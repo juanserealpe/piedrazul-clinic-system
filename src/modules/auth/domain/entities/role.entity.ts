@@ -1,4 +1,4 @@
-export type RoleName = 'ADMIN' | 'DOCTOR' | 'PATIENT';
+export type RoleName = "ADMIN" | "DOCTOR" | "PATIENT";
 
 export class Role {
   constructor(

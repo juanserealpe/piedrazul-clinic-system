@@ -1,15 +1,15 @@
 import {
-    CanActivate,
-    ExecutionContext,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 
 export interface JwtPayload {
-    sub: string;
-    email: string;
-    roles: string[];
+  sub: string;
+  email: string;
+  roles: string[];
 }
 
 /**
@@ -18,31 +18,33 @@ export interface JwtPayload {
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-    constructor(private readonly jwtService: JwtService) { }
+  constructor(private readonly jwtService: JwtService) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const token = this.extractTokenFromHeader(request);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const token = this.extractTokenFromHeader(request);
 
-        if (!token) {
-            throw new UnauthorizedException('Missing authentication token');
-        }
-
-        try {
-            const payload: JwtPayload = await this.jwtService.verifyAsync(token);
-            request.user = payload;
-        } catch {
-            throw new UnauthorizedException('Invalid or expired token');
-        }
-
-        return true;
+    if (!token) {
+      throw new UnauthorizedException("Missing authentication token");
     }
 
-    private extractTokenFromHeader(request: { headers: Record<string, string> }): string | undefined {
-        const authHeader = request.headers['authorization'];
-        if (!authHeader) return undefined;
-
-        const [type, token] = authHeader.split(' ');
-        return type === 'Bearer' ? token : undefined;
+    try {
+      const payload: JwtPayload = await this.jwtService.verifyAsync(token);
+      request.user = payload;
+    } catch {
+      throw new UnauthorizedException("Invalid or expired token");
     }
+
+    return true;
+  }
+
+  private extractTokenFromHeader(request: {
+    headers: Record<string, string>;
+  }): string | undefined {
+    const authHeader = request.headers["authorization"];
+    if (!authHeader) return undefined;
+
+    const [type, token] = authHeader.split(" ");
+    return type === "Bearer" ? token : undefined;
+  }
 }

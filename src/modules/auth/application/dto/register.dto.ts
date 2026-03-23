@@ -1,4 +1,4 @@
-import { RoleName } from '../../domain/entities/role.entity.js';
+import { RoleName } from "../../domain/entities/role.entity.js";
 
 /**
  * DTO for user registration.
@@ -12,8 +12,8 @@ import { RoleName } from '../../domain/entities/role.entity.js';
  * }
  */
 export class RegisterDto {
-    email!: string;
-    username!: string;
-    password!: string;
-    roles!: RoleName[];
+  email!: string;
+  username!: string;
+  password!: string;
+  roles!: RoleName[];
 }

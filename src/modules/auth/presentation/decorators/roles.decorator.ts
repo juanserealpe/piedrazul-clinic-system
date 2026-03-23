@@ -1,7 +1,7 @@
-import { SetMetadata } from '@nestjs/common';
-import { RoleName } from '../../domain/entities/role.entity.js';
+import { SetMetadata } from "@nestjs/common";
+import { RoleName } from "../../domain/entities/role.entity.js";
 
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = "roles";
 
 /**
  * Decorator to specify which roles are allowed to access an endpoint.
