@@ -20,7 +20,7 @@ import { AvailabilitySlotOrmEntity } from "./modules/auth/infrastructure/persist
         AvailabilitySlotOrmEntity,
       ],
       synchronize: true,
-      logging: ["query", "error"],
+      logging: true,
     }),
     AuthModule,
   ],

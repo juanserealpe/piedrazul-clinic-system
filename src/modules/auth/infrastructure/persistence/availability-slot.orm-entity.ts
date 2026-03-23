@@ -8,7 +8,6 @@ export class AvailabilitySlotOrmEntity {
   @Column() date: string;
   @Column() startTime: string;
   @Column() endTime: string;
-  @Column() appointmentDuration: number;
   @Column({ default: "available" }) status: string;
 
   @ManyToOne(() => DoctorOrmEntity, (doctor) => doctor.slots)

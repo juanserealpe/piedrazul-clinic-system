@@ -4,7 +4,6 @@ export class AvailabilitySlot {
     public readonly date: string, // Ej: "2026-03-22"
     public readonly startTime: string, // Ej: "08:00"
     public readonly endTime: string, // Ej: "12:00"
-    public readonly appointmentDuration: number, // en minutos, Ej: 30
     public status: "available" | "unavailable" | "busy" = "available",
   ) {}
 }

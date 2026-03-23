@@ -9,6 +9,13 @@ import { UserMapper } from "../persistence/user.mapper";
 @Injectable()
 export class UserRepositoryImpl implements UserRepository {
   constructor(
+    /**
+     * Inyectamos el repositorio del tipo PADRE (UserOrmEntity).
+     * TypeORM con Single Table Inheritance resuelve automáticamente
+     * el subtipo correcto (UserOrmEntity o DoctorOrmEntity) según
+     * la columna discriminadora `type`. No hace falta inyectar
+     * DoctorRepository por separado para las queries básicas.
+     */
     @InjectRepository(UserOrmEntity)
     private readonly repo: Repository<UserOrmEntity>,
   ) {}

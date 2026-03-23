@@ -106,12 +106,7 @@ export class RegisterUseCase {
     if (dto.availability) {
       dto.availability.forEach((slot) => {
         doctorSchedule.addSlot(
-          new AvailabilitySlot(
-            slot.date,
-            slot.startTime,
-            slot.endTime,
-            slot.appointmentDuration,
-          ),
+          new AvailabilitySlot(slot.date, slot.startTime, slot.endTime),
         );
       });
     }

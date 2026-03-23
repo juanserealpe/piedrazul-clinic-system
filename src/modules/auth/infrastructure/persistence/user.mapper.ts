@@ -42,7 +42,6 @@ export class UserMapper {
             slot.date,
             slot.startTime,
             slot.endTime,
-            slot.appointmentDuration,
             slot.status as "available" | "unavailable" | "busy",
           ),
         );
@@ -107,7 +106,6 @@ export class UserMapper {
       slotEntity.date = slot.date;
       slotEntity.startTime = slot.startTime;
       slotEntity.endTime = slot.endTime;
-      slotEntity.appointmentDuration = slot.appointmentDuration;
       slotEntity.status = slot.status;
       return slotEntity;
     });
