@@ -18,6 +18,7 @@ import { JwtAuthGuard } from "../guards/jwt-auth.guard.js";
 import { RolesGuard } from "../guards/roles.guard.js";
 import { Roles } from "../decorators/roles.decorator.js";
 import { User } from "../../domain/entities/user.entity.js";
+import { RoleName } from "../../domain/entities/role.entity.js";
 
 @Controller("auth")
 export class AuthController {
@@ -75,7 +76,7 @@ export class AuthController {
    */
   @Get("admin")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("ADMIN")
+  @Roles(RoleName.ADMIN)
   getAdminPanel(): { message: string } {
     return { message: "Welcome, Admin!" };
   }
@@ -86,7 +87,7 @@ export class AuthController {
    */
   @Get("doctors-only")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("DOCTOR")
+  @Roles(RoleName.DOCTOR)
   getDoctorsArea(): { message: string } {
     return { message: "Welcome, Doctor!" };
   }

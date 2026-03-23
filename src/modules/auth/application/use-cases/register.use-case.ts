@@ -1,4 +1,11 @@
-import { Inject, Injectable, ConflictException, Logger } from "@nestjs/common";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  Inject,
+  Injectable,
+  ConflictException,
+  Logger,
+  BadRequestException,
+} from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import type { UserRepository } from "../../domain/repositories/user.repository.js";
@@ -18,6 +25,17 @@ export class RegisterUseCase {
 
   async execute(dto: RegisterDto): Promise<Omit<User, "password">> {
     this.logger.log(`Starting user registration: ${dto.email}`);
+
+    const validRoles = Object.values(RoleName);
+
+    const invalidRoles = dto.roles.filter((role) => !validRoles.includes(role));
+
+    if (invalidRoles.length > 0) {
+      this.logger.warn(`Invalid roles detected: ${invalidRoles.join(", ")}`);
+      throw new BadRequestException(
+        `Invalid roles: ${invalidRoles.join(", ")}`,
+      );
+    }
 
     const existingByEmail = await this.userRepository.findByEmail(dto.email);
     if (existingByEmail) {

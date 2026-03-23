@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException, Logger } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  Logger,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as userRepository from "../../domain/repositories/user.repository.js";
