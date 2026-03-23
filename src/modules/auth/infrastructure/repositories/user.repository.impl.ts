@@ -1,31 +1,38 @@
-/* eslint-disable @typescript-eslint/require-await */
 import { Injectable } from "@nestjs/common";
-import { UserRepository } from "../../domain/repositories/user.repository.js";
-import { User } from "../../domain/entities/user.entity.js";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { UserRepository } from "../../domain/repositories/user.repository";
+import { User } from "../../domain/entities/user.entity";
+import { UserOrmEntity } from "../persistence/user.orm-entity";
+import { UserMapper } from "../persistence/user.mapper";
 
 @Injectable()
 export class UserRepositoryImpl implements UserRepository {
-  private readonly users: User[] = [];
+  constructor(
+    @InjectRepository(UserOrmEntity)
+    private readonly repo: Repository<UserOrmEntity>,
+  ) {}
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.users.find((user) => user.email === email) ?? null;
+    const entity = await this.repo.findOne({ where: { email } });
+    if (!entity) return null;
+    return UserMapper.toDomain(entity);
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.users.find((user) => user.id === id) ?? null;
+    const entity = await this.repo.findOne({ where: { id } });
+    if (!entity) return null;
+    return UserMapper.toDomain(entity);
   }
 
   async save(user: User): Promise<User> {
-    const existingIndex = this.users.findIndex((u) => u.id === user.id);
-    if (existingIndex !== -1) {
-      this.users[existingIndex] = user;
-    } else {
-      this.users.push(user);
-    }
-    return user;
+    const entity = UserMapper.toOrm(user);
+    const saved = await this.repo.save(entity);
+    return UserMapper.toDomain(saved);
   }
 
   async findAll(): Promise<User[]> {
-    return this.users;
+    const entities = await this.repo.find();
+    return entities.map((e) => UserMapper.toDomain(e));
   }
 }
