@@ -1,7 +1,7 @@
 import { Inject, Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
-import { UserRepository } from '../../domain/repositories/user.repository.js';
+import type { UserRepository } from '../../domain/repositories/user.repository.js';
 import { User } from '../../domain/entities/user.entity.js';
 import { Role, RoleName } from '../../domain/entities/role.entity.js';
 import { RegisterDto } from '../dto/register.dto.js';

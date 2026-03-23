@@ -1,7 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserRepository } from '../../domain/repositories/user.repository.js';
+import * as userRepository from '../../domain/repositories/user.repository.js';
 import { LoginDto } from '../dto/login.dto.js';
 import { USER_REPOSITORY } from '../../auth.tokens.js';
 
@@ -19,7 +19,7 @@ export interface LoginResponse {
 export class LoginUseCase {
     constructor(
         @Inject(USER_REPOSITORY)
-        private readonly userRepository: UserRepository,
+        private readonly userRepository: userRepository.UserRepository,
         private readonly jwtService: JwtService,
     ) { }
 
