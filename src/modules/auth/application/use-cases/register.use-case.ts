@@ -10,9 +10,17 @@ import * as bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import type { UserRepository } from "../../domain/repositories/user.repository.js";
 import { User } from "../../domain/entities/user.entity.js";
-import { Role, RoleName } from "../../domain/entities/role.entity.js";
+import { Doctor } from "../../domain/entities/doctor.entity.js";
+import { Account } from "../../domain/entities/account.entity.js";
+import { Role, RoleName } from "../../domain/entities/role.entity";
 import { RegisterDto } from "../dto/register.dto.js";
 import { USER_REPOSITORY } from "../../auth.tokens.js";
+import {
+  Schedule,
+  AvailabilitySlot,
+} from "../../domain/entities/availabilitySlot.entity";
+import { UserResponseDto } from "../dto/user.response.dto.js";
+import { ExceptionsHandler } from "@nestjs/core/exceptions/exceptions-handler.js";
 
 @Injectable()
 export class RegisterUseCase {
@@ -23,63 +31,124 @@ export class RegisterUseCase {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(dto: RegisterDto): Promise<Omit<User, "password">> {
-    this.logger.log(`Starting user registration: ${dto.email}`);
-
-    const validRoles = Object.values(RoleName);
-
-    const invalidRoles = dto.roles.filter((role) => !validRoles.includes(role));
-
-    if (invalidRoles.length > 0) {
-      this.logger.warn(`Invalid roles detected: ${invalidRoles.join(", ")}`);
-      throw new BadRequestException(
-        `Invalid roles: ${invalidRoles.join(", ")}`,
+  async execute(dto: RegisterDto): Promise<UserResponseDto> {
+    const existingUser = await this.userRepository.findByEmail(dto.email);
+    if (existingUser) {
+      throw new ConflictException(
+        `El correo electronico ya está en uso por otro usuario: ${dto.email}`,
       );
     }
-
-    const existingByEmail = await this.userRepository.findByEmail(dto.email);
-    if (existingByEmail) {
-      this.logger.warn(
-        `Registration failed - Email already registered: ${dto.email}`,
-      );
-      throw new ConflictException("Email already registered");
+    // Verifica roles
+    if (dto.roles.includes(RoleName.DOCTOR)) {
+      return this.registerDoctor(dto);
+    } else {
+      return this.registerRegularUser(dto);
     }
+  }
 
-    const existingByUsername = await this.userRepository.findByUsername(
-      dto.username,
-    );
-    if (existingByUsername) {
-      this.logger.warn(
-        `Registration failed - Username already taken: ${dto.username}`,
-      );
-      throw new ConflictException("Username already taken");
-    }
+  // ----------------------
+  // Registro de usuarios normales (pacientes, empleados no doctores)
+  // ----------------------
+  private async registerRegularUser(
+    dto: RegisterDto,
+  ): Promise<UserResponseDto> {
+    this.logger.log(`Starting registration for regular user: ${dto.email}`);
 
-    this.logger.log(`Hashing password for user: ${dto.email}`);
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const roles: Role[] = dto.roles.map(
-      (roleName: RoleName) => new Role(randomUUID(), roleName),
-    );
-
-    this.logger.log(
-      `Assigning roles to user: ${dto.email} -> [${dto.roles.join(", ")}]`,
-    );
-
-    const user = new User(
+    // Crear account con password
+    const account = new Account(
       randomUUID(),
-      dto.email,
-      dto.username,
-      hashedPassword,
-      roles,
+      await bcrypt.hash(dto.password, 10),
+      dto.roles,
     );
 
-    this.logger.log(`Saving user to repository: ${dto.email}`);
-    const savedUser = await this.userRepository.save(user);
+    // Crear usuario (paciente o empleado)
+    const user = new User(
+      dto.id,
+      dto.email,
+      dto.phone_number,
+      new Date(dto.born_date),
+      dto.names,
+      dto.lastnames,
+      dto.gender,
+      account,
+    );
 
-    this.logger.log(`User registered successfully: ${savedUser.id}`);
+    // Guardar en repositorio
+    await this.userRepository.save(user);
 
-    const { password: _, ...userWithoutPassword } = savedUser;
-    return userWithoutPassword as Omit<User, "password">;
+    // Construir DTO de respuesta sin password
+    const response: UserResponseDto = {
+      ...user,
+      account: {
+        id: user.account!.id,
+        roles: user.account!.roles,
+      },
+    };
+
+    return response;
+  }
+
+  // ----------------------
+  // Registro de Doctor
+  // ----------------------
+  private async registerDoctor(dto: RegisterDto): Promise<UserResponseDto> {
+    this.logger.log(`Starting registration for Doctor: ${dto.email}`);
+
+    if (!dto.availability || dto.availability.length === 0) {
+      this.logger.warn(`Doctor availability missing for: ${dto.email}`);
+      throw new BadRequestException(
+        "Se requiere que se llene el campo de disponibilidad del doctor.",
+      );
+    }
+
+    // Crear agenda del doctor
+    const doctorSchedule = new Schedule();
+    if (dto.availability) {
+      dto.availability.forEach((slot) => {
+        doctorSchedule.addSlot(
+          new AvailabilitySlot(
+            slot.date,
+            slot.startTime,
+            slot.endTime,
+            slot.appointmentDuration,
+          ),
+        );
+      });
+    }
+
+    // Crear account con password
+    const account = new Account(
+      randomUUID(),
+      await bcrypt.hash(dto.password, 10),
+      dto.roles,
+    );
+
+    // Crear Doctor
+    const doctor = new Doctor(
+      dto.id,
+      dto.email,
+      dto.phone_number,
+      new Date(dto.born_date),
+      dto.names,
+      dto.lastnames,
+      dto.gender,
+      account,
+      doctorSchedule,
+      dto.averageAppointmentDuration ?? 20,
+    );
+
+    // Guardar en repositorio
+    await this.userRepository.save(doctor);
+
+    // Construir DTO de respuesta sin password
+    const response: UserResponseDto = {
+      ...doctor,
+      account: {
+        id: doctor.account.id,
+        roles: doctor.account.roles,
+      },
+    };
+
+    return response;
   }
 }

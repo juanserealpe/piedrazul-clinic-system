@@ -1,3 +1,5 @@
+import { IsEmail, IsNotEmpty } from "class-validator";
+
 /**
  * DTO for user login.
  *
@@ -8,6 +10,9 @@
  * }
  */
 export class LoginDto {
+  @IsEmail()
   email!: string;
+
+  @IsNotEmpty()
   password!: string;
 }

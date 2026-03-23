@@ -17,8 +17,8 @@ import { LoginDto } from "../../application/dto/login.dto.js";
 import { JwtAuthGuard } from "../guards/jwt-auth.guard.js";
 import { RolesGuard } from "../guards/roles.guard.js";
 import { Roles } from "../decorators/roles.decorator.js";
-import { User } from "../../domain/entities/user.entity.js";
 import { RoleName } from "../../domain/entities/role.entity.js";
+import { UserResponseDto } from "../../application/dto/user.response.dto.js";
 
 @Controller("auth")
 export class AuthController {
@@ -39,7 +39,7 @@ export class AuthController {
    * }
    */
   @Post("register")
-  async register(@Body() dto: RegisterDto): Promise<Omit<User, "password">> {
+  async register(@Body() dto: RegisterDto): Promise<UserResponseDto> {
     return this.registerUseCase.execute(dto);
   }
 

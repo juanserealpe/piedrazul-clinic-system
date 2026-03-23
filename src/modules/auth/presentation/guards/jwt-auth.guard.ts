@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   CanActivate,
   ExecutionContext,
@@ -30,6 +31,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload: JwtPayload = await this.jwtService.verifyAsync(token);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       request.user = payload;
     } catch {
       throw new UnauthorizedException("Invalid or expired token");

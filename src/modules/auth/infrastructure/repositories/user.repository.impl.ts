@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Injectable } from "@nestjs/common";
 import { UserRepository } from "../../domain/repositories/user.repository.js";
 import { User } from "../../domain/entities/user.entity.js";
@@ -8,10 +9,6 @@ export class UserRepositoryImpl implements UserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     return this.users.find((user) => user.email === email) ?? null;
-  }
-
-  async findByUsername(username: string): Promise<User | null> {
-    return this.users.find((user) => user.username === username) ?? null;
   }
 
   async findById(id: string): Promise<User | null> {
@@ -26,5 +23,9 @@ export class UserRepositoryImpl implements UserRepository {
       this.users.push(user);
     }
     return user;
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.users;
   }
 }
