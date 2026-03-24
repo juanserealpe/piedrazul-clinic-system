@@ -15,10 +15,6 @@ import { Account } from "../../domain/entities/account.entity.js";
 import { Role, RoleName } from "../../domain/entities/role.entity";
 import { RegisterDto } from "../dto/register.dto.js";
 import { USER_REPOSITORY } from "../../auth.tokens.js";
-import {
-  Schedule,
-  AvailabilitySlot,
-} from "../../domain/entities/availabilitySlot.entity";
 import { UserResponseDto } from "../dto/user.response.dto.js";
 import { ExceptionsHandler } from "@nestjs/core/exceptions/exceptions-handler.js";
 
@@ -32,11 +28,15 @@ export class RegisterUseCase {
   ) {}
 
   async execute(dto: RegisterDto): Promise<UserResponseDto> {
-    const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) {
+    const existingEmailUser = await this.userRepository.findByEmail(dto.email);
+    if (existingEmailUser) {
       throw new ConflictException(
-        `El correo electronico ya está en uso por otro usuario: ${dto.email}`,
+        `El correo electronico ya está en uso por otro usuario`,
       );
+    }
+    const existingIdUser = await this.userRepository.findById(dto.id);
+    if (existingIdUser) {
+      throw new ConflictException(`El id ya está en uso por otro usuario.`);
     }
     // Verifica roles
     if (dto.roles.includes(RoleName.DOCTOR)) {
@@ -93,24 +93,6 @@ export class RegisterUseCase {
   // ----------------------
   private async registerDoctor(dto: RegisterDto): Promise<UserResponseDto> {
     this.logger.log(`Starting registration for Doctor: ${dto.email}`);
-
-    if (!dto.availability || dto.availability.length === 0) {
-      this.logger.warn(`Doctor availability missing for: ${dto.email}`);
-      throw new BadRequestException(
-        "Se requiere que se llene el campo de disponibilidad del doctor.",
-      );
-    }
-
-    // Crear agenda del doctor
-    const doctorSchedule = new Schedule();
-    if (dto.availability) {
-      dto.availability.forEach((slot) => {
-        doctorSchedule.addSlot(
-          new AvailabilitySlot(slot.date, slot.startTime, slot.endTime),
-        );
-      });
-    }
-
     // Crear account con password
     const account = new Account(
       randomUUID(),
@@ -128,7 +110,6 @@ export class RegisterUseCase {
       dto.lastnames,
       dto.gender,
       account,
-      doctorSchedule,
       dto.averageAppointmentDuration ?? 20,
     );
 

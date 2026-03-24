@@ -1,16 +1,11 @@
 import { User } from "../../domain/entities/user.entity";
 import { Doctor } from "../../domain/entities/doctor.entity";
 import { Account } from "../../domain/entities/account.entity";
-import {
-  Schedule,
-  AvailabilitySlot,
-} from "../../domain/entities/availabilitySlot.entity";
 import { RoleName } from "../../domain/entities/role.entity";
 import { GenderEnum } from "../../domain/enums/gender.enum";
 import { UserOrmEntity } from "./user.orm-entity";
 import { DoctorOrmEntity } from "./doctor.orm-entity";
 import { AccountOrmEntity } from "./account.orm-entity";
-import { AvailabilitySlotOrmEntity } from "./availability-slot.orm-entity";
 
 export class UserMapper {
   // ─────────────────────────────────────────────
@@ -33,32 +28,18 @@ export class UserMapper {
     );
   }
 
-  static toDoctorDomain(entity: DoctorOrmEntity): Doctor {
-    const schedule = new Schedule();
-    if (entity.slots) {
-      entity.slots.forEach((slot) => {
-        schedule.addSlot(
-          new AvailabilitySlot(
-            slot.date,
-            slot.startTime,
-            slot.endTime,
-            slot.status as "available" | "unavailable" | "busy",
-          ),
-        );
-      });
-    }
-
+  static toDoctorDomain(doctorEntity: DoctorOrmEntity): Doctor {
+    const user = doctorEntity.user;
     return new Doctor(
-      entity.id,
-      entity.email,
-      entity.phone_number,
-      new Date(entity.born_date),
-      entity.names,
-      entity.lastnames,
-      entity.gender as GenderEnum,
-      UserMapper.toAccountDomain(entity.account),
-      schedule,
-      entity.averageAppointmentDuration ?? 20,
+      user.id,
+      user.email,
+      user.phone_number,
+      new Date(user.born_date),
+      user.names,
+      user.lastnames,
+      user.gender as GenderEnum,
+      UserMapper.toAccountDomain(user.account),
+      doctorEntity.averageAppointmentDuration ?? 20,
     );
   }
 
@@ -71,10 +52,6 @@ export class UserMapper {
   // ─────────────────────────────────────────────
 
   static toOrm(user: User): UserOrmEntity {
-    if (user instanceof Doctor) {
-      return UserMapper.toDoctorOrm(user);
-    }
-
     const entity = new UserOrmEntity();
     entity.id = user.id;
     entity.email = user.email;
@@ -90,27 +67,13 @@ export class UserMapper {
   }
 
   static toDoctorOrm(doctor: Doctor): DoctorOrmEntity {
-    const entity = new DoctorOrmEntity();
-    entity.id = doctor.id;
-    entity.email = doctor.email;
-    entity.phone_number = doctor.phone_number;
-    entity.born_date = doctor.born_date;
-    entity.names = doctor.names;
-    entity.lastnames = doctor.lastnames;
-    entity.gender = doctor.gender;
-    entity.account = UserMapper.toAccountOrm(doctor.account);
-    entity.averageAppointmentDuration = doctor.averageAppointmentDuration;
+    const userEntity = UserMapper.toOrm(doctor);
+    const doctorEntity = new DoctorOrmEntity();
+    doctorEntity.user_id = doctor.id;
+    doctorEntity.user = userEntity;
+    doctorEntity.averageAppointmentDuration = doctor.averageAppointmentDuration;
 
-    entity.slots = (doctor.schedule?.slots ?? []).map((slot) => {
-      const slotEntity = new AvailabilitySlotOrmEntity();
-      slotEntity.date = slot.date;
-      slotEntity.startTime = slot.startTime;
-      slotEntity.endTime = slot.endTime;
-      slotEntity.status = slot.status;
-      return slotEntity;
-    });
-
-    return entity;
+    return doctorEntity;
   }
 
   static toAccountOrm(account: Account): AccountOrmEntity {
