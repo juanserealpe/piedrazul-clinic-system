@@ -14,7 +14,6 @@ import { USER_REPOSITORY } from "./auth.tokens.js";
 import { UserOrmEntity } from "./infrastructure/persistence/user.orm-entity.js";
 import { DoctorOrmEntity } from "./infrastructure/persistence/doctor.orm-entity.js";
 import { AccountOrmEntity } from "./infrastructure/persistence/account.orm-entity.js";
-import { AvailabilitySlotOrmEntity } from "./infrastructure/persistence/availability-slot.orm-entity.js";
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { AvailabilitySlotOrmEntity } from "./infrastructure/persistence/availabi
       UserOrmEntity,
       DoctorOrmEntity,
       AccountOrmEntity,
-      AvailabilitySlotOrmEntity,
     ]),
     JwtModule.register({
       global: false,

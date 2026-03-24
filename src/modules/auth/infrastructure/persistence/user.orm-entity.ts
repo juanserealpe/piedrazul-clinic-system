@@ -10,7 +10,6 @@ export class UserOrmEntity {
   @Column() names: string;
   @Column() lastnames: string;
   @Column() gender: string;
-  @Column({ default: "USER" }) type: string; // discriminador: 'USER' | 'DOCTOR'
 
   @OneToOne(() => AccountOrmEntity, { cascade: true, eager: true })
   @JoinColumn()

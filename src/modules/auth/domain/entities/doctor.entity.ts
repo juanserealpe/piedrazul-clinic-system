@@ -5,7 +5,6 @@
 import { Injectable } from "@nestjs/common";
 import { User } from "./user.entity";
 import { GenderEnum } from "../enums/gender.enum";
-import { Schedule, AvailabilitySlot } from "./availabilitySlot.entity";
 import { Account } from "./account.entity";
 
 @Injectable()
@@ -19,7 +18,6 @@ export class Doctor extends User {
     lastnames: string,
     gender: GenderEnum,
     public readonly account: Account,
-    public readonly schedule: Schedule = new Schedule(),
     public readonly averageAppointmentDuration: number,
   ) {
     super(
@@ -32,16 +30,5 @@ export class Doctor extends User {
       gender,
       account,
     );
-  }
-  addAvailability(slot: AvailabilitySlot) {
-    this.schedule.addSlot(slot);
-  }
-
-  blockAvailability(date: string, startTime: string, endTime: string) {
-    this.schedule.blockSlot(date, startTime, endTime);
-  }
-
-  getAvailableSlots() {
-    return this.schedule.getAvailableSlots();
   }
 }
