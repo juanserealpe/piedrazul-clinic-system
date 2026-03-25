@@ -5,12 +5,18 @@ import {
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { ValidationPipe } from "@nestjs/common";
+import { GlobalExceptionFilter } from "./modules/appointments/GlobalExceptionFilter";
+import { getDataSourceToken } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
+import { InitDataService } from "./modules/appointments/InitDataService";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -21,5 +27,9 @@ async function bootstrap() {
   );
 
   await app.listen(3000);
+  
+  const dataSource = app.get<DataSource>(getDataSourceToken());
+  const initDataService = new InitDataService(dataSource);
+  await initDataService.seedIfEmpty();
 }
 bootstrap();
