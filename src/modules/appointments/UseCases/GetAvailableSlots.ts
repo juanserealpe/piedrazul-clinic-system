@@ -1,6 +1,6 @@
 import { AppointmentRepository } from "../domain/Repositories/AppointmentRepository";
 import { ScheduleRepository } from "../domain/Repositories/ScheduleRepository";
-import { Schedule } from "../domain//entities/Schedule.entity";
+import { Schedule } from "../domain/entities/Schedule.entity";
 import { Status } from "../domain/entities/Status";
 import { GetAvailableSlotsDto } from "../Presentation/Dtos/Get/GetAvailableSlotsDto";
 import { GetAvailableSlotsResult } from "../Presentation/Dtos/Get/GetAvailableSlotsResult";
