@@ -1,7 +1,7 @@
 import { Appointment } from "../../domain/entities/Appointment.entity";
 import { AppointmentOrmEntity } from "../Entities/AppointmentOrmEntity";
 
-export class AppointmentMapper {
+export class AppointmentPersistenceMapper {
   static toDomain(orm: AppointmentOrmEntity): Appointment {
     return new Appointment(
       orm.id,

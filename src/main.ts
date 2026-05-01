@@ -30,7 +30,5 @@ async function bootstrap() {
   await app.listen(3000);
   
   const dataSource = app.get<DataSource>(getDataSourceToken());
-  //const initDataService = new InitDataService(dataSource);
-  //await initDataService.seedIfEmpty();
 }
 bootstrap();
