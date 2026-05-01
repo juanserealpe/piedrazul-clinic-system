@@ -97,7 +97,7 @@ invalidInput: () =>
     message: 'Datos de entrada invalidos',
   }),
 
-  invalidInterval: () =>
+invalidInterval: () =>
   new ConflictException({
     code: ErrorCodes.INVALID_INTERVAL,
     message: 'Intervalo invalido',

@@ -1,3 +1,4 @@
+import { getDayRange } from "src/modules/appointments/Utilities";
 import { AppointmentRepository } from "../../../domain/Repositories/AppointmentRepository";
 import { Status } from "../../../domain/entities/Status";
 import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
@@ -6,8 +7,7 @@ import { GetAppointmentsOutput } from "./GetAppointmentsOutput";
 import { AppError } from "src/common/errors/app-error.factory";
  
 export class GetAppointmentsByDoctorAndDate {
-
-  constructor(
+constructor(
     private readonly appointmentRepository: AppointmentRepository
   ) {}
 
@@ -19,11 +19,7 @@ export class GetAppointmentsByDoctorAndDate {
       throw AppError.invalidInput();
     }
 
-    const vStart = new Date(pInput.date);
-    vStart.setHours(0, 0, 0, 0);
-
-    const vEnd = new Date(pInput.date);
-    vEnd.setHours(23, 59, 59, 999);
+    const { vStart, vEnd } = getDayRange(pInput.date);
 
     const vAppointments =
       await this.appointmentRepository.findByDoctorStatusAndDateRange(

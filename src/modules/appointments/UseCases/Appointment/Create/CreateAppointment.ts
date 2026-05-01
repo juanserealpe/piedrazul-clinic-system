@@ -6,6 +6,7 @@ import { CreateAppointmentOutput } from "./CreateAppointmentOutput";
 import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
 import { DayOfWeek } from "src/modules/appointments/domain/entities/DaysOfWeek";
 import { AppError } from "src/common/errors/app-error.factory";
+import { getDayOfWeek } from "src/modules/appointments/Utilities";
  
 export class CreateAppointment{
   constructor(
@@ -21,9 +22,7 @@ async execute(
       throw AppError.invalidInput();
     }
 
-    const vDay = pInput.date
-      .toLocaleDateString("en-US", { weekday: "long" })
-      .toUpperCase() as DayOfWeek;
+    const vDay = getDayOfWeek(pInput.date);
 
     const vSchedules =
       await this.scheduleRepository.findByDoctorAndDay(
@@ -35,7 +34,7 @@ async execute(
       throw AppError.scheduleNotAvailable(pInput.date.toISOString());
     }
 
-    const vHour = pInput.date.getHours();
+    const vHour = pInput.date.getUTCHours();
 
     const vValidSchedule = vSchedules.find(s =>
       vHour >= s.startHour && vHour < s.endHour
@@ -46,7 +45,7 @@ async execute(
     }
 
     const vStart = new Date(pInput.date);
-    vStart.setHours(vValidSchedule.startHour, 0, 0, 0);
+    vStart.setUTCHours(vValidSchedule.startHour, 0, 0, 0);
 
     const diffMinutes =
       (pInput.date.getTime() - vStart.getTime()) / 60000;

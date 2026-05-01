@@ -11,6 +11,8 @@ import {
 import { CreateAppointment } from "../../UseCases/Appointment/Create/CreateAppointment";
 import { GetAppointmentsByDoctorAndDate } from "../../UseCases/Appointment/Get/GetAppointmentsByDoctorAndDate";
 import { AppointmentControllerMapper } from "../Mappers/AppointmentControllerMapper";
+import { CreateAppointmentRequestDto } from "../Dtos/Appointment/CreateAppointmentRequestDto";
+import { GetAppointmentsRequestDto } from "../Dtos/Appointment/GetAppointmentsRequestDto";
 
 @Controller("appointments")
 export class AppointmentController {
@@ -22,7 +24,7 @@ export class AppointmentController {
   // -------- CREATE APPOINTMENT --------
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() body: any) {
+  async create(@Body() body: CreateAppointmentRequestDto) {
 
     const vInput = AppointmentControllerMapper.toCreateInput(body);
 
@@ -36,7 +38,7 @@ export class AppointmentController {
   // -------- GET APPOINTMENTS BY DOCTOR AND DATE --------
   @Get("by-doctor")
   @HttpCode(HttpStatus.OK)
-  async getByDoctor(@Query() query: any) {
+  async getByDoctor(@Query() query: GetAppointmentsRequestDto) {
 
     const vInput =
       AppointmentControllerMapper.toGetInput(query);
