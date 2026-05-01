@@ -2,7 +2,8 @@ import { ScheduleRepository } from "src/modules/appointments/domain/Repositories
 import { CreateScheduleInput } from "./CreateScheduleInput";
 import { CreateScheduleOutput } from "./CreateScheduleOutput";
 import { ScheduleDtoMapper } from "../../Mappers/ScheduleDtoMapper";
-import { BusinessException } from "src/modules/appointments/BusinessException";
+import { AppError } from "src/common/errors/app-error.factory";
+import { getDayInSpanish } from "src/modules/appointments/domain/entities/DaysOfWeek";
 
 export class CreateScheduleUseCase{
     constructor(
@@ -31,8 +32,9 @@ export class CreateScheduleUseCase{
         );
 
         if (vConflict) {
-        throw new BusinessException("Schedule overlaps with an existing one");
-        }
+        throw AppError.appointmentAlreadyExist(
+          `${getDayInSpanish(vConflict.day)}: ${vConflict.startHour}-${vConflict.endHour}`)
+          }
 
         const vSaved =
         await this.scheduleRepository.save(vSchedule);

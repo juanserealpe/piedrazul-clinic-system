@@ -21,10 +21,12 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-fastify": "^11.1.17",
     "@nestjs/typeorm": "^11.0.0",
+    "axios": "^1.15.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.8.0",
     "class-transformer": "^0.5.1",

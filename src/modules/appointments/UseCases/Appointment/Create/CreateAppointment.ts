@@ -1,4 +1,3 @@
-import { BusinessException } from "src/modules/appointments/BusinessException";
 import { AppointmentRepository } from "../../../domain/Repositories/AppointmentRepository";
 import { Status } from "../../../domain/entities/Status";
 import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
@@ -6,6 +5,7 @@ import { CreateAppointmentInput } from "./CreateAppointmentInput";
 import { CreateAppointmentOutput } from "./CreateAppointmentOutput";
 import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
 import { DayOfWeek } from "src/modules/appointments/domain/entities/DaysOfWeek";
+import { AppError } from "src/common/errors/app-error.factory";
  
 export class CreateAppointment{
   constructor(
@@ -18,7 +18,7 @@ async execute(
   ): Promise<CreateAppointmentOutput> {
 
     if (!pInput.doctorId || !pInput.patientId || !pInput.date) {
-      throw new BusinessException("Invalid input data");
+      throw AppError.invalidInput();
     }
 
     const vDay = pInput.date
@@ -32,7 +32,7 @@ async execute(
       );
 
     if (vSchedules.length === 0) {
-      throw new BusinessException("Doctor has no schedule for this day");
+      throw AppError.scheduleNotAvailable(pInput.date.toISOString());
     }
 
     const vHour = pInput.date.getHours();
@@ -42,7 +42,7 @@ async execute(
     );
 
     if (!vValidSchedule) {
-      throw new BusinessException("Time is outside doctor's schedule");
+      throw AppError.scheduleNotFound(pInput.date.toISOString());
     }
 
     const vStart = new Date(pInput.date);
@@ -52,7 +52,7 @@ async execute(
       (pInput.date.getTime() - vStart.getTime()) / 60000;
 
     if (diffMinutes % vValidSchedule.interval !== 0) {
-      throw new BusinessException("Invalid time slot");
+      throw AppError.invalidInterval();
     }
 
     const vExistingAppointments =
@@ -68,7 +68,7 @@ async execute(
     );
 
     if (vConflict) {
-      throw new BusinessException("Slot already taken");
+      throw AppError.appointmentAlreadyExist(pInput.date.toISOString());
     }
 
     const vId = crypto.randomUUID();
