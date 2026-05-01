@@ -4,7 +4,6 @@ import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
 import { CreateAppointmentInput } from "./CreateAppointmentInput";
 import { CreateAppointmentOutput } from "./CreateAppointmentOutput";
 import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
-import { DayOfWeek } from "src/modules/appointments/domain/entities/DaysOfWeek";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayOfWeek } from "src/modules/appointments/Utilities";
  

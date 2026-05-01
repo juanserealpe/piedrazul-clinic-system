@@ -14,7 +14,8 @@ import { CreateScheduleUseCase } from "./UseCases/Schedule/Create/CreateSchedule
 import { CreateManySchedulesUseCase } from "./UseCases/Schedule/Create/CreateManySchedule";
 import { KeycloakService } from "src/common/keycloak/keycloak.service";
 import { KeycloakModule } from "src/common/keycloak/keycloak.module";
- 
+import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
+
 export const APPOINTMENT_REPOSITORY = "APPOINTMENT_REPOSITORY";
 export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
 
@@ -43,16 +44,18 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
       inject: [APPOINTMENT_REPOSITORY],
     },
     {
-      provide: GetAvailableSlotsUseCase,
-      useFactory: (scheduleRepo, appointmentRepo) =>
-        new GetAvailableSlotsUseCase(scheduleRepo, appointmentRepo),
-      inject: [SCHEDULE_REPOSITORY, APPOINTMENT_REPOSITORY],
-    },
-    {
       provide: CreateAppointment,
       useFactory: (appointmentRepo,scheduleRepo) =>
         new CreateAppointment(appointmentRepo,scheduleRepo),
       inject: [APPOINTMENT_REPOSITORY, SCHEDULE_REPOSITORY],
+    },
+    /*
+    */
+    {
+      provide: CsvExportUseCase,
+      useFactory: (getAppointmentsUseCase) =>
+        new CsvExportUseCase(getAppointmentsUseCase),
+      inject: [GetAppointmentsByDoctorAndDate],
     },
     //Schedule
     {
