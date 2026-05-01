@@ -2,7 +2,7 @@ import { Status } from "./Status";
 
 export class Appointment {
   constructor(
-    public readonly id: string,
+    public id: string,
     public readonly patientId: string,
     public readonly doctorId: string,
     public readonly date: Date,

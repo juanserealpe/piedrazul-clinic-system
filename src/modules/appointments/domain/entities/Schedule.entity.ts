@@ -1,7 +1,6 @@
 import { getDayOfWeek } from "../../Utilities";
 import { DayOfWeek } from "./DaysOfWeek";
 
-
 export class Schedule {
   constructor(
     public readonly id: string,
@@ -11,15 +10,18 @@ export class Schedule {
     public readonly endHour: number,
     public interval: number,
     public isActive: boolean = true
-  ) {}
+  ) {
+    this.validate();
+  }
   
   isSameDay(pDate: Date): boolean {
     return getDayOfWeek(pDate) === this.day;
   }
+  
   isWithinWorkingHours(pDate: Date): boolean {
     const vHour = pDate.getUTCHours();
     return vHour >= this.startHour && vHour < this.endHour;
-}
+  }
 
   generateTimeSlots(pDate: Date): Date[] {
     const vSlots: Date[] = [];
@@ -54,18 +56,20 @@ export class Schedule {
     return vMinutes % this.interval === 0;
   }
 
-  desactivate() {
-    this.isActive = false;
-  }
-  
-  reactivate(){
-    this.isActive = true;
+  overlaps(pOther: Schedule): boolean {
+    if (this.day !== pOther.day) return false;
+    return this.startHour < pOther.endHour && this.endHour > pOther.startHour;
   }
 
-  changeInterval(newInterval: number){
-    if(newInterval < 0 || newInterval > 60) 
-      throw new Error("Interval (0-60)");
-    else 
-      this.interval = newInterval;
+  private validate(): void {
+    if (this.startHour >= this.endHour) {
+      throw new Error("startHour must be less than endHour");
+    }
+    if (this.startHour < 0 || this.endHour > 23) {
+      throw new Error("Invalid hour range");
+    }
+    if (this.interval <= 0) {
+      throw new Error("Interval must be greater than 0");
+    }
   }
 }

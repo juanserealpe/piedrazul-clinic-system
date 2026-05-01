@@ -1,7 +1,7 @@
 import { Schedule } from "../../domain/entities/Schedule.entity";
 import { ScheduleOrmEntity } from "../Entities/ScheduleOrmEntity";
 
-export class ScheduleMapper {
+export class SchedulePersistenceMapper {
   static toDomain(orm: ScheduleOrmEntity): Schedule {
     return new Schedule(
       orm.id,

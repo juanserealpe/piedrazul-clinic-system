@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, Repository } from "typeorm";
-import { AppointmentOrmEntity } from "./Entities/AppointmentOrmEntity";
-import { AppointmentRepository } from "../domain/Repositories/AppointmentRepository";
-import { AppointmentMapper } from "./Mappers/AppointmentMapper";
-import { Appointment } from "../domain/entities/Appointment.entity";
-import { Status } from "../domain/entities/Status";
+import { AppointmentOrmEntity } from "../Entities/AppointmentOrmEntity";
+import { AppointmentRepository } from "../../domain/Repositories/AppointmentRepository";
+import { AppointmentPersistenceMapper } from "../Mappers/AppointmentPersistenceMapper";
+import { Appointment } from "../../domain/entities/Appointment.entity";
+import { Status } from "../../domain/entities/Status";
 
 @Injectable()
 export class TypeOrmAppointmentRepository implements AppointmentRepository {
@@ -14,29 +14,29 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
     private readonly repo: Repository<AppointmentOrmEntity>
   ) {}
 
-  async findByDoctor(id: string): Promise<Appointment[] | null> {
+  async findByDoctor(id: string): Promise<Appointment[]> {
     const results = await this.repo.find({
       where: { doctorId: id },
       order: { date: "ASC" },
     });
-    return results.map(AppointmentMapper.toDomain);
+    return results.map(AppointmentPersistenceMapper.toDomain);
   }
 
   async findByDoctorAndStatus(
     id: string,
     status: Status
-  ): Promise<Appointment[] | null> {
+  ): Promise<Appointment[]> {
     const results = await this.repo.find({
       where: { doctorId: id, status: status as any },
       order: { date: "ASC" },
     });
-    return results.map(AppointmentMapper.toDomain);
+    return results.map(AppointmentPersistenceMapper.toDomain);
   }
 
   async save(appointment: Appointment): Promise<Appointment> {
-    const orm = AppointmentMapper.toOrm(appointment);
+    const orm = AppointmentPersistenceMapper.toOrm(appointment);
     const saved = await this.repo.save(orm);
-    return AppointmentMapper.toDomain(saved);
+    return AppointmentPersistenceMapper.toDomain(saved);
   }
 
   async findByDoctorStatusAndDateRange(
@@ -54,6 +54,6 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
       order: { date: "ASC" },
     });
 
-    return results.map(AppointmentMapper.toDomain);
+    return results.map(AppointmentPersistenceMapper.toDomain);
   }
 }

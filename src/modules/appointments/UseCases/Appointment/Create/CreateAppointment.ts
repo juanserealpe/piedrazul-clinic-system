@@ -1,0 +1,84 @@
+import { BusinessException } from "src/modules/appointments/BusinessException";
+import { AppointmentRepository } from "../../../domain/Repositories/AppointmentRepository";
+import { Status } from "../../../domain/entities/Status";
+import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
+import { CreateAppointmentInput } from "./CreateAppointmentInput";
+import { CreateAppointmentOutput } from "./CreateAppointmentOutput";
+import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
+import { DayOfWeek } from "src/modules/appointments/domain/entities/DaysOfWeek";
+ 
+export class CreateAppointment{
+  constructor(
+    private readonly appointmentRepository: AppointmentRepository,
+    private readonly scheduleRepository: ScheduleRepository
+  ) {}
+
+async execute(
+    pInput: CreateAppointmentInput
+  ): Promise<CreateAppointmentOutput> {
+
+    if (!pInput.doctorId || !pInput.patientId || !pInput.date) {
+      throw new BusinessException("Invalid input data");
+    }
+
+    const vDay = pInput.date
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toUpperCase() as DayOfWeek;
+
+    const vSchedules =
+      await this.scheduleRepository.findByDoctorAndDay(
+        pInput.doctorId,
+        vDay
+      );
+
+    if (vSchedules.length === 0) {
+      throw new BusinessException("Doctor has no schedule for this day");
+    }
+
+    const vHour = pInput.date.getHours();
+
+    const vValidSchedule = vSchedules.find(s =>
+      vHour >= s.startHour && vHour < s.endHour
+    );
+
+    if (!vValidSchedule) {
+      throw new BusinessException("Time is outside doctor's schedule");
+    }
+
+    const vStart = new Date(pInput.date);
+    vStart.setHours(vValidSchedule.startHour, 0, 0, 0);
+
+    const diffMinutes =
+      (pInput.date.getTime() - vStart.getTime()) / 60000;
+
+    if (diffMinutes % vValidSchedule.interval !== 0) {
+      throw new BusinessException("Invalid time slot");
+    }
+
+    const vExistingAppointments =
+      await this.appointmentRepository.findByDoctorStatusAndDateRange(
+        pInput.doctorId,
+        Status.SCHEDULED,
+        pInput.date,
+        pInput.date
+      );
+
+    const vConflict = vExistingAppointments.find(a =>
+      a.overlaps(pInput.date)
+    );
+
+    if (vConflict) {
+      throw new BusinessException("Slot already taken");
+    }
+
+    const vId = crypto.randomUUID();
+
+    const vAppointment =
+      AppointmentDtoMapper.toCreateEntity(vId, pInput);
+
+    const vSaved =
+      await this.appointmentRepository.save(vAppointment);
+
+    return AppointmentDtoMapper.toCreateOutput(vSaved);
+  }
+}

@@ -3,14 +3,14 @@ import { Schedule } from "../entities/Schedule.entity";
 
 export interface ScheduleRepository{
     
-    //By doctor
-    findByDoctorAndDay(id: string, day: DayOfWeek): Promise<Schedule[] | null>;
-    
-    //Cruds
-    findByStatus(status: string): Promise<Schedule[] | null>;
-    save(schedule: Schedule): Promise<Schedule>;  
+   findByDoctor(doctorId: string): Promise<Schedule[]>;
 
-    //Actives
-    findActiveByDoctor(doctorId: string): Promise<Schedule[]>;
+  findByDoctorAndDay(
+    doctorId: string,
+    day: DayOfWeek
+  ): Promise<Schedule[]>;
 
+  save(schedule: Schedule): Promise<Schedule>;
+
+  existDoctor(id: string): Promise<boolean>;
 }

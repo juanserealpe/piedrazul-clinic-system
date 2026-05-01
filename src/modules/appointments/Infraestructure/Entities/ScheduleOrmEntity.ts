@@ -16,7 +16,11 @@ export class ScheduleOrmEntity {
   doctorId: string;
 
   @Column({
-    type: "int",
+    type: "enum",
+    enum: DayOfWeek,
+  })
+  @Column({
+    type: "text",
     enum: DayOfWeek,
   })
   day: DayOfWeek;
