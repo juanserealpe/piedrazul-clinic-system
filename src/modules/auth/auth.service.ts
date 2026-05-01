@@ -22,7 +22,7 @@ export class AuthService implements IAuthService {
 
 async login(dto: LoginDto): Promise<LoginResponseDto> {
   try {
-    const tokens = await this.kc.login(dto.email, dto.password);
+    const tokens = await this.kc.login(dto.id, dto.password);
     return {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
@@ -35,7 +35,7 @@ async login(dto: LoginDto): Promise<LoginResponseDto> {
 
 async register(dto: RegisterUserDto): Promise<UserResponseDto> {
   const token = await this.kc.getToken();
-  await this.ensureUserNotExists(dto.email, token);
+  await this.ensureUserNotExists(dto.id, token);
   const roles = await this.validateRoles(dto.roles || [], token);
   const user = await this.createUserInKeycloak(dto, token);
   await this.saveUserOrRollback(dto, user.id, token);
@@ -74,23 +74,23 @@ private async validateRoles(roleNames: string[], token: string) {
   return roles;
 }
 
-private async ensureUserNotExists(email: string, token: string) {
-    Logger.log(`Checking if user exists: ${email}`);
-    const exists = await this.kc.getUserByEmail(email, token).catch(() => null);
+private async ensureUserNotExists(id: string, token: string) {
+    Logger.log(`Checking if user exists: ${id}`);
+    const exists = await this.kc.getUserById(id, token).catch(() => null);
     if (exists) {
-      Logger.error(`User already exists: ${email}`);
+      Logger.error(`User already exists: ${id}`);
       throw AppError.userAlreadyExists();
     }
 }
 
 private async createUserInKeycloak(dto: RegisterUserDto, token: string) {
-  Logger.log(`Creating user in Keycloak: ${dto.email}`);
-    await this.kc.createUser(dto.email, dto.password, token);
-    Logger.log(`User created in Keycloak: ${dto.email}`);
-    const user = await this.kc.getUserByEmail(dto.email, token);
+  Logger.log(`Creating user in Keycloak: ${dto.id}`);
+    await this.kc.createUser(dto.id, dto.password, token, dto.email);
+    Logger.log(`User created in Keycloak: ${dto.id}`);
+    const user = await this.kc.getUserById(dto.id, token);
     Logger.log(`User retrieved from Keycloak: ${user.id}`);
     if (!user) {
-      Logger.error(`User not found after creation: ${dto.email}`);
+      Logger.error(`User not found after creation: ${dto.id}`);
       throw AppError.userNotFound();
     }
 
@@ -102,8 +102,9 @@ private async saveUserOrRollback(dto: RegisterUserDto, userId: string, token: st
   try {
     await this.userRepo.create(
       UserMapper.toOrm({
-        id: userId,
-        email: dto.email,
+        id: dto.id,
+        uuid: userId,
+        email: dto.email || '',
         names: dto.names,
         lastnames: dto.lastnames,
         gender: dto.gender,

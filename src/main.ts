@@ -25,6 +25,8 @@ async function bootstrap() {
     }),
   );
 
+  app.enableCors(); // Enable CORS for all origins
+
   await app.listen(3000);
   
   const dataSource = app.get<DataSource>(getDataSourceToken());
