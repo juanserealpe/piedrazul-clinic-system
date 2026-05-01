@@ -1,0 +1,11 @@
+import { LoginDto } from "./dtos/login-dto";
+import { LoginResponseDto } from "./dtos/login-response-dto";
+import { RefreshDto } from "./dtos/refresh-dto";
+import { RegisterUserDto } from "./dtos/register-user-dto";
+import { UserResponseDto } from "./dtos/user-response-dto";
+
+export interface IAuthService {
+  register(dto: RegisterUserDto): Promise<UserResponseDto>;
+  login(dto: LoginDto): Promise<LoginResponseDto>;
+  refresh(dto: RefreshDto): Promise<LoginResponseDto>;
+}

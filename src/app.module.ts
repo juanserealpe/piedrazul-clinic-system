@@ -1,39 +1,43 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { AuthModule } from "./modules/auth/auth.module.js";
+import { ConfigModule } from "@nestjs/config";
 
-// ORM Entities
-import { UserOrmEntity } from "./modules/auth/infrastructure/persistence/user.orm-entity.js";
-import { DoctorOrmEntity } from "./modules/auth/infrastructure/persistence/doctor.orm-entity.js";
-import { AccountOrmEntity } from "./modules/auth/infrastructure/persistence/account.orm-entity.js";
-
-//Appoint
+// Appointments
 import { AppointmentOrmEntity } from "./modules/appointments/Infraestructure/Entities/AppointmentOrmEntity.js";
 import { ScheduleOrmEntity } from "./modules/appointments/Infraestructure/Entities/ScheduleOrmEntity.js";
 import { AppointmentModule } from "./modules/appointments/appointments.module.js";
+import { UserOrmEntity } from "./modules/auth/persistence/user.orm-entity.js";
+import { AuthController } from "./modules/auth/auth.controller.js";
+import { AuthService } from "./modules/auth/auth.service.js";
+import { KeycloakService } from "./common/keycloak/keycloak.service.js";
+import { UserRepository } from "./modules/auth/persistence/user.repository.js";
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
     TypeOrmModule.forRoot({
       type: "better-sqlite3",
       database: "piedrazul.db",
       entities: [
         UserOrmEntity,
-        DoctorOrmEntity,
-        AccountOrmEntity,
-        //AvailabilitySlotOrmEntity,
-        //
         AppointmentOrmEntity,
         ScheduleOrmEntity,
       ],
       synchronize: true,
       logging: true,
     }),
-    AuthModule,
-    //
-    AppointmentModule
+
+    AppointmentModule,
+    TypeOrmModule.forFeature([UserOrmEntity]),
   ],
-  
-  
+  controllers: [AuthController],
+  providers: [
+    AuthService,
+    KeycloakService,
+    UserRepository, 
+  ],
 })
-export class AppModule { }
+export class AppModule {}
