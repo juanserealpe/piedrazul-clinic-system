@@ -1,10 +1,16 @@
 import { IsEmail, IsString, MinLength, Matches, IsOptional, IsArray, IsEnum, ArrayNotEmpty, ArrayMaxSize, IsIn, MaxLength, IsDateString } from 'class-validator';
 
 export class RegisterUserDto {
+  @IsString()
+  @MinLength(6, { message: 'User ID is required' })
+  @MaxLength(11, { message: 'User ID too long' })
+  id: string;
+
+  @IsOptional()
   @IsEmail({}, { message: 'Invalid email format' })
   @MaxLength(100, { message: 'Email too long' })
   @MinLength(5, { message: 'Invalid email format' })
-  email: string;
+  email?: string;
 
   @IsString()
   @MinLength(8, { message: 'Password too short' })

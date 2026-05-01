@@ -68,14 +68,18 @@ export class KeycloakService implements IKeycloakService {
     }
   }
 
-  async createUser(email: string, password: string, token: string) {
+  async createUser(id: string, password: string, token: string, email?: string) {
+    Logger.log(`Creating user in Keycloak: ${id}`);
+    Logger.log(`Using token: ${token.substring(0, 10)}...`);
+
+
     try {
       await axios.post(
         `${this.baseUrl}/admin/realms/${this.realm}/users`,
         {
-          username: email,
-          email,
+          username: id,
           enabled: true,
+          email: email,
           emailVerified: true,
           credentials: [{ type: 'password', value: password, temporary: false }],
         },
@@ -86,12 +90,12 @@ export class KeycloakService implements IKeycloakService {
     }
   }
 
-  async getUserByEmail(email: string, token: string) {
+  async getUserById(id: string, token: string) {
     try {
       const res = await axios.get(
         `${this.baseUrl}/admin/realms/${this.realm}/users`,
         {
-          params: { username: email },
+          params: { username: id },
           headers: { Authorization: `Bearer ${token}` },
         },
       );
@@ -152,12 +156,12 @@ export class KeycloakService implements IKeycloakService {
   }
 }
 
-async login(email: string, password: string) {
+async login(id: string, password: string) {
   const params = new URLSearchParams();
   params.append('client_id', this.clientId);
   params.append('client_secret', this.clientSecret);
   params.append('grant_type', 'password');
-  params.append('username', email);
+  params.append('username', id);
   params.append('password', password);
 
   return this.requestToken(params);

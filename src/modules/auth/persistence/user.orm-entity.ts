@@ -6,7 +6,10 @@ export class UserOrmEntity {
   id: string;
 
   @Column({ unique: true })
-  email: string;
+  uuid: string;
+
+  @Column({ nullable: true })
+  email?: string;
 
   @Column()
   phone_number: string;

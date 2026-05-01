@@ -5,6 +5,7 @@ export class UserMapper {
   static toResponse(entity: UserOrmEntity) {
     return {
       id: entity.id,
+      uuid: entity.uuid,
       email: entity.email,
       names: entity.names,
       lastnames: entity.lastnames,
@@ -16,6 +17,7 @@ export class UserMapper {
 
   static toOrm(data: {
     id: string;
+    uuid: string;
     email: string;
     names: string;
     lastnames: string;
@@ -26,6 +28,7 @@ export class UserMapper {
     const entity = new UserOrmEntity();
 
     entity.id = data.id;
+    entity.uuid = data.uuid;
     entity.email = data.email;
     entity.names = data.names;
     entity.lastnames = data.lastnames;
