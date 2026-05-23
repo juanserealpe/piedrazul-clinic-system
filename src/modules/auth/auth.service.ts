@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Console } from 'console';
 import { AppError } from 'src/common/errors/app-error.factory';
 import { LoginDto } from './dtos/login-dto';
 import { LoginResponseDto } from './dtos/login-response-dto';
