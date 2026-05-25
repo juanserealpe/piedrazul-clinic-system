@@ -13,6 +13,7 @@ export class AppointmentDtoMapper{
     //Use case = Create.
     static toCreateOutput(entity: Appointment): CreateAppointmentOutput{
         return new CreateAppointmentOutput(
+          entity.id,
           entity.doctorId,
           entity.patientId,
           entity.getCurrentDate() 
@@ -34,6 +35,7 @@ export class AppointmentDtoMapper{
   //Use case = Get
   static toGetItemOutput(entity: Appointment): GetAppointmentItemOutput{
     return new GetAppointmentItemOutput(
+      entity.id,
       entity.getCurrentDate().toISOString(),
       entity.patientId
     );

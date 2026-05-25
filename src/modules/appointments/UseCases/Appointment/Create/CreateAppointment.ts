@@ -68,15 +68,13 @@ async execute(
     if (vConflict) {
       throw AppError.appointmentAlreadyExist(pInput.date.toISOString());
     }
-
-    const vId = crypto.randomUUID();
-
     const vAppointment =
-      AppointmentDtoMapper.toCreateEntity(vId, pInput);
+      AppointmentDtoMapper.toCreateEntity("", pInput);
 
     const vSaved =
       await this.appointmentRepository.save(vAppointment);
 
+      console.log(vSaved);
     return AppointmentDtoMapper.toCreateOutput(vSaved);
   }
 }

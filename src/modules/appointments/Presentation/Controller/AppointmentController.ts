@@ -40,9 +40,7 @@ export class AppointmentController {
 
     const vResult = await this.createAppointmentUseCase.execute(vInput);
 
-    const vOutput = AppointmentControllerMapper.toCreateOutput(vResult);
-
-    return vOutput;
+    return vResult;
   }
 
   // -------- GET APPOINTMENTS BY DOCTOR AND DATE --------
@@ -57,10 +55,7 @@ export class AppointmentController {
     const vResult =
       await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
 
-    const vOutput =
-      AppointmentControllerMapper.toGetOutput(vResult);
-
-    return vOutput;
+    return vResult;
   }
   
 
