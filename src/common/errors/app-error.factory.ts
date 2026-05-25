@@ -119,5 +119,10 @@ scheduleAlreadyExist: (date: string)=>
     new ConflictException({
       code: ErrorCodes.INVALID_INTERVAL,
       message: `Ya tiene un horario asignado el ${date}, debe seleccionar otra franja`
-    })
+    }),
+patientNotFound: (pId: string) =>
+  new NotFoundException({
+    code: ErrorCodes.NOT_FOUND,
+    message: `El id ${pId} no corresponde a un paciente registrado`
+  })
 }

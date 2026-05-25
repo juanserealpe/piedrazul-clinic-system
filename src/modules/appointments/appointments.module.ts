@@ -44,8 +44,8 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
     {
       provide: CreateAppointment,
-      useFactory: (appointmentRepo,scheduleRepo) =>
-        new CreateAppointment(appointmentRepo,scheduleRepo),
+      useFactory: (appointmentRepo,scheduleRepo, authRepo) =>
+        new CreateAppointment(appointmentRepo,scheduleRepo,authRepo),
       inject: [APPOINTMENT_REPOSITORY, SCHEDULE_REPOSITORY],
     },
     /*
@@ -66,8 +66,8 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
 
     {//MODIFICAR
       provide: CreateScheduleUseCase,
-      useFactory: (scheduleRepo) =>
-        new CreateScheduleUseCase(scheduleRepo),
+      useFactory: (scheduleRepo,authRepo) =>
+        new CreateScheduleUseCase(scheduleRepo,authRepo),
       inject: [SCHEDULE_REPOSITORY],
     },
     {

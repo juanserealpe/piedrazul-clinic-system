@@ -148,3 +148,10 @@ private buildResponse(user: any, roles: any[]): UserResponseDto {
 }
 
 }
+
+/*
+PATIENT
+DOCTOR
+ADMIN
+SCHEDULER
+*/

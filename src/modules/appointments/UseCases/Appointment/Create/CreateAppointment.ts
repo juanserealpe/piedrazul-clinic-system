@@ -6,11 +6,13 @@ import { CreateAppointmentOutput } from "./CreateAppointmentOutput";
 import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayOfWeek } from "src/modules/appointments/Utilities";
+import { IAuthService } from "src/modules/auth/auth.interface";
  
 export class CreateAppointment{
   constructor(
     private readonly appointmentRepository: AppointmentRepository,
-    private readonly scheduleRepository: ScheduleRepository
+    private readonly scheduleRepository: ScheduleRepository,
+    private readonly authRepo: IAuthService
   ) {}
 
 async execute(
@@ -20,6 +22,12 @@ async execute(
     if (!pInput.doctorId || !pInput.patientId || !pInput.date) {
       throw AppError.invalidInput();
     }
+    
+    if(!this.authRepo.isUserInRole(pInput.patientId, "PATIENT"))
+      throw AppError.patientNotFound(pInput.patientId);
+
+    if(!this.authRepo.isUserInRole(pInput.doctorId, "DOCTOR"))
+      throw AppError.doctorNotFound(pInput.doctorId);
 
     const vDay = getDayOfWeek(pInput.date);
 
