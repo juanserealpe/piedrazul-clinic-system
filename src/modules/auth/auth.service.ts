@@ -20,6 +20,7 @@ export class AuthService implements IAuthService {
   ) {}
 
   async isUserInRole(userId: string, roleName: string): Promise<boolean> {
+    console.log(`Checking if user ${userId} has role ${roleName}`);
     return this.userRepo.isUserInRole(userId, roleName);
   }
 

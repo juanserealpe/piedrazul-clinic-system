@@ -31,8 +31,8 @@ export class ScheduleController {
   // -------- CREATE ONE --------
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  //@UseGuards(JwtGuard, RolesGuard)
-  //@Roles("ADMIN", "SCHEDULER")
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("ADMIN", "SCHEDULER")
   async create(@Body() body: CreateScheduleRequestDto) {
 
     console.log(body);
@@ -48,7 +48,7 @@ export class ScheduleController {
   // -------- CREATE MANY --------
   @Post("batch")
   @HttpCode(HttpStatus.CREATED)
-  @Roles("ADMIN", "SCHDEDULER")
+  @Roles("ADMIN", "SCHEDULER")
   async createMany(@Body() body: CreateManySchedulesRequestDto) {
 
     const vInputs =
@@ -63,7 +63,7 @@ export class ScheduleController {
   // -------- GET AVAILABLE SLOTS --------
   @Get("available-slots")
   @HttpCode(HttpStatus.OK)
-  @Roles("DOCTOR")
+  @Roles("DOCTOR", "SCHEDULER", "PATIENT", "ADMIN")
   async getAvailableSlots(@Query() query: GetScheduleRequestDto) {
 
     const vInput =

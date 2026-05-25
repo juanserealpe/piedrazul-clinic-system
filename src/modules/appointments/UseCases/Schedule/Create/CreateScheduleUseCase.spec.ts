@@ -5,7 +5,6 @@ describe("CreateScheduleUseCase", () => {
 
   let vUseCase: CreateScheduleUseCase;
   let vScheduleRepo: any;
-  let vKeycloakService: any;
 
   beforeEach(() => {
     vScheduleRepo = {
@@ -13,7 +12,7 @@ describe("CreateScheduleUseCase", () => {
       save: jest.fn(),
     };
 
-    vKeycloakService = {}; 
+
 
     vUseCase = new CreateScheduleUseCase(
       vScheduleRepo

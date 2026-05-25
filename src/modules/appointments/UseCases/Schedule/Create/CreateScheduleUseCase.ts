@@ -5,6 +5,7 @@ import { ScheduleDtoMapper } from "../../Mappers/ScheduleDtoMapper";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayInSpanish } from "src/modules/appointments/domain/entities/DaysOfWeek";
 import { IAuthService } from "src/modules/auth/auth.interface";
+import { Console } from "console";
 
 export class CreateScheduleUseCase{
     constructor(
@@ -16,8 +17,11 @@ export class CreateScheduleUseCase{
         pInput: CreateScheduleInput
     ): Promise<CreateScheduleOutput> {
 
-        if(!this.authRepo.isUserInRole(pInput.doctorId,"DOCTOR"))
-            throw AppError.doctorNotFound(pInput.doctorId);
+        if (!(await this.authRepo.isUserInRole(pInput.doctorId,"DOCTOR",))) {
+        throw AppError.doctorNotFound(
+            pInput.doctorId,
+        );
+        }
 
         const vSchedule = 
         ScheduleDtoMapper.toEntity(

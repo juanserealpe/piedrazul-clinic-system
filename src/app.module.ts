@@ -14,6 +14,7 @@ import { RolesGuard } from "./common/auth/guards/roles.guard.js";
 import { KeycloakService } from "./modules/auth/keycloak/keycloak.service.js";
 import { UserRepository } from "./modules/auth/persistence/user.repository.js";
 import { AppointmentScheduleOrmEntity } from "./modules/appointments/Infraestructure/Entities/AppointmentScheduleOrmEntity.js";
+import { AuthModule } from "./modules/auth/auth.module.js";
 
 @Module({
   imports: [
@@ -22,26 +23,23 @@ import { AppointmentScheduleOrmEntity } from "./modules/appointments/Infraestruc
     }),
 
     TypeOrmModule.forRoot({
-      type: "better-sqlite3",
-      database: "piedrazul.db",
+      type: 'better-sqlite3',
+      database: 'piedrazul.db',
       entities: [
         UserOrmEntity,
         AppointmentOrmEntity,
         ScheduleOrmEntity,
-        AppointmentScheduleOrmEntity
+        AppointmentScheduleOrmEntity,
       ],
       synchronize: true,
       logging: true,
     }),
 
+    AuthModule,
     AppointmentModule,
-    TypeOrmModule.forFeature([UserOrmEntity]),
   ],
-  controllers: [AuthController],
+
   providers: [
-    AuthService,
-    KeycloakService,
-    UserRepository, 
     JwtGuard,
     RolesGuard,
   ],

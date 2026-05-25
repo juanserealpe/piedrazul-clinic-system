@@ -9,6 +9,8 @@ import {
   Header,
   Patch,
   Param,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 
 import { CreateAppointment } from "../../UseCases/Appointment/Create/CreateAppointment";
@@ -20,6 +22,8 @@ import { CsvExportUseCase } from "../../UseCases/Appointment/Export/CsvExportUse
 import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
 import { UpdateAppointment } from "../../UseCases/Appointment/Update/UpdateAppointment";
 import { Roles } from "src/common/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/common/auth/guards/roles.guard";
+import { JwtGuard } from "src/common/auth/guards/jwt.guard";
 
 @Controller("appointments")
 export class AppointmentController {
@@ -33,9 +37,9 @@ export class AppointmentController {
   // -------- CREATE APPOINTMENT --------
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT")
   async create(@Body() body: CreateAppointmentRequestDto) {
-
     const vInput = AppointmentControllerMapper.toCreateInput(body);
 
     const vResult = await this.createAppointmentUseCase.execute(vInput);

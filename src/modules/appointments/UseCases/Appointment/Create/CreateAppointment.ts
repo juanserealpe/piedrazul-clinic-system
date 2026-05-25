@@ -23,10 +23,10 @@ async execute(
       throw AppError.invalidInput();
     }
     
-    if(!this.authRepo.isUserInRole(pInput.patientId, "PATIENT"))
+    if(!await this.authRepo.isUserInRole(pInput.patientId, "PATIENT"))
       throw AppError.patientNotFound(pInput.patientId);
 
-    if(!this.authRepo.isUserInRole(pInput.doctorId, "DOCTOR"))
+    if(!await this.authRepo.isUserInRole(pInput.doctorId, "DOCTOR"))
       throw AppError.doctorNotFound(pInput.doctorId);
 
     const vDay = getDayOfWeek(pInput.date);
