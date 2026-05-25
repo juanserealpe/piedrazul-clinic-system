@@ -8,4 +8,5 @@ export interface IAuthService {
   register(dto: RegisterUserDto): Promise<UserResponseDto>;
   login(dto: LoginDto): Promise<LoginResponseDto>;
   refresh(dto: RefreshDto): Promise<LoginResponseDto>;
+  isUserInRole(userId: string, roleName: string): Promise<boolean>;
 }
