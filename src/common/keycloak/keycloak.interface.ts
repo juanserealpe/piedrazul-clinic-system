@@ -7,5 +7,4 @@ export interface IKeycloakService {
   deleteUser(userId: string, token: string): Promise<void>;
   login(id: string, password: string): Promise<any>;
   refreshToken(refreshToken: string): Promise<any>;
-  isUserInRole(userId: string, roleName: string, token: string): Promise<boolean>;
 }

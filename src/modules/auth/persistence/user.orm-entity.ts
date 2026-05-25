@@ -25,4 +25,7 @@ export class UserOrmEntity {
 
   @Column()
   gender: string;
+
+  @Column('simple-array')
+  roles: string[];
 }

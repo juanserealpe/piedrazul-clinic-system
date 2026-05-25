@@ -4,12 +4,10 @@ import { CreateScheduleOutput } from "./CreateScheduleOutput";
 import { ScheduleDtoMapper } from "../../Mappers/ScheduleDtoMapper";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayInSpanish } from "src/modules/appointments/domain/entities/DaysOfWeek";
-import { IKeycloakService } from "src/common/keycloak/keycloak.interface";
 
 export class CreateScheduleUseCase{
     constructor(
         private readonly scheduleRepository: ScheduleRepository,
-        private readonly keyCloackService: IKeycloakService
   ) {}
 
     async execute(

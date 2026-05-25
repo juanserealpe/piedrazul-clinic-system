@@ -12,17 +12,6 @@ export class KeycloakService implements IKeycloakService {
   private clientId = process.env.KEYCLOAK_CLIENT_ID as string;
   private clientSecret = process.env.KEYCLOAK_CLIENT_SECRET as string;
 
-  isUserInRole(userId: string, roleName: string, token: string): Promise<boolean> {
-    return axios.get(
-      `${this.baseUrl}/admin/realms/${this.realm}/users/${userId}/role-mappings/realm`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-    .then(res => res.data.some((r: any) => r.name === roleName))
-    .catch(error => {
-      this.handleError(error, 'Error checking user role');
-    });
-  }
-  
 
   private validateEnv() {
     if (!this.baseUrl || !this.realm || !this.clientId || !this.clientSecret) {

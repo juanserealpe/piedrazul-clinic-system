@@ -12,6 +12,7 @@ export class UserMapper {
       gender: entity.gender,
       phoneNumber: entity.phone_number,
       bornDate: entity.born_date,
+      roles: entity.roles
     };
   }
 
@@ -24,6 +25,7 @@ export class UserMapper {
     gender: string;
     phoneNumber: string;
     bornDate: Date;
+    roles: string[];
   }): UserOrmEntity {
     const entity = new UserOrmEntity();
 
@@ -35,7 +37,7 @@ export class UserMapper {
     entity.gender = data.gender as any;
     entity.phone_number = data.phoneNumber;
     entity.born_date = data.bornDate;
-
+    entity.roles = data.roles;
     return entity;
   }
 }

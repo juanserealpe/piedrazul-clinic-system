@@ -6,6 +6,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from "@nestjs/common";
 import { CreateManySchedulesUseCase } from "../../UseCases/Schedule/Create/CreateManySchedule";
 import { GetAvailableSlotsUseCase } from "../../UseCases/Schedule/Get/GetAvailableSlots";
@@ -14,6 +15,9 @@ import { CreateScheduleUseCase } from "../../UseCases/Schedule/Create/CreateSche
 import { CreateScheduleRequestDto } from "../Dtos/Schedule/CreateScheduleRequestDto";
 import { CreateManySchedulesRequestDto } from "../Dtos/Schedule/CreateManySchedulesRequestDto";
 import { GetScheduleRequestDto } from "../Dtos/Schedule/GetScheduleRequestDto";
+import { Roles } from "src/common/auth/decorators/roles.decorator";
+import { RolesGuard } from "src/common/auth/guards/roles.guard";
+import { JwtGuard } from "src/common/auth/guards/jwt.guard";
 
 @Controller("schedules")
 export class ScheduleController {
@@ -27,6 +31,8 @@ export class ScheduleController {
   // -------- CREATE ONE --------
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  //@UseGuards(JwtGuard, RolesGuard)
+  //@Roles("ADMIN", "SCHEDULER")
   async create(@Body() body: CreateScheduleRequestDto) {
 
     console.log(body);
@@ -42,6 +48,7 @@ export class ScheduleController {
   // -------- CREATE MANY --------
   @Post("batch")
   @HttpCode(HttpStatus.CREATED)
+  @Roles("ADMIN", "SCHDEDULER")
   async createMany(@Body() body: CreateManySchedulesRequestDto) {
 
     const vInputs =
@@ -56,6 +63,7 @@ export class ScheduleController {
   // -------- GET AVAILABLE SLOTS --------
   @Get("available-slots")
   @HttpCode(HttpStatus.OK)
+  @Roles("DOCTOR")
   async getAvailableSlots(@Query() query: GetScheduleRequestDto) {
 
     const vInput =

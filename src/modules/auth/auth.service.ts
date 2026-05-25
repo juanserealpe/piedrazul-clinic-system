@@ -109,6 +109,7 @@ private async saveUserOrRollback(dto: RegisterUserDto, userId: string, token: st
         gender: dto.gender,
         phoneNumber: dto.phone_number,
         bornDate: new Date(dto.born_date),
+        roles: dto.roles || []
       })
     );
   } catch {
