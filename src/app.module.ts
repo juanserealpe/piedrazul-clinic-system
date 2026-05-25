@@ -11,7 +11,7 @@ import { AuthController } from "./modules/auth/auth.controller.js";
 import { AuthService } from "./modules/auth/auth.service.js";
 import { JwtGuard } from "./common/auth/guards/jwt.guard.js";
 import { RolesGuard } from "./common/auth/guards/roles.guard.js";
-import { KeycloakService } from "./common/keycloak/keycloak.service.js";
+import { KeycloakService } from "./modules/auth/keycloak/keycloak.service.js";
 import { UserRepository } from "./modules/auth/persistence/user.repository.js";
 import { AppointmentScheduleOrmEntity } from "./modules/appointments/Infraestructure/Entities/AppointmentScheduleOrmEntity.js";
 

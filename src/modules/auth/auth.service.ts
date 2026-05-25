@@ -6,7 +6,7 @@ import { RefreshDto } from './dtos/refresh-dto';
 import { IAuthService } from './auth.interface';
 import { UserRepository } from './persistence/user.repository';
 import { UserMapper } from './persistence/user.mapper';
-import { KeycloakService } from 'src/common/keycloak/keycloak.service';
+import { KeycloakService } from 'src/modules/auth/keycloak/keycloak.service';
 import { RegisterUserDto } from './dtos/register-user-dto';
 import { UserResponseDto } from './dtos/user-response-dto';
 import { Logger } from '@nestjs/common';
@@ -18,6 +18,10 @@ export class AuthService implements IAuthService {
     private readonly kc: KeycloakService,
     private readonly userRepo: UserRepository
   ) {}
+
+  async isUserInRole(userId: string, roleName: string): Promise<boolean> {
+    return this.userRepo.isUserInRole(userId, roleName);
+  }
 
 async login(dto: LoginDto): Promise<LoginResponseDto> {
   try {

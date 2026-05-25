@@ -16,8 +16,7 @@ describe("CreateScheduleUseCase", () => {
     vKeycloakService = {}; 
 
     vUseCase = new CreateScheduleUseCase(
-      vScheduleRepo,
-      vKeycloakService
+      vScheduleRepo
     );
   });
 

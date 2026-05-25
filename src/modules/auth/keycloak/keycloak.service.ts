@@ -1,7 +1,7 @@
 // src/keycloak/keycloak.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { AppError } from '../errors/app-error.factory';
+import { AppError } from '../../../common/errors/app-error.factory';
 import { IKeycloakService } from './keycloak.interface';
 
 @Injectable()

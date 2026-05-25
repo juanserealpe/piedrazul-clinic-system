@@ -12,4 +12,8 @@ export class UserRepository {
 
   async create(user: UserOrmEntity): Promise<UserOrmEntity> {return this.repo.save(user);}
   async findByEmail(email: string): Promise<UserOrmEntity | null> {return this.repo.findOne({ where: { email } });}
+  async isUserInRole(userId: string, roleName: string): Promise<boolean> {
+    const user = await this.repo.findOne({ where: { id: userId } });
+    return user ? user.roles.includes(roleName) : false;
+  }
 }
