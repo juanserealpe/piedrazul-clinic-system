@@ -2,7 +2,6 @@ import { CreateScheduleInput } from "../../UseCases/Schedule/Create/CreateSchedu
 import { CreateScheduleOutput } from "../../UseCases/Schedule/Create/CreateScheduleOutput";
 import { GetScheduleInput } from "../../UseCases/Schedule/Get/GetScheduleInput";
 import { GetScheduleOutput } from "../../UseCases/Schedule/Get/GetScheduleOutput";
-import { CreateManySchedulesRequestDto } from "../Dtos/Schedule/CreateManySchedulesRequestDto";
 import { CreateScheduleRequestDto } from "../Dtos/Schedule/CreateScheduleRequestDto";
 import { GetScheduleRequestDto } from "../Dtos/Schedule/GetScheduleRequestDto";
 

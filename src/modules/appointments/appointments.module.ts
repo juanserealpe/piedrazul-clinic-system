@@ -15,13 +15,16 @@ import { CreateManySchedulesUseCase } from "./UseCases/Schedule/Create/CreateMan
 import { KeycloakService } from "src/common/keycloak/keycloak.service";
 import { KeycloakModule } from "src/common/keycloak/keycloak.module";
 import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
+import { TypeOrmAppointmentScheduleRepository } from "./Infraestructure/Implements/TypeOrmAppointmentScheduleRepository";
+import { AppointmentScheduleOrmEntity } from "./Infraestructure/Entities/AppointmentScheduleOrmEntity";
+import { UpdateAppointment } from "./UseCases/Appointment/Update/UpdateAppointment";
 
 export const APPOINTMENT_REPOSITORY = "APPOINTMENT_REPOSITORY";
 export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
 
-@Module({
+@Module({   
   imports: [
-    TypeOrmModule.forFeature([AppointmentOrmEntity, ScheduleOrmEntity]),
+    TypeOrmModule.forFeature([AppointmentOrmEntity, ScheduleOrmEntity, AppointmentScheduleOrmEntity,]),
     KeycloakModule
   ],
   controllers: [AppointmentController,ScheduleController],
@@ -35,7 +38,6 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
       provide: SCHEDULE_REPOSITORY,
       useClass: TypeOrmScheduleRepository,
     },
-
     // ── Casos de uso ──────────────────────────────────────────────────────────
     { 
       provide: GetAppointmentsByDoctorAndDate,
@@ -70,6 +72,12 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
       useFactory: (scheduleRepo, KeycloakService) =>
         new CreateScheduleUseCase(scheduleRepo, KeycloakService),
       inject: [SCHEDULE_REPOSITORY, KeycloakService],
+    },
+    {
+      provide: UpdateAppointment,
+      useFactory: (appointmentRepo, scheduleRepo) =>
+        new UpdateAppointment(appointmentRepo,scheduleRepo),
+      inject: [APPOINTMENT_REPOSITORY, SCHEDULE_REPOSITORY],
     },
 
     {

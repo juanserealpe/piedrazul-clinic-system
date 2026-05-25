@@ -1,26 +1,36 @@
 import { Appointment } from "../../domain/entities/Appointment.entity";
 import { AppointmentOrmEntity } from "../Entities/AppointmentOrmEntity";
+import { AppointmentSchedulePersistenceMapper } from "./AppointmentSchedulePersistenceMapper";
 
 export class AppointmentPersistenceMapper {
-  static toDomain(orm: AppointmentOrmEntity): Appointment {
+  static toDomain(pOrm: AppointmentOrmEntity,): Appointment {
+
     return new Appointment(
-      orm.id,
-      orm.patientId,
-      orm.doctorId,
-      new Date(orm.date),
-      orm.observations,
-      orm.status
+      pOrm.id,
+      pOrm.patientId,
+      pOrm.doctorId,
+      pOrm.observations,
+      pOrm.history?.map(
+        AppointmentSchedulePersistenceMapper.toDomain,
+        ) ?? [],
+      new Date(pOrm.date),
+      pOrm.status
     );
   }
+  static toOrm(pDomain: Appointment,): AppointmentOrmEntity {
 
-  static toOrm(domain: Appointment): AppointmentOrmEntity {
-    const orm = new AppointmentOrmEntity();
-    orm.id = domain.id;
-    orm.patientId = domain.patientId;
-    orm.doctorId = domain.doctorId;
-    orm.date = domain.date;
-    orm.observations = domain.observations;
-    orm.status = domain.status;
-    return orm;
+    const vOrm = new AppointmentOrmEntity();
+    vOrm.patientId = pDomain.patientId;
+    vOrm.doctorId = pDomain.doctorId;
+    vOrm.observations = pDomain.observations;
+    vOrm.status = pDomain.status;
+    vOrm.date = pDomain.date.toISOString();
+    vOrm.history =
+      pDomain.getHistory().map(
+        AppointmentSchedulePersistenceMapper
+          .toOrm,
+      );
+    return vOrm;
   }
+
 }

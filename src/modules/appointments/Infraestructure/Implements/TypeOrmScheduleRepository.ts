@@ -47,12 +47,4 @@ export class TypeOrmScheduleRepository implements ScheduleRepository {
 
     return SchedulePersistenceMapper.toDomain(saved);
   }
-
-  async existDoctor(id: string): Promise<boolean> {
-    const count = await this.repo.count({
-      where: { doctorId: id }
-    });
-    
-    return count > 0;
-  }
 }

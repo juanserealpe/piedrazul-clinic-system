@@ -7,6 +7,8 @@ import {
   HttpCode,
   HttpStatus,
   Header,
+  Patch,
+  Param,
 } from "@nestjs/common";
 
 import { CreateAppointment } from "../../UseCases/Appointment/Create/CreateAppointment";
@@ -15,12 +17,15 @@ import { AppointmentControllerMapper } from "../Mappers/AppointmentControllerMap
 import { CreateAppointmentRequestDto } from "../Dtos/Appointment/CreateAppointmentRequestDto";
 import { GetAppointmentsRequestDto } from "../Dtos/Appointment/GetAppointmentsRequestDto";
 import { CsvExportUseCase } from "../../UseCases/Appointment/Export/CsvExportUseCase";
+import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
+import { UpdateAppointment } from "../../UseCases/Appointment/Update/UpdateAppointment";
 
 @Controller("appointments")
 export class AppointmentController {
     constructor(
     private readonly createAppointmentUseCase: CreateAppointment,
     private readonly getAppointmentsByDoctorAndDateUseCase: GetAppointmentsByDoctorAndDate,
+    private readonly reScheduleAppointmentUseCase: UpdateAppointment,
     private readonly csvExportUseCase: CsvExportUseCase
   ) {}
 
@@ -66,5 +71,12 @@ export class AppointmentController {
       AppointmentControllerMapper.toGetInput(query);
 
     return await this.csvExportUseCase.execute(vInput);
+  }
+
+
+  @Patch("reschedule/:id")
+  async reSchedule( @Param("id") id: string,@Body() body: ReScheduleRequestDto){
+    const vInput = AppointmentControllerMapper.toRescheduleInput(body);
+    return await this.reScheduleAppointmentUseCase.execute(id,vInput);
   }
 }

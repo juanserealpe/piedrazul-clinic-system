@@ -25,8 +25,8 @@ constructor(
       await this.appointmentRepository.findByDoctorStatusAndDateRange(
         pInput.doctorId,
         Status.SCHEDULED,
-        vStart,
-        vEnd
+        vStart.toISOString(),
+        vEnd.toISOString()
       );
 
     return AppointmentDtoMapper.toGetOutput(

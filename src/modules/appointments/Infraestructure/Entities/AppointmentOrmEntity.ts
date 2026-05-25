@@ -1,39 +1,41 @@
 import {
   Entity,
-  PrimaryColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from "typeorm";
 import { Status } from "../../domain/entities/Status";
+import { AppointmentScheduleOrmEntity } from "./AppointmentScheduleOrmEntity";
 
-@Entity("appointments")
-export class AppointmentOrmEntity {
-  @PrimaryColumn("varchar")
+  @Entity("appointments")
+  export class AppointmentOrmEntity {
+  @PrimaryGeneratedColumn("uuid")
   id: string;
+    @Column("varchar", { name: "patient_id" })
+    patientId: string;
 
-  @Column("varchar", { name: "patient_id" })
-  patientId: string;
+    @Column("varchar", { name: "doctor_id" })
+    doctorId: string;
 
-  @Column("varchar", { name: "doctor_id" })
-  doctorId: string;
+    @Column({ type: "text" })
+    date: string;
+    
+    @Column("text", { default: "" })
+    observations: string;
 
-  @Column("datetime")
-  date: Date;
+    @Column({
+      type: "varchar",
+      enum: Status,
+      default: Status.SCHEDULED,
+    })
+    status: Status;
 
-  @Column("text", { default: "" })
-  observations: string;
-
-  @Column({
-    type: "varchar",
-    enum: Status,
-    default: Status.SCHEDULED,
-  })
-  status: Status;
-
-  @CreateDateColumn({ name: "created_at" })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: "updated_at" })
-  updatedAt: Date;
-}
+    @OneToMany(
+      () => AppointmentScheduleOrmEntity,
+      (vHistory) => vHistory.appointment,
+      {
+        cascade: true,
+      },
+    )
+    history: AppointmentScheduleOrmEntity[];
+  }

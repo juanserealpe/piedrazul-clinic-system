@@ -29,6 +29,7 @@ export class ScheduleController {
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() body: CreateScheduleRequestDto) {
 
+    console.log(body);
     const vInput =
       ScheduleControllerMapper.toCreateInput(body);
 

@@ -1,4 +1,3 @@
-import { AppError } from "src/common/errors/app-error.factory";
 import { DayOfWeek } from "./domain/entities/DaysOfWeek";
 
   export function getDayOfWeek(pDate: Date): DayOfWeek {

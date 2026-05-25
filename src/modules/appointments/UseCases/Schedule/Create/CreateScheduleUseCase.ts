@@ -41,7 +41,7 @@ export class CreateScheduleUseCase{
         );
 
         if (vConflict) {
-        throw AppError.appointmentAlreadyExist(
+        throw AppError.scheduleAlreadyExist(
           `${getDayInSpanish(vConflict.day)}: ${vConflict.startHour}-${vConflict.endHour}`)
           }
 

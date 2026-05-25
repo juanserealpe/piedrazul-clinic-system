@@ -102,4 +102,22 @@ invalidInterval: () =>
     code: ErrorCodes.INVALID_INTERVAL,
     message: 'Intervalo invalido',
   }),
+
+appointmentNotFound:()=>
+  new NotFoundException({
+    code: ErrorCodes.APPOINTMENT_NOT_FOUND,
+    message: 'La cita a editar no existe o no le pertenece',
+  }),
+
+invalidAppointmentDate:(date: string)=>
+  new ConflictException({
+      code: ErrorCodes.SCHEDULE_NOT_AVAILABLE,
+      message: `El horario ${date}  no se encuentra disponible para el medico`,
+  }),
+
+scheduleAlreadyExist: (date: string)=>
+    new ConflictException({
+      code: ErrorCodes.INVALID_INTERVAL,
+      message: `Ya tiene un horario asignado el ${date}, debe seleccionar otra franja`
+    })
 }

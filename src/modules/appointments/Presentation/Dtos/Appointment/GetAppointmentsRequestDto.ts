@@ -7,6 +7,6 @@ export class GetAppointmentsRequestDto {
   doctorId: string;
 
   @IsISO8601()
-  @Matches(/Z$/, { message: "date must be in UTC format (end with Z)" })
+  @Matches(/Z$/, { message: "El formato de fecha debe estar en UTC(finalizar en Z)" })
   date: string;
 }

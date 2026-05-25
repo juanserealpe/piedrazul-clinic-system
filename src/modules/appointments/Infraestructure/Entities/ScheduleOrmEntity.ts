@@ -1,15 +1,16 @@
 import {
   Entity,
-  PrimaryColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  PrimaryGeneratedColumn,
+  OneToMany,
 } from "typeorm";
 import { DayOfWeek } from "../../domain/entities/DaysOfWeek";
+import { AppointmentScheduleOrmEntity } from "./AppointmentScheduleOrmEntity";
 
 @Entity("schedules")
 export class ScheduleOrmEntity {
-  @PrimaryColumn("varchar")
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column("varchar", { name: "doctor_id" })
@@ -40,6 +41,13 @@ export class ScheduleOrmEntity {
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: "updated_at" })
-  updatedAt: Date;
+    @OneToMany(
+    () => AppointmentScheduleOrmEntity,
+    (vSchedule) => vSchedule.appointment,
+    {
+      cascade: true,
+    },
+  )
+  schedules: AppointmentScheduleOrmEntity[];
+
 }

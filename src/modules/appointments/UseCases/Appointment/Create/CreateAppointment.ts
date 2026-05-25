@@ -57,8 +57,8 @@ async execute(
       await this.appointmentRepository.findByDoctorStatusAndDateRange(
         pInput.doctorId,
         Status.SCHEDULED,
-        pInput.date,
-        pInput.date
+        pInput.date.toISOString(),
+        pInput.date.toISOString()
       );
 
     const vConflict = vExistingAppointments.find(a =>

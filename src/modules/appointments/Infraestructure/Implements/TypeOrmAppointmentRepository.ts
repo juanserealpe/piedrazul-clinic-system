@@ -6,14 +6,37 @@ import { AppointmentRepository } from "../../domain/Repositories/AppointmentRepo
 import { AppointmentPersistenceMapper } from "../Mappers/AppointmentPersistenceMapper";
 import { Appointment } from "../../domain/entities/Appointment.entity";
 import { Status } from "../../domain/entities/Status";
+import { AppointmentSchedule } from "../../domain/entities/AppointmentSchedule";
+import { AppointmentScheduleOrmEntity } from "../Entities/AppointmentScheduleOrmEntity";
+import { AppointmentSchedulePersistenceMapper } from "../Mappers/AppointmentSchedulePersistenceMapper";
 
 @Injectable()
 export class TypeOrmAppointmentRepository implements AppointmentRepository {
   constructor(
     @InjectRepository(AppointmentOrmEntity)
-    private readonly repo: Repository<AppointmentOrmEntity>
-  ) {}
+    private readonly repo:
+      Repository<AppointmentOrmEntity>,
+  ){}
 
+async findByAppointmentIdAndDoctorId(pDoctorId: string,pAppointmentId: string,)
+      : Promise<Appointment | null> {
+
+  const vResult = await this.repo.findOne({
+    where: {
+      id: pAppointmentId,
+      doctorId: pDoctorId,
+    },
+  });
+
+  if (!vResult) {
+    return null;
+  }
+
+  return AppointmentPersistenceMapper.toDomain(
+    vResult,
+  );
+}
+  
   async findByDoctor(id: string): Promise<Appointment[]> {
     const results = await this.repo.find({
       where: { doctorId: id },
@@ -23,11 +46,11 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
   }
 
   async findByDoctorAndStatus(
-    id: string,
+    doctorId: string,
     status: Status
   ): Promise<Appointment[]> {
     const results = await this.repo.find({
-      where: { doctorId: id, status: status as any },
+      where: { doctorId: doctorId, status: status as any },
       order: { date: "ASC" },
     });
     return results.map(AppointmentPersistenceMapper.toDomain);
@@ -42,8 +65,8 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
   async findByDoctorStatusAndDateRange(
     doctorId: string,
     status: Status,
-    start: Date,
-    end: Date
+    start: string,
+    end: string
   ): Promise<Appointment[]> {
     const results = await this.repo.find({
       where: {
@@ -55,5 +78,54 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
     });
 
     return results.map(AppointmentPersistenceMapper.toDomain);
+  }
+
+ async update(pAppointment: Appointment, pNewSchedule: AppointmentSchedule,
+  ): Promise<Appointment> {
+
+    await this.repo.manager.transaction(
+      async (pManager) => {
+
+        await pManager.update(
+          AppointmentOrmEntity,
+          {
+            id: pAppointment.id!,
+          },
+          {
+            date:
+              pNewSchedule.scheduledDate.toISOString(),
+            status:
+              pAppointment.status,
+          },
+        );
+
+        const vScheduleOrm =
+          AppointmentSchedulePersistenceMapper.toOrm(pNewSchedule);
+
+        vScheduleOrm.appointment = {id: pAppointment.id!,} as AppointmentOrmEntity;
+
+        await pManager.save(AppointmentScheduleOrmEntity, vScheduleOrm,);
+      },
+    );
+  
+    pAppointment.updateCurrentDate(pNewSchedule.scheduledDate);
+    return pAppointment;
+  }
+
+  async existsByDoctorAndDate(
+    pDoctorId: string,
+    pDate: Date,
+  ): Promise<boolean> {
+
+    const vAppointments =
+      await this.repo.findOne({
+        where: {
+          doctorId: pDoctorId,
+          date: pDate.toISOString()
+        }
+      }
+      );
+
+    return vAppointments != null;
   }
 }

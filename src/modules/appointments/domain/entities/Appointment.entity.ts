@@ -1,14 +1,24 @@
+import { AppointmentSchedule } from "./AppointmentSchedule";
 import { Status } from "./Status";
 
 export class Appointment {
   constructor(
-    public id: string,
+    public id: string | null,
     public readonly patientId: string,
     public readonly doctorId: string,
-    public readonly date: Date,
     public readonly observations: string,
-    public status: Status
+    private history: AppointmentSchedule[],
+    public date: Date,
+    public status: Status,
+
   ) {}
+
+  updateCurrentDate(pDate: Date){
+    this.date = pDate;
+  }
+  getCurrentDate(): Date {
+    return this.date;
+  }
 
   isOnSameDay(pDate: Date): boolean {
     return (
@@ -22,15 +32,21 @@ export class Appointment {
     return this.date.getTime() === pDate.getTime();
   }
 
-  isActive(): boolean {
+  isScheduled(): boolean {
     return this.status === Status.SCHEDULED;
   }
 
-  reschedule(pNewDate: Date): Date {
-    if (this.status !== Status.SCHEDULED)
-      throw new Error('Only scheduled appointments can be rescheduled');
+  isReScheduled(): boolean{
+    return this.status === Status.RESCHEDULED 
+      && this.history.length > 1;//Adicional
+  }
 
-    this.status = Status.CANCELLED;
-    return pNewDate;
+  reschedule(pNewScheduler: AppointmentSchedule){
+    this.history.push(pNewScheduler);
+    if(this.status === Status.RESCHEDULED) return; //Para no reasiganar siempre
+    else this.status = Status.RESCHEDULED;
+  }
+  getHistory(): AppointmentSchedule[]{
+    return this.history;
   }
 }

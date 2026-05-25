@@ -2,8 +2,10 @@ import { CreateAppointmentInput } from "../../UseCases/Appointment/Create/Create
 import { CreateAppointmentOutput } from "../../UseCases/Appointment/Create/CreateAppointmentOutput";
 import { GetAppointmentsInput } from "../../UseCases/Appointment/Get/GetAppointmentsInput";
 import { GetAppointmentsOutput } from "../../UseCases/Appointment/Get/GetAppointmentsOutput";
+import { UpdateAppointmentInput } from "../../UseCases/Appointment/Update/UpdateAppointmentInput";
 import { CreateAppointmentRequestDto } from "../Dtos/Appointment/CreateAppointmentRequestDto";
 import { GetAppointmentsRequestDto } from "../Dtos/Appointment/GetAppointmentsRequestDto";
+import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
 
 export class AppointmentControllerMapper {
 
@@ -40,5 +42,12 @@ export class AppointmentControllerMapper {
       })),
       count: pOutput.count,
     };
+  }
+
+  static toRescheduleInput(pInput: ReScheduleRequestDto): UpdateAppointmentInput{
+    return {
+      appointmentId: pInput.appointmentId,
+      newDate: new Date(pInput.newDate),
+    }
   }
 }
