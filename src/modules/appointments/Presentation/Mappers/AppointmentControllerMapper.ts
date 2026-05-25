@@ -17,31 +17,11 @@ export class AppointmentControllerMapper {
     );
   }
 
-  static toCreateOutput(pOutput: CreateAppointmentOutput) {
-    return {
-      doctorId: pOutput.doctorId,
-      patientId: pOutput.patientId,
-      date: pOutput.date.toISOString(),
-    };
-  }
-
   static toGetInput(pQuery: GetAppointmentsRequestDto): GetAppointmentsInput {
     return new GetAppointmentsInput(
       pQuery.doctorId,
       new Date(pQuery.date)
     );
-  }
-
-  static toGetOutput(pOutput: GetAppointmentsOutput) {
-    return {
-      doctorId: pOutput.doctorId,
-      date: pOutput.date,
-      appointments: pOutput.appointments.map(a => ({
-        date: a.date,
-        patientId: a.patientId,
-      })),
-      count: pOutput.count,
-    };
   }
 
   static toRescheduleInput(pInput: ReScheduleRequestDto): UpdateAppointmentInput{
