@@ -5,7 +5,7 @@ frontend-system/.next
 # BACKEND
 backend-system/node_modules
 backend-system/dist
-
+backend-system/piedrazul.db
 # ENV
 **/.env
 
