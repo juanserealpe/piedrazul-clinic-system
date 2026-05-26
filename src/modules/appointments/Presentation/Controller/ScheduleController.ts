@@ -48,6 +48,7 @@ export class ScheduleController {
   // -------- CREATE MANY --------
   @Post("batch")
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("ADMIN", "SCHEDULER")
   async createMany(@Body() body: CreateManySchedulesRequestDto) {
 
@@ -63,6 +64,7 @@ export class ScheduleController {
   // -------- GET AVAILABLE SLOTS --------
   @Get("available-slots")
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT", "ADMIN")
   async getAvailableSlots(@Query() query: GetScheduleRequestDto) {
 

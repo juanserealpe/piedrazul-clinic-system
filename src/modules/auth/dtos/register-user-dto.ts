@@ -4,6 +4,9 @@ export class RegisterUserDto {
   @IsString()
   @MinLength(6, { message: 'User ID is required' })
   @MaxLength(11, { message: 'User ID too long' })
+  @Matches(/^[0-9]+$/, {
+    message: 'User ID must contain only numbers',
+  })
   id: string;
 
   @IsOptional()

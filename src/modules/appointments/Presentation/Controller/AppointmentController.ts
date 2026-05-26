@@ -50,6 +50,7 @@ export class AppointmentController {
   // -------- GET APPOINTMENTS BY DOCTOR AND DATE --------
   @Get("by-doctor")
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR" , "ADMIN")
   async getByDoctor(@Query() query: GetAppointmentsRequestDto) {
 
@@ -67,6 +68,7 @@ export class AppointmentController {
   @Header("Content-Type", "text/csv")
   @Header("Content-Disposition", 'attachment; filename="appointments.csv"')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
   async exportCsv(@Query() query: GetAppointmentsRequestDto) {
 
@@ -78,6 +80,7 @@ export class AppointmentController {
 
 
   @Patch("reschedule/:id")
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
   async reSchedule( @Param("id") id: string,@Body() body: ReScheduleRequestDto){
     const vInput = AppointmentControllerMapper.toRescheduleInput(body);
