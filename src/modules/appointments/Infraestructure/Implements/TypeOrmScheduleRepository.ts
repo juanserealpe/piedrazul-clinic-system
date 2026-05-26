@@ -14,6 +14,15 @@ export class TypeOrmScheduleRepository implements ScheduleRepository {
       @InjectRepository(ScheduleOrmEntity)
       private readonly repo: Repository<ScheduleOrmEntity>
   ) {}
+  getSchedulesPredefinedByIdDoctor(doctorId: string): Promise<Schedule[]> {
+    const results = this.repo.find({
+      where: {
+        doctorId
+      },
+      order: { day: "ASC", startHour: "ASC" },
+    });
+    return results.then((schedules) => schedules.map(SchedulePersistenceMapper.toDomain));
+  }
 
   async findByDoctor(doctorId: string): Promise<Schedule[]> {
     const results = await this.repo.find({

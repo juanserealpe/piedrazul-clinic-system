@@ -1,10 +1,10 @@
-import { IsString, IsNotEmpty, IsEnum, IsInt, Min, Max } from "class-validator";
+import { IsString, IsNotEmpty, IsEnum, IsInt, Min, Max, IsOptional } from "class-validator";
 import { DayOfWeek } from "src/modules/appointments/domain/entities/DaysOfWeek";
 
 export class CreateScheduleRequestDto {
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   doctorId: string;
 
   @IsEnum(DayOfWeek)

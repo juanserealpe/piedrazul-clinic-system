@@ -3,9 +3,11 @@ import { Schedule } from "../entities/Schedule.entity";
 
 export interface ScheduleRepository{
     
-   findByDoctor(doctorId: string): Promise<Schedule[]>;
+  findByDoctor(doctorId: string): Promise<Schedule[]>;
 
   findByDoctorAndDay(doctorId: string, day: DayOfWeek): Promise<Schedule[]>;
 
   save(schedule: Schedule): Promise<Schedule>;
+
+  getSchedulesPredefinedByIdDoctor(doctorId: string): Promise<Schedule[]>;
 }

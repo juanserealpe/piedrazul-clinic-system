@@ -19,55 +19,79 @@ import { TypeOrmAppointmentScheduleRepository } from "./Infraestructure/Implemen
 import { AppointmentController } from "./Presentation/Controller/AppointmentController";
 import { ScheduleController } from "./Presentation/Controller/ScheduleController";
 
-// Use Cases
+// Appointment Use Cases
 import { GetAppointmentsByDoctorAndDate } from "./UseCases/Appointment/Get/GetAppointmentsByDoctorAndDate";
 import { CreateAppointment } from "./UseCases/Appointment/Create/CreateAppointment";
 import { UpdateAppointment } from "./UseCases/Appointment/Update/UpdateAppointment";
 import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
+import { GetAvailableSlotsUseCase } from "./UseCases/Appointment/GetAvaibleSlotsByDoctor/GetAvailableSlots";
 
-import { GetAvailableSlotsUseCase } from "./UseCases/Schedule/Get/GetAvailableSlots";
+// Schedule Use Cases
 import { CreateScheduleUseCase } from "./UseCases/Schedule/Create/CreateScheduleUseCase";
 import { CreateManySchedulesUseCase } from "./UseCases/Schedule/Create/CreateManySchedule";
+import { GetScheduleUseCase } from "./UseCases/Schedule/Get/GetScheduleUseCase";
 
-export const APPOINTMENT_REPOSITORY = "APPOINTMENT_REPOSITORY";
-export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
+export const APPOINTMENT_REPOSITORY =
+  "APPOINTMENT_REPOSITORY";
+
+export const SCHEDULE_REPOSITORY =
+  "SCHEDULE_REPOSITORY";
 
 @Module({
+
   imports: [
+
     TypeOrmModule.forFeature([
+
       AppointmentOrmEntity,
       ScheduleOrmEntity,
       AppointmentScheduleOrmEntity,
+
     ]),
 
     AuthModule,
+
   ],
 
   controllers: [
+
     AppointmentController,
     ScheduleController,
+
   ],
 
   providers: [
+
     // ─────────────────────────────────────────────
-    // Repositories
+    // REPOSITORIES
     // ─────────────────────────────────────────────
+
     {
       provide: APPOINTMENT_REPOSITORY,
-      useClass: TypeOrmAppointmentRepository,
+
+      useClass:
+        TypeOrmAppointmentRepository,
     },
 
     {
       provide: SCHEDULE_REPOSITORY,
-      useClass: TypeOrmScheduleRepository,
+
+      useClass:
+        TypeOrmScheduleRepository,
     },
 
     // ─────────────────────────────────────────────
-    // Appointment Use Cases
+    // APPOINTMENT USE CASES
     // ─────────────────────────────────────────────
+
     {
-      provide: GetAppointmentsByDoctorAndDate,
-      useFactory: (appointmentRepo) =>
+      provide:
+        GetAppointmentsByDoctorAndDate,
+
+      useFactory: (
+        appointmentRepo,
+      ) =>
+
         new GetAppointmentsByDoctorAndDate(
           appointmentRepo,
         ),
@@ -78,13 +102,15 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     {
-      provide: CreateAppointment,
+      provide:
+        CreateAppointment,
 
       useFactory: (
         appointmentRepo,
         scheduleRepo,
         authService: AuthService,
       ) =>
+
         new CreateAppointment(
           appointmentRepo,
           scheduleRepo,
@@ -99,12 +125,14 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     {
-      provide: UpdateAppointment,
+      provide:
+        UpdateAppointment,
 
       useFactory: (
         appointmentRepo,
         scheduleRepo,
       ) =>
+
         new UpdateAppointment(
           appointmentRepo,
           scheduleRepo,
@@ -117,11 +145,13 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     {
-      provide: CsvExportUseCase,
+      provide:
+        CsvExportUseCase,
 
       useFactory: (
         getAppointmentsUseCase,
       ) =>
+
         new CsvExportUseCase(
           getAppointmentsUseCase,
         ),
@@ -132,15 +162,18 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     // ─────────────────────────────────────────────
-    // Schedule Use Cases
+    // SCHEDULE USE CASES
     // ─────────────────────────────────────────────
+
     {
-      provide: GetAvailableSlotsUseCase,
+      provide:
+        GetAvailableSlotsUseCase,
 
       useFactory: (
         scheduleRepo,
         appointmentRepo,
       ) =>
+
         new GetAvailableSlotsUseCase(
           scheduleRepo,
           appointmentRepo,
@@ -153,12 +186,14 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     {
-      provide: CreateScheduleUseCase,
+      provide:
+        CreateScheduleUseCase,
 
       useFactory: (
         scheduleRepo,
         authService: AuthService,
       ) =>
+
         new CreateScheduleUseCase(
           scheduleRepo,
           authService,
@@ -171,11 +206,13 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
     },
 
     {
-      provide: CreateManySchedulesUseCase,
+      provide:
+        CreateManySchedulesUseCase,
 
       useFactory: (
         scheduleRepo,
       ) =>
+
         new CreateManySchedulesUseCase(
           scheduleRepo,
         ),
@@ -184,6 +221,25 @@ export const SCHEDULE_REPOSITORY = "SCHEDULE_REPOSITORY";
         SCHEDULE_REPOSITORY,
       ],
     },
+
+    {
+      provide:
+        GetScheduleUseCase,
+
+      useFactory: (
+        scheduleRepo,
+      ) =>
+
+        new GetScheduleUseCase(
+          scheduleRepo,
+        ),
+
+      inject: [
+        SCHEDULE_REPOSITORY,
+      ],
+    },
+
   ],
+
 })
 export class AppointmentModule {}
