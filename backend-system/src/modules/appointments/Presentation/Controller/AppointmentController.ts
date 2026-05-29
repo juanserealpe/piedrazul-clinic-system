@@ -53,9 +53,13 @@ export class AppointmentController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER")
   async getByDoctor(@Query() query: GetAppointmentsRequestDto, @Req() req) {
-    if(query.doctorId === null || query.doctorId === "") query.doctorId = req.user.preferred_username;
+    console.log("Received query:", query);
+    console.log("Authenticated user:", req.user.preferred_username);
+    if(!query.doctorId) query.doctorId = req.user.preferred_username;
     const vInput = AppointmentControllerMapper.toGetInput(query);
-    return await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
+    const result = await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
+    console.log("Result:", result);
+    return result;
   }
   
 

@@ -9,7 +9,10 @@ export class UserRepository {
     @InjectRepository(UserOrmEntity)
     private readonly repo: Repository<UserOrmEntity>,
   ) {}
-
+  async userExists(id: string): Promise<boolean> {
+    const count = await this.repo.count({ where: { id } });
+    return count > 0;
+  }
   async create(user: UserOrmEntity): Promise<UserOrmEntity> {return this.repo.save(user);}
   async findByEmail(email: string): Promise<UserOrmEntity | null> {return this.repo.findOne({ where: { email } });}
   async isUserInRole(userId: string, roleName: string): Promise<boolean> {

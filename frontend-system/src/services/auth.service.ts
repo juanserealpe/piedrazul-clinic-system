@@ -29,3 +29,14 @@ export const registerRequest = async (
 
   return response.data;
 };
+
+export const isUserExistsRequest = async (
+  id: string
+): Promise<boolean> => {
+
+  const response = await api.get(
+    `/auth/user-exists/${id}`
+  );
+
+  return response.data.exists;
+};

@@ -1,20 +1,25 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-
   id: z
-    .string()
-    .min(6, "La cédula debe tener mínimo 6 caracteres")
-    .max(11, "La cédula es demasiado larga")
-    .regex(/^[0-9]+$/, "La cédula solo puede contener números"),
+  .string()
+  .min(6, "La cédula debe tener mínimo 6 caracteres")
+  .max(11, "La cédula es demasiado larga")
+  .regex(/^[0-9]+$/, "La cédula solo puede contener números"),
 
   email: z
-    .string()
-    .email("Correo inválido")
-    .min(5, "Correo inválido")
-    .max(100, "Correo demasiado largo")
-    .optional()
-    .or(z.literal("")),
+  .string()
+  .trim()
+  .min(1, "El correo es obligatorio")
+  .email("Correo inválido")
+  .max(100, "Correo demasiado largo")
+  .refine(
+    (email) => email.endsWith("@unicauca.edu.co"),
+    {
+      message:
+        "Solo se permiten correos @unicauca.edu.co",
+    }
+  ),
 
   password: z
     .string()
@@ -22,7 +27,7 @@ export const registerSchema = z.object({
     .max(100, "La contraseña es demasiado larga")
     .regex(
       /^(?=.*[A-Z])(?=.*[0-9])/,
-      "Debe contener 1 mayúscula y 1 número"
+      "Debe contener al menos 1 mayúscula y 1 número"
     ),
 
   roles: z
@@ -38,8 +43,8 @@ export const registerSchema = z.object({
 
   names: z
     .string()
-    .min(2, "Nombres demasiado cortos")
-    .max(50, "Nombres demasiado largos")
+    .min(5, "Nombres demasiado cortos, debe tener al menos 5 caracteres")
+    .max(20, "Nombres demasiado largos, debe tener máximo 20 caracteres")
     .regex(
       /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
       "Solo letras y espacios"
@@ -47,8 +52,8 @@ export const registerSchema = z.object({
 
   lastnames: z
     .string()
-    .min(2, "Apellidos demasiado cortos")
-    .max(50, "Apellidos demasiado largos")
+    .min(5, "Apellidos demasiado cortos, debe tener al menos 5 caracteres")
+    .max(20, "Apellidos demasiado largos, debe tener máximo 20 caracteres")
     .regex(
       /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
       "Solo letras y espacios"
@@ -74,7 +79,6 @@ export const registerSchema = z.object({
       /^\d{4}-\d{2}-\d{2}$/,
       "La fecha debe ser YYYY-MM-DD"
     ),
-
 });
 
 export type RegisterFormData =

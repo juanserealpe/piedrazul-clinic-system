@@ -11,12 +11,12 @@ export const createSchedulesRequest =
     return response.data;
   };
 
-  export const getDoctorSchedules =
-  async () => {
 
-    const response = await api.get(
-      "/schedules/predefined/doctor"
-    );
+export const getDoctorSchedules = async () => {
 
-    return response.data;
-  };
+  const response = await api.get(
+    "/schedules/predefined/doctor"
+  );
+
+  return response.data;
+}

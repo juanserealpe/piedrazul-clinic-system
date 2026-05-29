@@ -14,7 +14,7 @@ constructor(
   async execute(
     pInput: GetAppointmentsInput
   ): Promise<GetAppointmentsOutput> {
-
+    console.log("INPUT:", pInput);
     if (!pInput.doctorId || !pInput.date) {
       throw AppError.invalidInput();
     }

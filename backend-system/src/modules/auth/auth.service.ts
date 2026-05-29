@@ -18,6 +18,9 @@ export class AuthService implements IAuthService {
     private readonly kc: KeycloakService,
     private readonly userRepo: UserRepository
   ) {}
+  userExists(id: string): Promise<boolean> {
+    return this.userRepo.userExists(id);
+  }
 
   async isUserInRole(userId: string, roleName: string): Promise<boolean> {
     console.log(`Checking if user ${userId} has role ${roleName}`);

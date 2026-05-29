@@ -9,4 +9,5 @@ export interface IAuthService {
   login(dto: LoginDto): Promise<LoginResponseDto>;
   refresh(dto: RefreshDto): Promise<LoginResponseDto>;
   isUserInRole(userId: string, roleName: string): Promise<boolean>;
+  userExists(id: string): Promise<boolean>;
 }

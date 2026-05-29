@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { LoginDto } from './dtos/login-dto';
 import { LoginResponseDto } from './dtos/login-response-dto';
 import { RefreshDto } from './dtos/refresh-dto';
@@ -34,5 +34,13 @@ export class AuthController {
   @Roles('ADMIN')
   protectedRoute() {
     return { message: 'Ok.' };
+  }
+
+  @Get('user-exists/:id')
+  async userExists(
+    @Param('id') id: string
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.authService.userExists(id);
+    return { exists };
   }
 }

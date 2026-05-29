@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,9 +17,10 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Card } from "@/src/components/ui/card";
-import { registerRequest } from "@/src/services/auth.service";
+import { registerRequest, isUserExistsRequest } from "@/src/services/auth.service";
 import { RegisterFormData, registerSchema } from "@/src/types/register.schema";
-import { Input, Button } from "@base-ui/react";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 
 export default function RegisterPage() {
 
@@ -30,14 +32,19 @@ export default function RegisterPage() {
     handleSubmit,
     setValue,
     watch,
+    setError,
+    clearErrors,
 
     formState: {
       errors,
       isSubmitting,
+      isValid,
     },
 
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: "all",
+    reValidateMode: "onChange",
 
     defaultValues: {
       roles: ["PATIENT"],
@@ -70,6 +77,69 @@ export default function RegisterPage() {
       );
     }
   };
+
+  // Real-time cedula validation (debounced) against backend
+  const idValue = watch("id");
+  const idCheckTimer = useRef<number | null>(null);
+  const [checkingId, setCheckingId] = useState(false);
+
+  useEffect(() => {
+    // clear pending timer
+    if (idCheckTimer.current) {
+      window.clearTimeout(idCheckTimer.current);
+      idCheckTimer.current = null;
+    }
+
+    if (!idValue || typeof idValue !== "string") {
+      // nothing to check
+      clearErrors("id");
+      setCheckingId(false);
+      return;
+    }
+
+    // basic client-side conditions before calling API
+    const digitsOnly = /^[0-9]+$/.test(idValue);
+    if (idValue.length < 6 || idValue.length > 11 || !digitsOnly) {
+      // let zod handle the message, just clear remote-check state
+      clearErrors("id");
+      setCheckingId(false);
+      return;
+    }
+
+    setCheckingId(true);
+
+    idCheckTimer.current = window.setTimeout(async () => {
+      try {
+        const exists = await isUserExistsRequest(idValue);
+
+        if (exists) {
+          setError("id", {
+            type: "manual",
+            message: "La cédula ya está registrada",
+          });
+        } else {
+          // clear only remote/manual errors for id
+          clearErrors("id");
+        }
+      } catch (err) {
+        // network or server error: set a generic message
+        setError("id", {
+          type: "manual",
+          message: "Error verificando cédula",
+        });
+      } finally {
+        setCheckingId(false);
+      }
+    }, 600);
+
+    return () => {
+      if (idCheckTimer.current) {
+        window.clearTimeout(idCheckTimer.current);
+        idCheckTimer.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idValue]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
@@ -271,7 +341,15 @@ export default function RegisterPage() {
           {/* FECHA NACIMIENTO */}
 
           <div>
+            <label
+              htmlFor="born_date"
+              className="block text-sm font-medium mb-1"
+            >
+              Fecha de nacimiento
+            </label>
+
             <Input
+              id="born_date"
               type="date"
               {...register("born_date")}
             />
@@ -288,22 +366,22 @@ export default function RegisterPage() {
           <div className="flex flex-col gap-2">
 
             <Button
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {
-                isSubmitting
-                  ? "Registrando..."
-                  : "Crear cuenta"
-              }
-            </Button>
+  type="submit"
+  variant="default"
+  disabled={!isValid || isSubmitting || checkingId}
+>
+  {isSubmitting
+    ? "Registrando..."
+    : "Crear cuenta"}
+</Button>
 
             <Button
-              type="button"
-              onClick={() => router.push("/login")}
-            >
-              Volver al login
-            </Button>
+  type="button"
+  variant="outline"
+  onClick={() => router.push("/login")}
+>
+  Volver al login
+</Button>
 
           </div>
 
