@@ -1,5 +1,5 @@
-import { GetAppointmentsByDoctorAndDate } from "../Get/GetAppointmentsByDoctorAndDate";
-import { GetAppointmentsInput } from "../Get/GetAppointmentsInput";
+import { GetAppointmentsByDoctorAndDate } from "../Get/GetAppointments/GetAppointmentsByDoctorAndDate";
+import { GetAppointmentsInput } from "../Get/GetAppointments/GetAppointmentsInput";
 
 
 export class CsvExportUseCase {

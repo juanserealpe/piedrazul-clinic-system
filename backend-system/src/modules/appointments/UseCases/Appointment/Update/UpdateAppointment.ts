@@ -5,24 +5,28 @@ import { AppError } from "src/common/errors/app-error.factory";
 import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
 import { getDayOfWeek } from "src/modules/appointments/Utilities";
 import { ScheduleRepository } from "src/modules/appointments/domain/Repositories/ScheduleRepository";
+import { DoctorUnavailabilityRepository } from "src/modules/appointments/domain/Repositories/DoctorUnavailabilityRepository";
+import { Status } from "src/modules/appointments/domain/entities/Status";
 
 export class UpdateAppointment{
      constructor(
         private readonly appointmentRepository:
             AppointmentRepository,
-
         private readonly scheduleRepository:
             ScheduleRepository,
+        private readonly unavailabilityRepo:
+            DoctorUnavailabilityRepository,
     ) {}
 
-    async execute(pReschedulerId: string, pInput: UpdateAppointmentInput,
+    async execute(pInput: UpdateAppointmentInput,
     ): Promise<UpdateAppointmentOutput> {
 
         const vAppointment =
             await this.appointmentRepository
-                .findByAppointmentIdAndDoctorId(
-                    pReschedulerId,
+                .findByAppointmentIdDoctorAndStatus(
                     pInput.appointmentId,
+                    pInput.doctorId,
+                    [Status.PENDING_RESCHEDULE],
                 );
 
         if (!vAppointment) {
@@ -37,6 +41,11 @@ export class UpdateAppointment{
         ) {
             throw AppError.appointmentAlreadyExist(pInput.newDate.toISOString());
         }
+
+        /*
+        */
+        if(await this.unavailabilityRepo.findActiveByDoctorIdAndDate(pInput.doctorId,pInput.newDate))
+            throw AppError.unavailabilityDoctor(pInput.newDate.toDateString());
 
         // Validate schedule slot
         const vDay =
@@ -67,8 +76,9 @@ export class UpdateAppointment{
         // Validate occupied slot
         const vAlreadyTaken =
             await this.appointmentRepository
-                .existsByDoctorAndDate(
+                .findByDoctorStatusAndDate(
                     vAppointment.doctorId,
+                    [Status.SCHEDULED, Status.RESCHEDULED],
                     pInput.newDate,
                 );
 
@@ -80,7 +90,7 @@ export class UpdateAppointment{
         const vNewSchedule =
             AppointmentDtoMapper
                 .toUpdateEntity(
-                    pReschedulerId,
+                    pInput.reschedulerId,
                     pInput,
                 );
 

@@ -67,62 +67,73 @@ export const AppError = {
 
   // APPOINTMENT
 
-appointmentAlreadyExist: (pDate: string) =>
-  new ConflictException({
-    code: ErrorCodes.APPOINTMENT_ALREADY_EXIST,
-    message: `Ya existe una cita en la fecha (${pDate})`,
-  }),
+  appointmentAlreadyExist: (pDate: string) =>
+    new ConflictException({
+      code: ErrorCodes.APPOINTMENT_ALREADY_EXIST,
+      message: `Ya existe una cita en la fecha (${pDate})`,
+    }),
 
-scheduleNotFound: (pDate: string) =>
-  new NotFoundException({
-    code: ErrorCodes.SCHEDULE_NOT_FOUND,
-    message: `Horario ${pDate} no encontrado`,
-  }),
+  scheduleNotFound: (pDate: string) =>
+    new NotFoundException({
+      code: ErrorCodes.SCHEDULE_NOT_FOUND,
+      message: `Horario ${pDate} no encontrado`,
+    }),
 
-scheduleNotAvailable: (pDate: string) =>
-  new ConflictException({
-    code: ErrorCodes.SCHEDULE_NOT_AVAILABLE,
-    message: `No hay disponibilidad en el horario (${pDate})`,
-  }),
-
-doctorNotFound: (pId: string) =>
-  new NotFoundException({
-    code: ErrorCodes.DOCTOR_NOT_FOUND,
-    message: `Medico ${pId} no encontrado`,
-  }),
-
-invalidInput: () =>
-  new ConflictException({
-    code: ErrorCodes.INVALID_INPUT,
-    message: 'Datos de entrada invalidos',
-  }),
-
-invalidInterval: () =>
-  new ConflictException({
-    code: ErrorCodes.INVALID_INTERVAL,
-    message: 'Intervalo invalido',
-  }),
-
-appointmentNotFound:()=>
-  new NotFoundException({
-    code: ErrorCodes.APPOINTMENT_NOT_FOUND,
-    message: 'La cita a editar no existe o no le pertenece',
-  }),
-
-invalidAppointmentDate:(date: string)=>
-  new ConflictException({
+  scheduleNotAvailable: (pDate: string) =>
+    new ConflictException({
       code: ErrorCodes.SCHEDULE_NOT_AVAILABLE,
-      message: `El horario ${date}  no se encuentra disponible para el medico`,
-  }),
+      message: `No hay disponibilidad en el horario (${pDate})`,
+    }),
 
-scheduleAlreadyExist: (date: string)=>
+  doctorNotFound: (pId: string) =>
+    new NotFoundException({
+      code: ErrorCodes.DOCTOR_NOT_FOUND,
+      message: `Medico ${pId} no encontrado`,
+    }),
+
+  invalidInput: () =>
+    new ConflictException({
+      code: ErrorCodes.INVALID_INPUT,
+      message: 'Datos de entrada invalidos',
+    }),
+
+  invalidInterval: () =>
     new ConflictException({
       code: ErrorCodes.INVALID_INTERVAL,
-      message: `Ya tiene un horario asignado el ${date}, debe seleccionar otra franja`
+      message: 'Intervalo invalido',
     }),
-patientNotFound: (pId: string) =>
-  new NotFoundException({
-    code: ErrorCodes.NOT_FOUND,
-    message: `El id ${pId} no corresponde a un paciente registrado`
-  })
-}
+
+  appointmentNotFound:()=>
+    new NotFoundException({
+      code: ErrorCodes.APPOINTMENT_NOT_FOUND,
+      message: 'La cita a editar no existe o no le pertenece',
+    }),
+
+  invalidAppointmentDate:(date: string)=>
+    new ConflictException({
+        code: ErrorCodes.SCHEDULE_NOT_AVAILABLE,
+        message: `El horario ${date}  no se encuentra disponible para el medico`,
+    }),
+
+  scheduleAlreadyExist: (date: string)=>
+      new ConflictException({
+        code: ErrorCodes.INVALID_INTERVAL,
+        message: `Ya tiene un horario asignado el ${date}, debe seleccionar otra franja`
+      }),
+  patientNotFound: (pId: string) =>
+    new NotFoundException({
+      code: ErrorCodes.NOT_FOUND,
+      message: `El id ${pId} no corresponde a un paciente registrado`
+    }),
+
+  unavailabilityAlreadyExist: (pDate: string)=>
+      new ConflictException({
+        code: ErrorCodes.UNAVAILABILITY_ALREADY_EXIST,
+        message: `Ya tiene registrada una indisponibilidad en la fecha ${pDate}`
+      }),
+  unavailabilityDoctor: (pDate: string)=>
+      new ConflictException({
+        code: ErrorCodes.UNAVAILABILITY_DOCTOR,
+        message: `El doctor tiene una indisposicion en la fecha seleccionada ${pDate}`
+      }),
+  }

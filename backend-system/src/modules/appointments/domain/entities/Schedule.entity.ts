@@ -19,46 +19,47 @@ export class Schedule {
   }
   
   isWithinWorkingHours(pDate: Date): boolean {
-    const vHour = pDate.getUTCHours();
-    return vHour >= this.startHour && vHour < this.endHour;
+    const hour = pDate.getUTCHours();
+    return hour >= this.startHour && hour < this.endHour;
   }
 
   generateTimeSlots(pDate: Date): Date[] {
-    const vSlots: Date[] = [];
-    if (!this.isSameDay(pDate)) return vSlots;
+    if (!this.isSameDay(pDate)) return [];
 
-    const vStart = new Date(pDate);
-    vStart.setUTCHours(this.startHour, 0, 0, 0);
+    const slots: Date[] = [];
+    const start = new Date(pDate);
+    start.setUTCHours(this.startHour, 0, 0, 0);
+    
+    const end = new Date(pDate);
+    end.setUTCHours(this.endHour, 0, 0, 0);
 
-    const vEnd = new Date(pDate);
-    vEnd.setUTCHours(this.endHour, 0, 0, 0);
-
-    let vCurrent = new Date(vStart);
-    while (vCurrent < vEnd) {
-      vSlots.push(new Date(vCurrent));
-      vCurrent.setUTCMinutes(vCurrent.getUTCMinutes() + this.interval);
+    let current = new Date(start);
+    while (current < end) {
+      slots.push(new Date(current));
+      current.setUTCMinutes(current.getUTCMinutes() + this.interval);
     }
 
-    return vSlots;
+    return slots;
   }
 
   getAvailableSlots(pDate: Date, pTakenDates: Date[]): Date[] {
-    const vAllSlots = this.generateTimeSlots(pDate);
-    const vTakenTimes = new Set(pTakenDates.map(d => d.getTime()));
-    return vAllSlots.filter(slot => !vTakenTimes.has(slot.getTime()));
+    const allSlots = this.generateTimeSlots(pDate);
+    if (allSlots.length === 0) return [];
+    
+    const takenTimes = new Set(pTakenDates.map(d => d.getTime()));
+    return allSlots.filter(slot => !takenTimes.has(slot.getTime()));
   }
 
   containsSlot(pDate: Date): boolean {
-    if (!this.isSameDay(pDate)) return false;
-    if (!this.isWithinWorkingHours(pDate)) return false;
-
-    const vMinutes = pDate.getUTCMinutes();
-    return vMinutes % this.interval === 0;
+    return this.isSameDay(pDate) && 
+           this.isWithinWorkingHours(pDate) && 
+           pDate.getUTCMinutes() % this.interval === 0;
   }
 
   overlaps(pOther: Schedule): boolean {
-    if (this.day !== pOther.day) return false;
-    return this.startHour < pOther.endHour && this.endHour > pOther.startHour;
+    return this.day === pOther.day && 
+           this.startHour < pOther.endHour && 
+           this.endHour > pOther.startHour;
   }
 
   private validate(): void {
@@ -66,10 +67,10 @@ export class Schedule {
       throw new Error("startHour must be less than endHour");
     }
     if (this.startHour < 0 || this.endHour > 23) {
-      throw new Error("Invalid hour range");
+      throw new Error("Invalid hour range (0-23)");
     }
-    if (this.interval <= 0) {
-      throw new Error("Interval must be greater than 0");
+    if (this.interval <= 0 || this.interval > 60) {
+      throw new Error("Interval must be between 1 and 60 minutes");
     }
   }
 }

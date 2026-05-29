@@ -15,6 +15,7 @@ import { KeycloakService } from "./modules/auth/keycloak/keycloak.service.js";
 import { UserRepository } from "./modules/auth/persistence/user.repository.js";
 import { AppointmentScheduleOrmEntity } from "./modules/appointments/Infraestructure/Entities/AppointmentScheduleOrmEntity.js";
 import { AuthModule } from "./modules/auth/auth.module.js";
+import { DoctorUnavailabilityOrmEntity } from "./modules/appointments/Infraestructure/Entities/DoctorUnavailabilityOrmEntity.js";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from "./modules/auth/auth.module.js";
         AppointmentOrmEntity,
         ScheduleOrmEntity,
         AppointmentScheduleOrmEntity,
+        DoctorUnavailabilityOrmEntity,
       ],
       synchronize: true,
       logging: true,

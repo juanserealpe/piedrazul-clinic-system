@@ -7,21 +7,36 @@ import { ScheduleRepository } from "src/modules/appointments/domain/Repositories
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayOfWeek } from "src/modules/appointments/Utilities";
 import { IAuthService } from "src/modules/auth/auth.interface";
+import { DoctorUnavailabilityRepository } from "src/modules/appointments/domain/Repositories/DoctorUnavailabilityRepository";
  
 export class CreateAppointment{
   constructor(
     private readonly appointmentRepository: AppointmentRepository,
     private readonly scheduleRepository: ScheduleRepository,
-    private readonly authRepo: IAuthService
+    private readonly authRepo: IAuthService,
+    private readonly unavailabilityRepo: DoctorUnavailabilityRepository,
   ) {}
 
 async execute(
     pInput: CreateAppointmentInput
   ): Promise<CreateAppointmentOutput> {
 
+
+    const vFormatted = pInput.date.toLocaleString("es-CO", {
+      hour12: true,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    console.log(vFormatted);
+
     if (!pInput.doctorId || !pInput.patientId || !pInput.date) {
       throw AppError.invalidInput();
     }
+    if(await this.unavailabilityRepo.findActiveByDoctorIdAndDate(pInput.doctorId,pInput.date))
+        throw AppError.unavailabilityDoctor(pInput.date.toDateString());
     
     if(!await this.authRepo.isUserInRole(pInput.patientId, "PATIENT"))
       throw AppError.patientNotFound(pInput.patientId);
@@ -64,9 +79,9 @@ async execute(
     const vExistingAppointments =
       await this.appointmentRepository.findByDoctorStatusAndDateRange(
         pInput.doctorId,
-        Status.SCHEDULED,
-        pInput.date.toISOString(),
-        pInput.date.toISOString()
+        [Status.SCHEDULED],
+        pInput.date,
+        pInput.date,
       );
 
     const vConflict = vExistingAppointments.find(a =>

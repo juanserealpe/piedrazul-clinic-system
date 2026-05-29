@@ -3,8 +3,8 @@ import { AppointmentSchedule } from "../../domain/entities/AppointmentSchedule";
 import { Status } from "../../domain/entities/Status";
 import { CreateAppointmentInput } from "../Appointment/Create/CreateAppointmentInput";
 import { CreateAppointmentOutput } from "../Appointment/Create/CreateAppointmentOutput";
-import { GetAppointmentItemOutput } from "../Appointment/Get/GetAppointmentItemOutput";
-import { GetAppointmentsOutput } from "../Appointment/Get/GetAppointmentsOutput";
+import { GetAppointmentItemOutput } from "../Appointment/Get/GetAppointments/GetAppointmentItemOutput";
+import { GetAppointmentsOutput } from "../Appointment/Get/GetAppointments/GetAppointmentsOutput";
 import { UpdateAppointmentInput } from "../Appointment/Update/UpdateAppointmentInput";
 import { UpdateAppointmentOutput } from "../Appointment/Update/UpdateAppointmentOutput";
 
@@ -62,7 +62,7 @@ export class AppointmentDtoMapper{
   //Update
   static toUpdateEntity(reschedulerId: string, newUpdate: UpdateAppointmentInput)
     : AppointmentSchedule{
-    return new AppointmentSchedule(null,reschedulerId,newUpdate.newDate,new Date())
+    return new AppointmentSchedule("",reschedulerId,newUpdate.newDate,new Date())
   }
 
   static toUpdateOutput(appointment: Appointment): UpdateAppointmentOutput{
