@@ -54,11 +54,10 @@ export class AppointmentController {
   @Get("by-doctor")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR" , "ADMIN")
-  async getByDoctor(@Query() query: GetAppointmentsRequestDto) {
-
-    const vInput =
-      AppointmentControllerMapper.toGetInput(query);
+  @Roles("DOCTOR", "SCHEDULER")
+  async getByDoctor(@Query() query: GetAppointmentsRequestDto, @Req() req) {
+    if(query.doctorId === null || query.doctorId === "") query.doctorId = req.user.preferred_username;
+    const vInput = AppointmentControllerMapper.toGetInput(query);
     return await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
   }
   
@@ -68,11 +67,10 @@ export class AppointmentController {
   @Header("Content-Disposition", 'attachment; filename="appointments.csv"')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR")
-  async exportCsv(@Query() query: GetAppointmentsRequestDto) {
-
-    const vInput =
-      AppointmentControllerMapper.toGetInput(query);
+  @Roles("DOCTOR", "SCHEDULER")
+  async exportCsv(@Query() query: GetAppointmentsRequestDto, @Req() req) {
+    if(query.doctorId === null || query.doctorId === "") query.doctorId = req.user.preferred_username;
+    const vInput = AppointmentControllerMapper.toGetInput(query);
     return await this.csvExportUseCase.execute(vInput);
   }
 
