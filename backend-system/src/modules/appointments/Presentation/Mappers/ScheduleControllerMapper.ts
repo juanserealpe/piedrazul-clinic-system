@@ -4,6 +4,9 @@ import { GetScheduleInput } from "../../UseCases/Appointment/GetAvaibleSlotsByDo
 import { GetScheduleOutput } from "../../UseCases/Appointment/GetAvaibleSlotsByDoctor/GetScheduleOutput";
 import { CreateScheduleRequestDto } from "../Dtos/Schedule/CreateScheduleRequestDto";
 import { GetScheduleRequestDto } from "../Dtos/Schedule/GetScheduleRequestDto";
+import { CreateDoctorUnavailabilityInput } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityInput";
+import { CreateDoctorUnavailabilityOutput } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityOutput";
+import { CreateDoctorUnavailabilityRequestDto } from "../Dtos/Appointment/CreateDoctorUnavailabilityRequestDto";
 
 export class ScheduleControllerMapper {
 
@@ -24,16 +27,6 @@ export class ScheduleControllerMapper {
     );
   }
 
-  static toCreateOutput(pOutput: CreateScheduleOutput) {
-    return {
-      doctorId: pOutput.doctorId,
-      day: pOutput.day,
-      startHour: pOutput.startHour,
-      endHour: pOutput.endHour,
-      interval: pOutput.interval,
-      isActive: pOutput.isActive,
-    };
-  }
 
   // -------- GET SLOTS --------
   static toGetInput(pQuery: GetScheduleRequestDto): GetScheduleInput {
@@ -43,11 +36,14 @@ export class ScheduleControllerMapper {
     );
   }
 
-  static toGetOutput(pOutput: GetScheduleOutput) {
-    return {
-      doctorId: pOutput.doctorId,
-      date: pOutput.date,
-      slots: pOutput.slots,
-    };
+  //Unavailability
+  static toCreateUnavailabilityInput(pDoctorId: string, pBody: CreateDoctorUnavailabilityRequestDto)
+  : CreateDoctorUnavailabilityInput{
+      return new CreateDoctorUnavailabilityInput(
+        pDoctorId,
+        new Date(pBody.startDate),
+        new Date(pBody.endDate),
+        pBody.reason,
+      )
   }
 }

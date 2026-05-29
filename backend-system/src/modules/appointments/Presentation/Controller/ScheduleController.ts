@@ -8,6 +8,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Param,
 } from "@nestjs/common";
 import { CreateManySchedulesUseCase } from "../../UseCases/Schedule/Create/CreateManySchedule";
 import { GetAvailableSlotsUseCase } from "../../UseCases/Appointment/GetAvaibleSlotsByDoctor/GetAvailableSlots";
@@ -21,6 +22,10 @@ import { RolesGuard } from "src/common/auth/guards/roles.guard";
 import { JwtGuard } from "src/common/auth/guards/jwt.guard";
 import { Console } from "console";
 import { GetScheduleUseCase } from "../../UseCases/Schedule/Get/GetScheduleUseCase";
+import { CreateDoctorUnavailabilityInput } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityInput";
+import { CreateDoctorUnavailabilityUseCase } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityUseCase";
+import { GetActivesByDoctorUseCase } from "../../UseCases/DoctorUnavailability/Get/GetActivesByDoctorUseCase";
+import { CreateDoctorUnavailabilityRequestDto } from "../Dtos/Appointment/CreateDoctorUnavailabilityRequestDto";
 
 @Controller("schedules")
 export class ScheduleController {
@@ -29,7 +34,9 @@ export class ScheduleController {
     private readonly createScheduleUseCase: CreateScheduleUseCase,
     private readonly getScheduleBydoctorUseCase: GetScheduleUseCase,
     private readonly createManySchedulesUseCase: CreateManySchedulesUseCase,
-    private readonly getAvailableSlotsUseCase: GetAvailableSlotsUseCase
+    private readonly getAvailableSlotsUseCase: GetAvailableSlotsUseCase,
+    private readonly createUnavailabilityUseCase: CreateDoctorUnavailabilityUseCase,
+    private readonly getActivesByDoctorUseCase: GetActivesByDoctorUseCase
   ) {}
 
   // -------- CREATE ONE --------
@@ -43,10 +50,7 @@ export class ScheduleController {
     const vInput =
       ScheduleControllerMapper.toCreateInput(body);
 
-    const vResult =
-      await this.createScheduleUseCase.execute(vInput);
-
-    return ScheduleControllerMapper.toCreateOutput(vResult);
+    return  await this.createScheduleUseCase.execute(vInput);
   }
 
   // -------- CREATE MANY --------
@@ -62,10 +66,7 @@ export class ScheduleController {
     const vInputs =
       ScheduleControllerMapper.toCreateManyInput(body.schedules);
 
-    const vResults =
-      await this.createManySchedulesUseCase.execute(vInputs);
-
-    return vResults.map(ScheduleControllerMapper.toCreateOutput);
+    return await this.createManySchedulesUseCase.execute(vInputs);
   }
 
   // -------- GET AVAILABLE SLOTS --------
@@ -78,10 +79,8 @@ export class ScheduleController {
     const vInput =
       ScheduleControllerMapper.toGetInput(query);
 
-    const vResult =
-      await this.getAvailableSlotsUseCase.execute(vInput);
+    return await this.getAvailableSlotsUseCase.execute(vInput);
 
-    return ScheduleControllerMapper.toGetOutput(vResult);
   }
 
   @Get("predefined/doctor")
@@ -90,7 +89,28 @@ export class ScheduleController {
   @Roles("DOCTOR")
   async getPredefinedByDoctor(@Req() req) {
     const doctorId = req.user.preferred_username;
-    const vResult = await this.getScheduleBydoctorUseCase.execute(doctorId);
-    return vResult.map(ScheduleControllerMapper.toCreateOutput);
+    return await this.getScheduleBydoctorUseCase.execute(doctorId);
+  }
+
+  //
+
+  @Post("unavailable/:id")
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR")
+  async createUnavailability(@Param("id") id: string, @Body() body: CreateDoctorUnavailabilityRequestDto) {
+    //const doctorId = req.user.preferred_username;
+    
+    const input = ScheduleControllerMapper.toCreateUnavailabilityInput(id, body);
+    return await this.createUnavailabilityUseCase.execute(input);
+  }
+
+  @Get("unavailable/:id")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR")
+  async getActiveUnavailabilities(@Param("id") id: string) {//EL ID CORRESPONDE AL TOKEN
+    //const doctorId = req.user.preferred_username;
+    return await this.getActivesByDoctorUseCase.execute(id);
   }
 }

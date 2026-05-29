@@ -20,7 +20,7 @@ import { AppointmentController } from "./Presentation/Controller/AppointmentCont
 import { ScheduleController } from "./Presentation/Controller/ScheduleController";
 
 // Appointment Use Cases
-import { GetAppointmentsByDoctorAndDate } from "./UseCases/Appointment/Get/GetAppointmentsByDoctorAndDate";
+import { GetAppointmentsByDoctorAndDate } from "./UseCases/Appointment/Get/GetAppointments/GetAppointmentsByDoctorAndDate";
 import { CreateAppointment } from "./UseCases/Appointment/Create/CreateAppointment";
 import { UpdateAppointment } from "./UseCases/Appointment/Update/UpdateAppointment";
 import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
@@ -30,6 +30,12 @@ import { GetAvailableSlotsUseCase } from "./UseCases/Appointment/GetAvaibleSlots
 import { CreateScheduleUseCase } from "./UseCases/Schedule/Create/CreateScheduleUseCase";
 import { CreateManySchedulesUseCase } from "./UseCases/Schedule/Create/CreateManySchedule";
 import { GetScheduleUseCase } from "./UseCases/Schedule/Get/GetScheduleUseCase";
+import { DoctorUnavailabilityOrmEntity } from "./Infraestructure/Entities/DoctorUnavailabilityOrmEntity";
+import { GetAllPendingsToRescheduleUseCase } from "./UseCases/Appointment/Get/GetPendingsToReschedule/GetAllPendingsToRescheduleUseCase";
+import { GetPendingsToRescheduleUseCase } from "./UseCases/Appointment/Get/GetPendingsToReschedule/GetPendingsToRescheduleUseCase";
+import { TypeOrmDoctorUnavailabilityRepository } from "./Infraestructure/Implements/TypeOrmDoctorUnavailabilityRepository";
+import { CreateDoctorUnavailabilityUseCase } from "./UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityUseCase";
+import { GetActivesByDoctorUseCase } from "./UseCases/DoctorUnavailability/Get/GetActivesByDoctorUseCase";
 
 export const APPOINTMENT_REPOSITORY =
   "APPOINTMENT_REPOSITORY";
@@ -37,6 +43,9 @@ export const APPOINTMENT_REPOSITORY =
 export const SCHEDULE_REPOSITORY =
   "SCHEDULE_REPOSITORY";
 
+export const DOCTOR_UNAVAILABILITY_REPOSITORY = 
+  "DOCTOR_UNAVAILABILITY_REPOSITORY";
+  
 @Module({
 
   imports: [
@@ -46,7 +55,7 @@ export const SCHEDULE_REPOSITORY =
       AppointmentOrmEntity,
       ScheduleOrmEntity,
       AppointmentScheduleOrmEntity,
-
+      DoctorUnavailabilityOrmEntity,
     ]),
 
     AuthModule,
@@ -65,6 +74,12 @@ export const SCHEDULE_REPOSITORY =
     // ─────────────────────────────────────────────
     // REPOSITORIES
     // ─────────────────────────────────────────────
+    {
+      provide: DOCTOR_UNAVAILABILITY_REPOSITORY,
+      
+      useClass: 
+      TypeOrmDoctorUnavailabilityRepository,
+    },
 
     {
       provide: APPOINTMENT_REPOSITORY,
@@ -109,18 +124,21 @@ export const SCHEDULE_REPOSITORY =
         appointmentRepo,
         scheduleRepo,
         authService: AuthService,
+        DoctorUnavailabilityRepository,
       ) =>
 
         new CreateAppointment(
           appointmentRepo,
           scheduleRepo,
           authService,
+          DoctorUnavailabilityRepository,
         ),
 
       inject: [
         APPOINTMENT_REPOSITORY,
         SCHEDULE_REPOSITORY,
         AuthService,
+        DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
 
@@ -131,16 +149,19 @@ export const SCHEDULE_REPOSITORY =
       useFactory: (
         appointmentRepo,
         scheduleRepo,
+        DoctorUnavailabilityRepository,
       ) =>
 
         new UpdateAppointment(
           appointmentRepo,
           scheduleRepo,
+          DoctorUnavailabilityRepository,
         ),
 
       inject: [
         APPOINTMENT_REPOSITORY,
         SCHEDULE_REPOSITORY,
+        DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
 
@@ -160,7 +181,40 @@ export const SCHEDULE_REPOSITORY =
         GetAppointmentsByDoctorAndDate,
       ],
     },
+    //
+    {
+      provide:
+          GetAllPendingsToRescheduleUseCase,
 
+      useFactory: (
+          appointmentRepo,
+      ) =>
+
+          new GetAllPendingsToRescheduleUseCase(
+              appointmentRepo,
+          ),
+
+      inject: [
+          APPOINTMENT_REPOSITORY,
+        ],
+    },
+    {
+      provide:
+          GetPendingsToRescheduleUseCase,
+
+      useFactory: (
+          appointmentRepo,
+      ) =>
+
+          new GetPendingsToRescheduleUseCase(
+              appointmentRepo,
+          ),
+
+      inject: [
+          APPOINTMENT_REPOSITORY,
+        ],
+        
+    },
     // ─────────────────────────────────────────────
     // SCHEDULE USE CASES
     // ─────────────────────────────────────────────
@@ -172,16 +226,19 @@ export const SCHEDULE_REPOSITORY =
       useFactory: (
         scheduleRepo,
         appointmentRepo,
+        doctorUnavailableRepo,
       ) =>
 
         new GetAvailableSlotsUseCase(
           scheduleRepo,
           appointmentRepo,
+          doctorUnavailableRepo
         ),
 
       inject: [
         SCHEDULE_REPOSITORY,
         APPOINTMENT_REPOSITORY,
+        DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
 
@@ -238,7 +295,27 @@ export const SCHEDULE_REPOSITORY =
         SCHEDULE_REPOSITORY,
       ],
     },
+    {
+      provide: CreateDoctorUnavailabilityUseCase,
+      useFactory: (
+        doctorUnavailabilityRepo,
+        appointmentRepo,
+      ) => new CreateDoctorUnavailabilityUseCase(
+        doctorUnavailabilityRepo,
+        appointmentRepo,
+      ),
+      inject: [
+        DOCTOR_UNAVAILABILITY_REPOSITORY,
+        APPOINTMENT_REPOSITORY,
+      ],
+    },
 
+    {
+      provide: GetActivesByDoctorUseCase,
+      useFactory: (doctorUnavailabilityRepo) => 
+        new GetActivesByDoctorUseCase(doctorUnavailabilityRepo),
+      inject: [DOCTOR_UNAVAILABILITY_REPOSITORY],
+    },
   ],
 
 })

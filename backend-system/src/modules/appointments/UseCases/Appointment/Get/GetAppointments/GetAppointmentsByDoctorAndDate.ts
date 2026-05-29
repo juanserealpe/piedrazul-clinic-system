@@ -1,7 +1,7 @@
 import { getDayRange } from "src/modules/appointments/Utilities";
-import { AppointmentRepository } from "../../../domain/Repositories/AppointmentRepository";
-import { Status } from "../../../domain/entities/Status";
-import { AppointmentDtoMapper } from "../../Mappers/AppointmentDtoMapper";
+import { AppointmentRepository } from "../../../../domain/Repositories/AppointmentRepository";
+import { Status } from "../../../../domain/entities/Status";
+import { AppointmentDtoMapper } from "../../../Mappers/AppointmentDtoMapper";
 import { GetAppointmentsInput } from "./GetAppointmentsInput";
 import { GetAppointmentsOutput } from "./GetAppointmentsOutput";
 import { AppError } from "src/common/errors/app-error.factory";
@@ -24,9 +24,12 @@ constructor(
     const vAppointments =
       await this.appointmentRepository.findByDoctorStatusAndDateRange(
         pInput.doctorId,
-        Status.SCHEDULED,
-        vStart.toISOString(),
-        vEnd.toISOString()
+        [
+          Status.SCHEDULED,
+          Status.RESCHEDULED,
+        ],
+        vStart,
+        vEnd
       );
 
     return AppointmentDtoMapper.toGetOutput(
