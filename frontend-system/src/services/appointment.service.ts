@@ -1,13 +1,12 @@
 import api from "../lib/axios";
+import { AppointmentNotification, AppointmentNotificationResponse } from "../types/appointment-notification";
 
 
 export const createAppointment = async (
   payload: {
-    patientId: string;
     doctorId: string;
-    scheduleId: string;
-    appointmentDate: string;
-    reason?: string;
+    patientId: string;
+    date: string;
   }
 ) => {
 
@@ -18,6 +17,7 @@ export const createAppointment = async (
 
   return response.data;
 };
+
 
 export const getAppointments = async (
   date: string,
@@ -67,6 +67,24 @@ export const rescheduleAppointment = async (
   const response = await api.patch(
     `/appointments/reschedule/${appointmentId}`,
     payload
+  );
+
+  return response.data;
+};
+
+export const getPendingAppointmentsToReschedule = async (
+  startDate: string,
+  endDate: string
+): Promise<AppointmentNotificationResponse> => {
+
+  const response = await api.get(
+    "/appointments/pending-reschedule/range",
+    {
+      params: {
+        startDate,
+        endDate,
+      },
+    }
   );
 
   return response.data;

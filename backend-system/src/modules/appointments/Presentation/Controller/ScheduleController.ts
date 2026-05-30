@@ -94,14 +94,13 @@ export class ScheduleController {
 
   //
 
-  @Post("unavailable/:id")
+  @Post("unavailable")
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
-  async createUnavailability(@Param("id") id: string, @Body() body: CreateDoctorUnavailabilityRequestDto) {
-    //const doctorId = req.user.preferred_username;
-    
-    const input = ScheduleControllerMapper.toCreateUnavailabilityInput(id, body);
+  async createUnavailability(@Body() body: CreateDoctorUnavailabilityRequestDto, @Req() req) {
+    const doctorId = req.user.preferred_username;
+    const input = ScheduleControllerMapper.toCreateUnavailabilityInput(doctorId, body);
     return await this.createUnavailabilityUseCase.execute(input);
   }
 

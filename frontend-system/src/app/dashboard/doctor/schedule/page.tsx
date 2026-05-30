@@ -1,5 +1,6 @@
 import DoctorSchedulesList from "@/src/components/schedules/DoctorSchedulesList";
 import WeeklyScheduleForm from "@/src/components/schedules/WeeklyScheduleForm";
+import GenerateUnavailabilityButton from "@/src/components/ui/GenerateUnavailabilityButton";
 
 
 export default function DoctorSchedulePage() {
@@ -21,6 +22,7 @@ export default function DoctorSchedulePage() {
           Configura tus horarios semanales
 
         </p>
+      <GenerateUnavailabilityButton/>
 
       </div>
       <WeeklyScheduleForm />

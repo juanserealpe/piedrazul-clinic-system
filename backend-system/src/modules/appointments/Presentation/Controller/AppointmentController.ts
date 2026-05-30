@@ -44,8 +44,13 @@ export class AppointmentController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT")
-  async create(@Body() body: CreateAppointmentRequestDto) {
-    const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId,body);//EL "DoctorId" SE DEBE 
+  async create(@Body() body: CreateAppointmentRequestDto, @Req() req) {
+
+    console.log("BODY:", body);
+    const doctorId =
+    req.user.preferred_username;
+    body.doctorId = doctorId;
+    const vInput = AppointmentControllerMapper.toCreateInput(doctorId, body);//EL "DoctorId" SE DEBE 
     return await this.createAppointmentUseCase.execute(vInput);                  //EXTREAER DEL TOKEN
   }
   
@@ -73,7 +78,8 @@ export class AppointmentController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER")
   async exportCsv(@Query() query: GetAppointmentsRequestDto, @Req() req) {
-    if(query.doctorId === null || query.doctorId === "") query.doctorId = req.user.preferred_username;
+    query.doctorId = req.user.preferred_username;
+    console.log("Received query for CSV export:", query);
     const vInput = AppointmentControllerMapper.toGetInput(query);
     return await this.csvExportUseCase.execute(vInput);
   }
@@ -99,21 +105,20 @@ export class AppointmentController {
       return await this.getAllPendingsToRescheduleUseCase.execute(id,);
     }
 
-    @Get("pending-reschedule/range/:id") 
+    @Get("pending-reschedule/range") 
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtGuard, RolesGuard)
     @Roles("DOCTOR", "SCHEDULER")
     async getByRange(
-      @Param("id") id: string,
       @Query()
-      pQuery: GetPendingsToRescheduleRequestDto,
+      pQuery: GetPendingsToRescheduleRequestDto, @Req() req
     ) {
-
       const vInput =
         AppointmentControllerMapper
-        .toGetPendingsInput(id,pQuery);
-
-        return await this.getPendingsToRescheduleUseCase
+        .toGetPendingsInput(req.user.preferred_username,pQuery);
+        const a =  await this.getPendingsToRescheduleUseCase
          .execute(vInput);
+        console.log(a);
+         return a;
     }
 }

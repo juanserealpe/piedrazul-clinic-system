@@ -10,3 +10,12 @@ export const getTodayUtc = () => {
     )
   ).toISOString();
 };
+
+export const toISOStringLib = (
+  localDateTime: string
+) => {
+
+  return new Date(
+    localDateTime
+  ).toISOString();
+};

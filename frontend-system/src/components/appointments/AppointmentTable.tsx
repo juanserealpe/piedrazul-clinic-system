@@ -57,11 +57,13 @@ export default function AppointmentTable({
       <div className="mb-4">
 
         <h2 className="font-semibold">
-
-          Citas para:
-          {" "}
-          {data.date}
-
+          Citas para{" "}
+          {new Date(data.date).toLocaleDateString(
+            "es-CO",
+            {
+              timeZone: "UTC",
+            }
+          )}
         </h2>
 
         <p className="text-sm text-muted-foreground">

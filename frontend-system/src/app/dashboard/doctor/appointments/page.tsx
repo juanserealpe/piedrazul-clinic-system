@@ -11,6 +11,9 @@ from "@/src/components/appointments/AppointmentFilters";
 import AppointmentTable
 from "@/src/components/appointments/AppointmentTable";
 
+import AppointmentNotifications
+from "@/src/components/appointments/AppointmentNotifications";
+
 import {
   getAppointments,
 } from "@/src/services/appointment.service";
@@ -66,24 +69,47 @@ export default function AppointmentsPage() {
 
     <div className="space-y-6">
 
-      <div>
+      {/* HEADER */}
 
-        <h1 className="text-3xl font-bold">
-          Gestión de Citas
-        </h1>
+      <div
+        className="
+        flex
+        items-start
+        justify-between
+        gap-4
+        "
+      >
 
-        <p className="text-muted-foreground">
-          Administra las citas médicas
-        </p>
+        <div>
+
+          <h1 className="text-3xl font-bold">
+            Gestión de Citas
+          </h1>
+
+          <p className="text-muted-foreground">
+            Administra las citas médicas
+          </p>
+
+        </div>
+
+        <AppointmentNotifications />
 
       </div>
 
-      <AppointmentToolbar />
+      {/* BOTONES */}
+
+      <AppointmentToolbar
+        onCreated={loadAppointments}
+      />
+
+      {/* FILTRO FECHA */}
 
       <AppointmentFilters
         date={date}
         setDate={setDate}
       />
+
+      {/* TABLA */}
 
       <AppointmentTable
         data={data}

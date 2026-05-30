@@ -20,3 +20,20 @@ export const getDoctorSchedules = async () => {
 
   return response.data;
 }
+
+export const createUnavailabilityRequest =
+  async (
+    payload: {
+      startDate: string;
+      endDate: string;
+      reason: string;
+    }
+  ) => {
+
+    const response = await api.post(
+      `/schedules/unavailable`,
+      payload
+    );
+
+    return response.data;
+  };
