@@ -36,14 +36,7 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
     vResult,
     );
   }
-  
-  async findByDoctor(id: string): Promise<Appointment[]> {
-    const results = await this.repo.find({
-      where: { doctorId: id },
-      order: { date: "ASC" },
-    });
-    return results.map(AppointmentPersistenceMapper.toDomain);
-  }
+
 
   async findByAppointmentIdDoctorAndStatus(
       pAppointmentId: string,
@@ -146,29 +139,12 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
     return pAppointment;
   }
 
-  async existsByDoctorAndDate(
-    pDoctorId: string,
-    pDate: Date,
-  ): Promise<boolean> {
-
-    const vAppointments =
-      await this.repo.findOne({
-        where: {
-          doctorId: pDoctorId,
-          date: pDate.toISOString()
-        }
-      }
-      );
-
-    return vAppointments != null;
-  }
-
   async updateStatusByDoctorIdAndDateRange(
       pDoctorId: string,
       pStartDate: Date,
       pEndDate: Date,
       pStatus: Status,
-): Promise<number> {
+    ): Promise<number> {
 
     const vResult = await this.repo.update(
       {
@@ -200,5 +176,22 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
           },
       });
     return results.map(AppointmentPersistenceMapper.toDomain);
+  }
+  async updateStatusByIds(
+    pIds: string[],
+    pStatus: Status,
+  ): Promise<number> {
+
+      const vResult =
+          await this.repo.update(
+              {
+                  id: In(pIds),
+              },
+              {
+                  status: pStatus,
+              },
+          );
+
+      return vResult.affected ?? 0;
   }
 }

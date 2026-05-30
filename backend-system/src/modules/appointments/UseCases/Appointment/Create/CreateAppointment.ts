@@ -21,28 +21,26 @@ async execute(
     pInput: CreateAppointmentInput
   ): Promise<CreateAppointmentOutput> {
 
-
-    const vFormatted = pInput.date.toLocaleString("es-CO", {
-      hour12: true,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    console.log(vFormatted);
-
     if (!pInput.doctorId || !pInput.patientId || !pInput.date) {
       throw AppError.invalidInput();
     }
-    if(await this.unavailabilityRepo.findActiveByDoctorIdAndDate(pInput.doctorId,pInput.date))
-        throw AppError.unavailabilityDoctor(pInput.date.toDateString());
-    
+    if(pInput.date < new Date())
+      throw AppError.pastDate(pInput.date.toLocaleDateString())
+
+    const vMaxDate = new Date();
+    vMaxDate.setDate(vMaxDate.getDate() + 12);
+
+    if (pInput.date > vMaxDate) {
+      throw AppError.veryDistantDate(pInput.date.toLocaleDateString());
+    }
+    if(!await this.authRepo.isUserInRole(pInput.doctorId, "DOCTOR"))
+      throw AppError.doctorNotFound(pInput.doctorId);
+
     if(!await this.authRepo.isUserInRole(pInput.patientId, "PATIENT"))
       throw AppError.patientNotFound(pInput.patientId);
 
-    if(!await this.authRepo.isUserInRole(pInput.doctorId, "DOCTOR"))
-      throw AppError.doctorNotFound(pInput.doctorId);
+    if(await this.unavailabilityRepo.findActiveByDoctorIdAndDate(pInput.doctorId,pInput.date))
+        throw AppError.unavailabilityDoctor(pInput.date.toDateString());
 
     const vDay = getDayOfWeek(pInput.date);
 
@@ -65,6 +63,8 @@ async execute(
     if (!vValidSchedule) {
       throw AppError.scheduleNotFound(pInput.date.toISOString());
     }
+    if(!vValidSchedule.isActive)
+      throw AppError.scheduleNotAvailable(pInput.date.toISOString());
 
     const vStart = new Date(pInput.date);
     vStart.setUTCHours(vValidSchedule.startHour, 0, 0, 0);
@@ -92,7 +92,7 @@ async execute(
       throw AppError.appointmentAlreadyExist(pInput.date.toISOString());
     }
     const vAppointment =
-      AppointmentDtoMapper.toCreateEntity("", pInput);
+      AppointmentDtoMapper.toCreateEntity(pInput.createBy, pInput);
 
     const vSaved =
       await this.appointmentRepository.save(vAppointment);

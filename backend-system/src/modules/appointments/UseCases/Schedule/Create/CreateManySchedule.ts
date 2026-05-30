@@ -4,7 +4,6 @@ import { CreateScheduleOutput } from "./CreateScheduleOutput";
 import { ScheduleDtoMapper } from "../../Mappers/ScheduleDtoMapper";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayInSpanish } from "src/modules/appointments/domain/entities/DaysOfWeek";
-import { Schedule } from "src/modules/appointments/domain/entities/Schedule.entity";
 export class CreateManySchedulesUseCase {
 
   constructor(
@@ -16,7 +15,7 @@ export class CreateManySchedulesUseCase {
   ): Promise<CreateScheduleOutput[]> {
 
     const vSchedules = pInputs.map(input =>
-      ScheduleDtoMapper.toEntity(crypto.randomUUID(), input)
+      ScheduleDtoMapper.toCreateEntity(crypto.randomUUID(), input)
     );
 
     // 2. Validar solapamientos ENTRE los nuevos
@@ -53,6 +52,6 @@ export class CreateManySchedulesUseCase {
       this.scheduleRepository.save(s)
     )
   );
-    return vSaved.map(ScheduleDtoMapper.toOutput);
+    return vSaved.map(ScheduleDtoMapper.toCreateOutput);
   }
 }

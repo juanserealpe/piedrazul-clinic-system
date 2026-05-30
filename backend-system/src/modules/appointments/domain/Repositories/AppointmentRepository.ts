@@ -7,8 +7,7 @@ export interface AppointmentRepository{
     findByAppointmentIdAndDoctorId(pDoctorId: string,pAppointmentId: string,)
       : Promise<Appointment | null>;
     //Doctor
-    findByDoctor(id: string): Promise<Appointment[] | null>;
-
+    
     findByAppointmentIdDoctorAndStatus(
       pAppointmentId: string,
       pDoctorId: string,
@@ -24,7 +23,6 @@ export interface AppointmentRepository{
     //Cruds
     save(appointment: Appointment): Promise<Appointment>;
     update(pAppointment: Appointment, pNewSchedule: AppointmentSchedule,): Promise<Appointment>;
-    existsByDoctorAndDate(pDoctorId: string,pDate: Date,): Promise<boolean>;
 
     //Update
     updateStatusByDoctorIdAndDateRange(
@@ -37,5 +35,10 @@ export interface AppointmentRepository{
     findUpcomingPendingsToRescheduleByDoctorId(
     pDoctorId: string,
     pCurrentDate: Date,
-): Promise<Appointment[]>;
+    ): Promise<Appointment[]>;
+    
+    updateStatusByIds(
+    pIds: string[],
+    pStatus: Status,
+    ): Promise<number>;
 }
