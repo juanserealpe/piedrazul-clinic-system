@@ -10,4 +10,6 @@ export interface IAuthService {
   refresh(dto: RefreshDto): Promise<LoginResponseDto>;
   isUserInRole(userId: string, roleName: string): Promise<boolean>;
   userExists(id: string): Promise<boolean>;
+  getAllDoctors(): Promise<{ id: string; name: string, lastnames: string }[]>;
+  getAllPatients(): Promise<{ id: string; name: string, lastnames: string }[]>;
 }

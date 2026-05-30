@@ -78,13 +78,14 @@ export class ScheduleController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT", "ADMIN")
-  async getAvailableSlots(@Query() query: GetScheduleRequestDto) {
-
+  async getAvailableSlots(@Query() query: GetScheduleRequestDto, @Req() req)
+  : Promise<GetScheduleOutput> {
+    if(!query.doctorId) query.doctorId = req.user.preferred_username;
     const vInput =
       ScheduleControllerMapper.toGetInput(query);
-
-    return await this.getAvailableSlotsUseCase.execute(vInput);
-
+    const a  = await this.getAvailableSlotsUseCase.execute(vInput);
+    console.log(a);
+    return a;
   }
 
   @Get("predefined/doctor")

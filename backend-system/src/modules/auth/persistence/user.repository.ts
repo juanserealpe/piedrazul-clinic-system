@@ -19,4 +19,12 @@ export class UserRepository {
     const user = await this.repo.findOne({ where: { id: userId } });
     return user ? user.roles.includes(roleName) : false;
   }
+  async getAllDoctors(): Promise<{ id: string; name: string, lastnames: string }[]> {
+    const doctors = await this.repo.find({ where: { roles: 'DOCTOR' } });
+    return doctors.map(doc => ({ id: doc.id, name: doc.names, lastnames: doc.lastnames }));
+  }
+  async getAllPatients(): Promise<{ id: string; name: string, lastnames: string }[]> {
+    const patients = await this.repo.find({ where: { roles: 'PATIENT' } });
+    return patients.map(pat => ({ id: pat.id, name: pat.names, lastnames: pat.lastnames }));
+  }
 }

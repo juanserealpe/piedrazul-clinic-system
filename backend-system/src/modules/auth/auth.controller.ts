@@ -43,4 +43,12 @@ export class AuthController {
     const exists = await this.authService.userExists(id);
     return { exists };
   }
+  @Get('all-doctors')
+  async getAllDoctors() : Promise<{ id: string; name: string, lastnames: string }[]> {
+    return this.authService.getAllDoctors();
+  }
+  @Get('all-patients')
+  async getAllPatients() : Promise<{ id: string; name: string, lastnames: string }[]> {
+    return this.authService.getAllPatients();
+  }
 }

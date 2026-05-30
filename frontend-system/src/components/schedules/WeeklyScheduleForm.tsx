@@ -2,7 +2,8 @@
 
 import { createSchedulesRequest } from "@/src/services/schedule.service";
 import { useAuthStore } from "@/src/store/auth.store";
-import { Button, Input } from "@base-ui/react";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import { useState } from "react";
 import { Card } from "../ui/card";
 
@@ -144,11 +145,15 @@ export default function WeeklyScheduleForm() {
   return (
     <div className="space-y-4">
 
-      <Button
-        onClick={addSchedule}
-      >
-        Agregar día
-      </Button>
+      <div className="flex justify-between items-center">
+  <h2 className="text-lg font-bold">
+    Horarios
+  </h2>
+
+  <Button onClick={addSchedule}>
+    + Agregar bloque de horario
+  </Button>
+</div>
 
       {schedules.map(
         (schedule, index) => (

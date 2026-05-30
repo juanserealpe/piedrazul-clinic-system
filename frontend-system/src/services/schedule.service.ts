@@ -37,3 +37,22 @@ export const createUnavailabilityRequest =
 
     return response.data;
   };
+
+
+export const getAvailableSlots = async (
+  date: string,
+  doctorId?: string
+) => {
+
+  const response = await api.get(
+    "/schedules/available-slots",
+    {
+      params: {
+        date,
+        doctorId,
+      },
+    }
+  );
+
+  return response.data;
+};

@@ -3,7 +3,6 @@ import { IsString, IsNotEmpty, IsISO8601, Matches } from "class-validator";
 export class GetScheduleRequestDto {
 
   @IsString()
-  @IsNotEmpty()
   doctorId: string;
 
   @IsISO8601()

@@ -56,16 +56,16 @@ export const exportAppointmentsCsv = async (
   return response.data;
 };
 
-export const rescheduleAppointment = async (
-  appointmentId: string,
+export const reScheduleAppointment = async (
   payload: {
-    scheduleId: string;
-    appointmentDate: string;
+    doctorId?: string;
+    appointmentId: string;
+    newDate: string;
   }
 ) => {
 
   const response = await api.patch(
-    `/appointments/reschedule/${appointmentId}`,
+    "/appointments/reschedule",
     payload
   );
 
