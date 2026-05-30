@@ -27,6 +27,7 @@ import { GetPendingsToRescheduleRequestDto } from "../Dtos/Appointment/GetPendin
 import { GetAllPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Get/GetPendingsToReschedule/GetAllPendingsToRescheduleUseCase";
 import { GetPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Get/GetPendingsToReschedule/GetPendingsToRescheduleUseCase";
 import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
+import { UpdateAppointmentOutput } from "../../UseCases/Appointment/Update/UpdateAppointmentOutput";
 
 @Controller("appointments")
 export class AppointmentController {
@@ -45,12 +46,10 @@ export class AppointmentController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT")
   async create(@Body() body: CreateAppointmentRequestDto, @Req() req) {
-
+    if(!body.patientId) body.patientId = req.user.preferred_username;
+    if(!body.doctorId) body.doctorId = req.user.preferred_username;
     console.log("BODY:", body);
-    const doctorId =
-    req.user.preferred_username;
-    body.doctorId = doctorId;
-    const vInput = AppointmentControllerMapper.toCreateInput(doctorId, body);//EL "DoctorId" SE DEBE 
+    const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId, body);//EL "DoctorId" SE DEBE 
     return await this.createAppointmentUseCase.execute(vInput);                  //EXTREAER DEL TOKEN
   }
   
@@ -85,12 +84,14 @@ export class AppointmentController {
   }
 
 
-  @Patch("reschedule/:id")
+  @Patch("reschedule")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
-  async reScheduleByDoctor( @Param("id") id: string,@Body() body: ReScheduleRequestDto){
-    const vInput = AppointmentControllerMapper.toRescheduleInput(id,body);//ENVIAR ID DE TOKEN
+  async reScheduleByDoctor(@Body() body: ReScheduleRequestDto, @Req() req)
+  : Promise<UpdateAppointmentOutput> {
+    if(!body.doctorId) body.doctorId = req.user.preferred_username; 
+    const vInput = AppointmentControllerMapper.toRescheduleInput(body.appointmentId,body);
     return await this.reScheduleAppointmentUseCase.execute(vInput);
   }
   //UNAVAILABILITY

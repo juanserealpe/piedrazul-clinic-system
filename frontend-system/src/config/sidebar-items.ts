@@ -17,9 +17,17 @@ export const sidebarItems = [
       "DOCTOR",
     ],
   },
-    {
+  {
     label: "Gestionar Horarios",
     path: "/dashboard/scheduler/schedule",
+
+    roles: [
+      "SCHEDULER",
+    ],
+  },
+  {
+    label: "Gestionar Citas",
+    path: "/dashboard/scheduler/appointments",
 
     roles: [
       "SCHEDULER",

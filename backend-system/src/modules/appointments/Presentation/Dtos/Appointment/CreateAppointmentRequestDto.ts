@@ -7,7 +7,7 @@ export class CreateAppointmentRequestDto {
   doctorId: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   patientId: string;
 
   @IsISO8601()

@@ -22,6 +22,14 @@ export class AuthService implements IAuthService {
     return this.userRepo.userExists(id);
   }
 
+  async getAllPatients() : Promise<{ id: string; name: string, lastnames: string }[]>{
+    return this.userRepo.getAllPatients();
+  }
+
+  async getAllDoctors() : Promise<{ id: string; name: string, lastnames: string }[]>{
+    return this.userRepo.getAllDoctors();
+  }
+
   async isUserInRole(userId: string, roleName: string): Promise<boolean> {
     console.log(`Checking if user ${userId} has role ${roleName}`);
     return this.userRepo.isUserInRole(userId, roleName);

@@ -40,3 +40,19 @@ export const isUserExistsRequest = async (
 
   return response.data.exists;
 };
+
+export const getAllDoctorsRequest = async () : Promise<{ id: string; name: string, lastnames: string }[]> => {
+  const response = await api.get(
+    "/auth/all-doctors"
+  );
+
+  return response.data;
+};
+
+export const getAllPatientsRequest = async () : Promise<{ id: string; name: string, lastnames: string }[]> => {
+  const response = await api.get(
+    "/auth/all-patients"
+  );
+
+  return response.data;
+}
