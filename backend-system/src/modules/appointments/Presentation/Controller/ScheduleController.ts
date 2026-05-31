@@ -28,6 +28,7 @@ import { UpdateScheduleRequestDto } from "../Dtos/Schedule/UpdateScheduleRequest
 import { UpdateScheduleUseCase } from "../../UseCases/Schedule/Update/UpdateScheduleUseCase";
 import { ChangeScheduleStatusRequestDto } from "../Dtos/Schedule/ChangeScheduleStatusRequestDto";
 import { ChangeScheduleStatusUseCase } from "../../UseCases/Schedule/ChangeScheduleStatus/ChangeScheduleStatusUseCase";
+import { GetScheduleOutput } from "../../UseCases/Appointment/GetAvaibleSlotsByDoctor/GetScheduleOutput";
 
 @Controller("schedules")
 export class ScheduleController {
