@@ -164,12 +164,11 @@ const handleSchedule = async () => {
 
       setLoading(true);
 
-      // ✅ Asegurar ISO válido
       const utcDate = new Date(selectedSlot).toISOString();
 
             const payload = {
         doctorId: doctor.id,
-        patientId: "",// ✅ obligatorio según tu service
+        patientId: "",
         date: utcDate,
       };
 
