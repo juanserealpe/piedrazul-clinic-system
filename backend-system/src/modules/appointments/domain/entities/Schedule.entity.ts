@@ -1,3 +1,4 @@
+import { AppError } from "src/common/errors/app-error.factory";
 import { getDayOfWeek } from "../../Utilities";
 import { DayOfWeek } from "./DaysOfWeek";
 
@@ -24,6 +25,7 @@ export class Schedule {
   }
 
   generateTimeSlots(pDate: Date): Date[] {
+    if(!this.isActive) return []
     if (!this.isSameDay(pDate)) return [];
 
     const slots: Date[] = [];
@@ -43,6 +45,7 @@ export class Schedule {
   }
 
   getAvailableSlots(pDate: Date, pTakenDates: Date[]): Date[] {
+    if(!this.isActive) return [];
     const allSlots = this.generateTimeSlots(pDate);
     if (allSlots.length === 0) return [];
     
@@ -51,6 +54,7 @@ export class Schedule {
   }
 
   containsSlot(pDate: Date): boolean {
+    if (!this.isActive) return false;
     return this.isSameDay(pDate) && 
            this.isWithinWorkingHours(pDate) && 
            pDate.getUTCMinutes() % this.interval === 0;
@@ -64,13 +68,22 @@ export class Schedule {
 
   private validate(): void {
     if (this.startHour >= this.endHour) {
-      throw new Error("startHour must be less than endHour");
+      throw AppError.invalidInterval();
     }
     if (this.startHour < 0 || this.endHour > 23) {
-      throw new Error("Invalid hour range (0-23)");
+      throw AppError.invalidInterval();
     }
     if (this.interval <= 0 || this.interval > 60) {
-      throw new Error("Interval must be between 1 and 60 minutes");
+      throw AppError.invalidInterval();
+    }
+    if(!this.isIntervalCompatible()){
+      throw AppError.invalidInterval();
     }
   }
+  private isIntervalCompatible(): boolean {
+    const vDurationMinutes =
+        (this.endHour - this.startHour) * 60;
+
+    return vDurationMinutes % this.interval === 0;
+}
 }

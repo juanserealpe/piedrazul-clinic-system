@@ -5,7 +5,6 @@ import { ScheduleDtoMapper } from "../../Mappers/ScheduleDtoMapper";
 import { AppError } from "src/common/errors/app-error.factory";
 import { getDayInSpanish } from "src/modules/appointments/domain/entities/DaysOfWeek";
 import { IAuthService } from "src/modules/auth/auth.interface";
-import { Console } from "console";
 
 export class CreateScheduleUseCase{
     constructor(
@@ -24,7 +23,7 @@ export class CreateScheduleUseCase{
         }
 
         const vSchedule = 
-        ScheduleDtoMapper.toEntity(
+        ScheduleDtoMapper.toCreateEntity(
             crypto.randomUUID(),
             pInput
         );
@@ -47,6 +46,6 @@ export class CreateScheduleUseCase{
         const vSaved =
         await this.scheduleRepository.save(vSchedule);
 
-        return ScheduleDtoMapper.toOutput(vSaved);
+        return ScheduleDtoMapper.toCreateOutput(vSaved);
     }
 }

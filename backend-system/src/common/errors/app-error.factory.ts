@@ -100,7 +100,7 @@ export const AppError = {
   invalidInterval: () =>
     new ConflictException({
       code: ErrorCodes.INVALID_INTERVAL,
-      message: 'Intervalo invalido',
+      message: 'Intervalo invalido, verifique el horario enviado',
     }),
 
   appointmentNotFound:()=>
@@ -136,4 +136,16 @@ export const AppError = {
         code: ErrorCodes.UNAVAILABILITY_DOCTOR,
         message: `El doctor tiene una indisposicion en la fecha seleccionada ${pDate}`
       }),
+
+  pastDate: (pDate: string)=>
+    new ConflictException({
+      code: ErrorCodes.INVALID_DATE,
+      message: `La fecha ${pDate} ya paso, seleccione una futura maximo 2 semanas despues`
+    }),
+  
+  veryDistantDate: (pDate: string)=>
+    new ConflictException({
+      code: ErrorCodes.INVALID_DATE,
+      message: `La fecha ${pDate} es muy lejana, solo se puede reservar para maximo 2 semanas desde hoy`
+    }),
   }

@@ -49,8 +49,11 @@ export class AppointmentController {
     if(!body.patientId) body.patientId = req.user.preferred_username;
     if(!body.doctorId) body.doctorId = req.user.preferred_username;
     console.log("BODY:", body);
-    const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId, body);//EL "DoctorId" SE DEBE 
-    return await this.createAppointmentUseCase.execute(vInput);                  //EXTREAER DEL TOKEN
+    const doctorId =
+    req.user.preferred_username;
+    body.doctorId = doctorId;
+    const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId, body);
+    return await this.createAppointmentUseCase.execute(vInput);               
   }
   
 
@@ -106,20 +109,19 @@ export class AppointmentController {
       return await this.getAllPendingsToRescheduleUseCase.execute(id,);
     }
 
-    @Get("pending-reschedule/range") 
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtGuard, RolesGuard)
-    @Roles("DOCTOR", "SCHEDULER")
-    async getByRange(
-      @Query()
-      pQuery: GetPendingsToRescheduleRequestDto, @Req() req
+  @Get("pending-reschedule/range") 
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR", "SCHEDULER")
+  async getByRange(
+    @Query()
+    pQuery: GetPendingsToRescheduleRequestDto, @Req() req
     ) {
       const vInput =
         AppointmentControllerMapper
         .toGetPendingsInput(req.user.preferred_username,pQuery);
         const a =  await this.getPendingsToRescheduleUseCase
          .execute(vInput);
-        console.log(a);
          return a;
     }
 }

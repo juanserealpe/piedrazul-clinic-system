@@ -36,6 +36,8 @@ import { GetPendingsToRescheduleUseCase } from "./UseCases/Appointment/Get/GetPe
 import { TypeOrmDoctorUnavailabilityRepository } from "./Infraestructure/Implements/TypeOrmDoctorUnavailabilityRepository";
 import { CreateDoctorUnavailabilityUseCase } from "./UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityUseCase";
 import { GetActivesByDoctorUseCase } from "./UseCases/DoctorUnavailability/Get/GetActivesByDoctorUseCase";
+import { UpdateScheduleUseCase } from "./UseCases/Schedule/Update/UpdateScheduleUseCase";
+import { ChangeScheduleStatusUseCase } from "./UseCases/Schedule/ChangeScheduleStatus/ChangeScheduleStatusUseCase";
 
 export const APPOINTMENT_REPOSITORY =
   "APPOINTMENT_REPOSITORY";
@@ -316,7 +318,44 @@ export const DOCTOR_UNAVAILABILITY_REPOSITORY =
         new GetActivesByDoctorUseCase(doctorUnavailabilityRepo),
       inject: [DOCTOR_UNAVAILABILITY_REPOSITORY],
     },
-  ],
+    {
+      provide:
+        UpdateScheduleUseCase,
 
+      useFactory: (
+        scheduleRepo,
+        appointmentRepo
+      ) =>
+
+        new UpdateScheduleUseCase(
+          scheduleRepo,
+          appointmentRepo,
+        ),
+
+      inject: [
+        SCHEDULE_REPOSITORY,
+        APPOINTMENT_REPOSITORY,
+      ],
+    },
+    {
+      provide:
+          ChangeScheduleStatusUseCase,
+
+      useFactory: (
+          scheduleRepo,
+          appointmentRepo
+      ) =>
+
+          new ChangeScheduleStatusUseCase(
+              scheduleRepo,
+              appointmentRepo,
+          ),
+
+      inject: [
+          SCHEDULE_REPOSITORY,
+          APPOINTMENT_REPOSITORY,
+      ],
+    },
+      ],
 })
 export class AppointmentModule {}

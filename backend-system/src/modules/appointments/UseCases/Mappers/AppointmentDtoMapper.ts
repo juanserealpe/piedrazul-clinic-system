@@ -22,7 +22,7 @@ export class AppointmentDtoMapper{
 
     static toCreateEntity(scheduleId: string, input: CreateAppointmentInput): Appointment{
         return new Appointment(
-          null,
+          scheduleId,
           input.patientId,
           input.doctorId,"",
           [new AppointmentSchedule(null, scheduleId,input.date ,new Date())],

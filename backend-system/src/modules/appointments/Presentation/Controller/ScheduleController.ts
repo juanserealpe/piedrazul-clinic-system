@@ -8,7 +8,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
-  Param,
+  Patch,
 } from "@nestjs/common";
 import { CreateManySchedulesUseCase } from "../../UseCases/Schedule/Create/CreateManySchedule";
 import { GetAvailableSlotsUseCase } from "../../UseCases/Appointment/GetAvaibleSlotsByDoctor/GetAvailableSlots";
@@ -20,13 +20,14 @@ import { GetScheduleRequestDto } from "../Dtos/Schedule/GetScheduleRequestDto";
 import { Roles } from "src/common/auth/decorators/roles.decorator";
 import { RolesGuard } from "src/common/auth/guards/roles.guard";
 import { JwtGuard } from "src/common/auth/guards/jwt.guard";
-import { Console } from "console";
 import { GetScheduleUseCase } from "../../UseCases/Schedule/Get/GetScheduleUseCase";
-import { CreateDoctorUnavailabilityInput } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityInput";
 import { CreateDoctorUnavailabilityUseCase } from "../../UseCases/DoctorUnavailability/Create/CreateDoctorUnavailabilityUseCase";
 import { GetActivesByDoctorUseCase } from "../../UseCases/DoctorUnavailability/Get/GetActivesByDoctorUseCase";
 import { CreateDoctorUnavailabilityRequestDto } from "../Dtos/Appointment/CreateDoctorUnavailabilityRequestDto";
-import { GetScheduleOutput } from "../../UseCases/Appointment/GetAvaibleSlotsByDoctor/GetScheduleOutput";
+import { UpdateScheduleRequestDto } from "../Dtos/Schedule/UpdateScheduleRequestDto";
+import { UpdateScheduleUseCase } from "../../UseCases/Schedule/Update/UpdateScheduleUseCase";
+import { ChangeScheduleStatusRequestDto } from "../Dtos/Schedule/ChangeScheduleStatusRequestDto";
+import { ChangeScheduleStatusUseCase } from "../../UseCases/Schedule/ChangeScheduleStatus/ChangeScheduleStatusUseCase";
 
 @Controller("schedules")
 export class ScheduleController {
@@ -37,7 +38,9 @@ export class ScheduleController {
     private readonly createManySchedulesUseCase: CreateManySchedulesUseCase,
     private readonly getAvailableSlotsUseCase: GetAvailableSlotsUseCase,
     private readonly createUnavailabilityUseCase: CreateDoctorUnavailabilityUseCase,
-    private readonly getActivesByDoctorUseCase: GetActivesByDoctorUseCase
+    private readonly getActivesByDoctorUseCase: GetActivesByDoctorUseCase,
+    private readonly updateScheduleUseCase: UpdateScheduleUseCase,
+    private readonly changeScheduleStatusUseCase: ChangeScheduleStatusUseCase
   ) {}
 
   // -------- CREATE ONE --------
@@ -106,12 +109,43 @@ export class ScheduleController {
     return await this.createUnavailabilityUseCase.execute(input);
   }
 
-  @Get("unavailable/:id")
+  @Get("unavailable")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
-  async getActiveUnavailabilities(@Param("id") id: string) {//EL ID CORRESPONDE AL TOKEN
-    //const doctorId = req.user.preferred_username;
-    return await this.getActivesByDoctorUseCase.execute(id);
+  async getActiveUnavailabilities(@Req() req) {//EL ID CORRESPONDE AL TOKEN
+    const doctorId = req.user.preferred_username;
+    return await this.getActivesByDoctorUseCase.execute(doctorId);
   }
+
+  @Post("update")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR", "ADMIN")
+  async updateSchedule(@Body() body: UpdateScheduleRequestDto){
+    const vInput = ScheduleControllerMapper.toUpdateScheduleInput(body);
+    return await this.updateScheduleUseCase.execute(vInput)
+  }
+
+  @Patch("activate")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR","ADMIN")
+  async activateSchedule(@Body() request: ChangeScheduleStatusRequestDto,) {
+      const input =
+          ScheduleControllerMapper.toChangeStatusInput(request,);
+
+      return await this.changeScheduleStatusUseCase.activate(input);
+      }
+    
+  @Patch("desactivate")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR","ADMIN")
+  async desactivateSchedule(@Body() request: ChangeScheduleStatusRequestDto,) {
+      const input =
+          ScheduleControllerMapper.toChangeStatusInput(request,);
+
+      return await this.changeScheduleStatusUseCase.desactivate(input);
+      }
 }

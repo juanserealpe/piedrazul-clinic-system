@@ -26,7 +26,7 @@ export class GetScheduleUseCase{
   }
 
   return result.map(
-    ScheduleDtoMapper.toOutput
+    ScheduleDtoMapper.toCreateOutput
   );
 }
 }

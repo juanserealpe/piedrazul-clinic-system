@@ -27,3 +27,33 @@ export function getDayRange(pDate: Date) {
 
   return { vStart, vEnd };
 }
+
+  export const DAY_TO_UTC_NUMBER: Record<DayOfWeek, number> = {
+    [DayOfWeek.SUNDAY]:    0,
+    [DayOfWeek.MONDAY]:    1,
+    [DayOfWeek.TUESDAY]:   2,
+    [DayOfWeek.WEDNESDAY]: 3,
+    [DayOfWeek.THURSDAY]:  4,
+    [DayOfWeek.FRIDAY]:    5,
+    [DayOfWeek.SATURDAY]:  6,
+  };
+
+  export function getNextDateForDay(targetDay: DayOfWeek, from: Date = new Date()): Date {
+    const vBase = new Date(from);
+    vBase.setUTCHours(0, 0, 0, 0);
+
+    const vCurrentDayNum = vBase.getUTCDay();
+    const vTargetDayNum  = DAY_TO_UTC_NUMBER[targetDay];
+
+    //
+    const vDaysUntilTarget =
+      vTargetDayNum > vCurrentDayNum
+        ? vTargetDayNum - vCurrentDayNum
+        : vTargetDayNum === vCurrentDayNum
+          ? 7
+          : 7 - (vCurrentDayNum - vTargetDayNum);
+
+    vBase.setUTCDate(vBase.getUTCDate() + vDaysUntilTarget);
+    return vBase;
+  }
+  
