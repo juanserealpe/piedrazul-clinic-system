@@ -45,8 +45,16 @@ export default function CreateAppointmentModal({
     try {
 
       setLoading(true);
-
+      console.log("INPUT:", date);
       const appointmentDate = new Date(date);
+      console.log(
+      "LOCAL DATE:",
+      appointmentDate
+    );
+    console.log(
+      "UTC:",
+      appointmentDate.toISOString()
+    );
 
         await createAppointment({
         doctorId,
@@ -56,7 +64,7 @@ export default function CreateAppointmentModal({
         
 
       alert(
-        "Cita creada correctamente"
+        "Cita creada correctamente!"
       );
 
       onCreated?.();

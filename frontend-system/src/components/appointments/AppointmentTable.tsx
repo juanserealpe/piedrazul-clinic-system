@@ -111,17 +111,16 @@ export default function AppointmentTable({
               >
 
                 <td className="p-2">
-
-                  {new Date(appointment.date).toLocaleTimeString(
-                    "es-CO",
-                    {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "America/Bogota",
-                    }
-                  )}
-
-                </td>
+                {new Date(appointment.date)
+                .toLocaleTimeString(
+                  "es-CO",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "UTC",
+                  }
+                )}
+              </td>
 
                 <td className="p-2">
 

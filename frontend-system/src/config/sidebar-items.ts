@@ -18,14 +18,6 @@ export const sidebarItems = [
     ],
   },
   {
-    label: "Gestionar Horarios",
-    path: "/dashboard/scheduler/schedule",
-
-    roles: [
-      "SCHEDULER",
-    ],
-  },
-  {
     label: "Gestionar Citas",
     path: "/dashboard/scheduler/appointments",
 

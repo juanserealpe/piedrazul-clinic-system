@@ -10,9 +10,24 @@ export const createAppointment = async (
   }
 ) => {
 
+  // Asegurar que la fecha SIEMPRE está en formato ISO con Z (UTC)
+  const normalizedDate = payload.date.endsWith('Z') 
+    ? payload.date 
+    : new Date(payload.date).toISOString();
+
+  const normalizedPayload = {
+    ...payload,
+    date: normalizedDate,
+  };
+
+  console.log(
+    "Payload enviado a backend (UTC garantizado):",
+    normalizedPayload
+  );
+
   const response = await api.post(
     "/appointments",
-    payload
+    normalizedPayload
   );
 
   return response.data;

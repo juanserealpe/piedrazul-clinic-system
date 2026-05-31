@@ -13,7 +13,9 @@ from "@/src/components/appointments/AppointmentTable";
 
 import AppointmentNotifications
 from "@/src/components/appointments/AppointmentNotifications";
-
+import {
+  getTodayUtc,
+} from "@/src/lib/date";
 import {
   getAppointments,
 } from "@/src/services/appointment.service";
@@ -24,8 +26,9 @@ import {
 
 export default function AppointmentsPage() {
 
-  const [date, setDate] = useState(
-    new Date().toISOString()
+  const [date, setDate] =
+  useState(
+    getTodayUtc()
   );
 
   const [data, setData] =

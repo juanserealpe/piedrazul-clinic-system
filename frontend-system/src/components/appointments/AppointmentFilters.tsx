@@ -8,6 +8,16 @@ export default function AppointmentFilters({
   setDate,
 }: Props) {
 
+  const handleChange = (
+    value: string
+  ) => {
+
+    const utcDate =
+      `${value}T00:00:00.000Z`;
+
+    setDate(utcDate);
+  };
+
   return (
 
     <div className="flex gap-4">
@@ -16,13 +26,15 @@ export default function AppointmentFilters({
         type="date"
         value={date.split("T")[0]}
         onChange={(e) =>
-          setDate(
-            new Date(
-              e.target.value
-            ).toISOString()
+          handleChange(
+            e.target.value
           )
         }
-        className="border rounded p-2"
+        className="
+          border
+          rounded
+          p-2
+        "
       />
 
     </div>

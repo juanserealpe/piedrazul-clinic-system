@@ -1,6 +1,24 @@
-import { useState, useEffect } from "react";
-import { getAllPatientsRequest } from "@/src/services/auth.service";
-import { Button } from "../../components/ui/button";
+"use client";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  getAllPatientsRequest,
+} from "@/src/services/auth.service";
+
+import {
+  Button,
+} from "@/src/components/ui/button";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
 
 interface Patient {
   id: string;
@@ -9,115 +27,230 @@ interface Patient {
 }
 
 export default function PatientTable() {
-  const [loading, setLoading] = useState(true);
-  const [patients, setPatients] = useState<Patient[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [patients, setPatients] =
+    useState<Patient[]>([]);
 
   useEffect(() => {
+
     loadPatients();
+
   }, []);
 
   const loadPatients = async () => {
+
     try {
+
       setLoading(true);
-      const response = await getAllPatientsRequest();
+
+      const response =
+        await getAllPatientsRequest();
+
       setPatients(response);
+
     } catch (error) {
+
       console.error(error);
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  const handleView = (patient: Patient) => {
-    console.log("ver", patient);
+  const handleView = (
+    patient: Patient
+  ) => {
+
+    console.log(
+      "ver",
+      patient
+    );
+
   };
 
-  const handleEdit = (patient: Patient) => {
-    console.log("crear cita", patient);
+  const handleCreateAppointment = (
+    patient: Patient
+  ) => {
+
+    console.log(
+      "crear cita",
+      patient
+    );
+
   };
 
   if (loading) {
+
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-gray-500">
-          Cargando pacientes...
-        </span>
-      </div>
+
+      <Card>
+
+        <CardContent className="py-12 text-center">
+
+          <p className="text-muted-foreground">
+
+            Cargando pacientes...
+
+          </p>
+
+        </CardContent>
+
+      </Card>
+
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
 
-      <table className="min-w-full bg-white">
+    <Card>
 
-        {/* HEADER */}
-        <thead className="bg-gray-100 text-left">
-          <tr>
-            <th className="py-3 px-4 border-b">
-              ID
-            </th>
+      <CardHeader>
 
-            <th className="py-3 px-4 border-b">
-              Nombre
-            </th>
+        <CardTitle>
 
-            <th className="py-3 px-4 border-b">
-              Apellidos
-            </th>
+          Pacientes Registrados
 
-            <th className="py-3 px-4 border-b text-center">
-              Acciones
-            </th>
-          </tr>
-        </thead>
+        </CardTitle>
 
-        {/* BODY */}
-        <tbody>
-          {patients.map((patient) => (
-            <tr
-              key={patient.id}
-              className="hover:bg-gray-50"
-            >
-              {/* ID */}
-              <td className="py-2 px-4 border-b text-sm text-gray-500">
-                {patient.id}
-              </td>
+        <p className="text-sm text-muted-foreground">
 
-              {/* NAME */}
-              <td className="py-2 px-4 border-b">
-                {patient.name}
-              </td>
+          Total pacientes:
+          {" "}
+          {patients.length}
 
-              {/* LASTNAMES */}
-              <td className="py-2 px-4 border-b">
-                {patient.lastnames}
-              </td>
+        </p>
 
-              {/* ACTIONS */}
-              <td className="py-2 px-4 border-b">
-                <div className="flex justify-center gap-2">
+      </CardHeader>
 
-                  <Button
-                    variant="outline"
-                    onClick={() => handleView(patient)}
+      <CardContent>
+
+        <div className="overflow-x-auto">
+
+          <table className="w-full">
+
+            <thead>
+
+              <tr className="border-b">
+
+                <th className="text-left py-3 px-4">
+                  Documento
+                </th>
+
+                <th className="text-left py-3 px-4">
+                  Nombre
+                </th>
+
+                <th className="text-left py-3 px-4">
+                  Apellidos
+                </th>
+
+                <th className="text-center py-3 px-4">
+                  Acciones
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {patients.map(
+                (patient) => (
+
+                  <tr
+                    key={patient.id}
+                    className="
+                      border-b
+                      hover:bg-muted/40
+                      transition-colors
+                    "
                   >
-                    Ver
-                  </Button>
 
-                  <Button
-                    variant="outline"
-                    onClick={() => handleEdit(patient)}
-                  >
-                    Crear Cita
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+                    <td className="px-4 py-3">
 
-      </table>
-    </div>
+                      <span
+                        className="
+                          text-sm
+                          font-mono
+                          bg-muted
+                          px-2
+                          py-1
+                          rounded
+                        "
+                      >
+                        {patient.id}
+                      </span>
+
+                    </td>
+
+                    <td className="px-4 py-3 font-medium">
+
+                      {patient.name}
+
+                    </td>
+
+                    <td className="px-4 py-3">
+
+                      {patient.lastnames}
+
+                    </td>
+
+                    <td className="px-4 py-3">
+
+                      <div
+                        className="
+                          flex
+                          justify-center
+                          gap-2
+                        "
+                      >
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            handleView(
+                              patient
+                            )
+                          }
+                        >
+                          Ver
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleCreateAppointment(
+                              patient
+                            )
+                          }
+                        >
+                          Crear Cita
+                        </Button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </CardContent>
+
+    </Card>
+
   );
 }

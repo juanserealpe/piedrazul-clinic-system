@@ -12,7 +12,9 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 
-import { Button } from "../../components/ui/button";
+import {
+  Button,
+} from "../../components/ui/button";
 
 import {
   createAppointment,
@@ -54,10 +56,6 @@ export default function ScheduleAppointmentModal({
     setSelectedSlot] =
       useState("");
 
-  // ===========================
-  // CARGAR FECHAS DISPONIBLES
-  // ===========================
-
   useEffect(() => {
 
     if (!open || !doctor)
@@ -91,8 +89,8 @@ export default function ScheduleAppointmentModal({
           const date =
             new Date();
 
-          date.setDate(
-            date.getDate() + i
+          date.setUTCDate(
+            date.getUTCDate() + i
           );
 
           promises.push(
@@ -125,13 +123,25 @@ export default function ScheduleAppointmentModal({
                 item.slots.length > 0
             );
 
+        console.log(
+          "AVAILABLE RAW:",
+          JSON.stringify(
+            available,
+            null,
+            2
+          )
+        );
+
         setAvailableDates(
           available
         );
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "ERROR CARGANDO DISPONIBILIDAD:",
+          error
+        );
 
       } finally {
 
@@ -139,10 +149,6 @@ export default function ScheduleAppointmentModal({
 
       }
     };
-
-  // ===========================
-  // SLOTS DEL DÍA SELECCIONADO
-  // ===========================
 
   const currentSlots =
     availableDates.find(
@@ -151,51 +157,35 @@ export default function ScheduleAppointmentModal({
         selectedDate
     )?.slots || [];
 
-  // ===========================
-  // CREAR CITA
-  // ===========================
 
-  const handleSchedule =
-    async () => {
+const handleSchedule = async () => {
+    try {
+      if (!selectedSlot || !doctor?.id ) return;
 
-      try {
+      setLoading(true);
 
-        if (!selectedSlot)
-          return;
+      // ✅ Asegurar ISO válido
+      const utcDate = new Date(selectedSlot).toISOString();
 
-        setLoading(true);
+            const payload = {
+        doctorId: doctor.id,
+        patientId: "",// ✅ obligatorio según tu service
+        date: utcDate,
+      };
 
-        await createAppointment({
-          doctorId: doctor.id,
-          patientId: "",
-          date: selectedSlot,
-        });
+      console.log("PAYLOAD:", payload);
 
-        alert(
-          "Cita creada correctamente"
-        );
+      await createAppointment(payload);
 
-        onClose();
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "Error al crear cita"
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-  // ===========================
-  // UI
-  // ===========================
-
+      alert("Cita creada correctamente");
+      onClose();
+    } catch (error) {
+      console.error("ERROR CREANDO CITA:", error);
+      alert("Error al crear cita");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
 
     <Dialog
@@ -209,8 +199,7 @@ export default function ScheduleAppointmentModal({
 
           <DialogTitle>
 
-            Agendar con
-            {" "}
+            Agendar con{" "}
             {doctor?.name}
             {" "}
             {doctor?.lastnames}
@@ -233,7 +222,13 @@ export default function ScheduleAppointmentModal({
         {!loading &&
           availableDates.length === 0 && (
 
-            <div className="py-6 text-center text-muted-foreground">
+            <div
+              className="
+              py-6
+              text-center
+              text-muted-foreground
+              "
+            >
 
               No hay horarios disponibles
               para los próximos 12 días.
@@ -246,8 +241,6 @@ export default function ScheduleAppointmentModal({
 
           <div className="space-y-6">
 
-            {/* FECHAS */}
-
             <div>
 
               <h3 className="font-semibold mb-3">
@@ -258,10 +251,10 @@ export default function ScheduleAppointmentModal({
 
               <div
                 className="
-                  grid
-                  grid-cols-2
-                  md:grid-cols-3
-                  gap-2
+                grid
+                grid-cols-2
+                md:grid-cols-3
+                gap-2
                 "
               >
 
@@ -289,20 +282,23 @@ export default function ScheduleAppointmentModal({
                       }}
                     >
 
-                      {
-                        new Date(
-                          item.date
-                        ).toLocaleDateString(
-                          "es-CO",
-                          {
-                            weekday:
-                              "short",
-                            day: "2-digit",
-                            month:
-                              "2-digit",
-                          }
-                        )
-                      }
+                      {new Date(
+                        item.date
+                      ).toLocaleDateString(
+                        "es-CO",
+                        {
+                          timeZone:
+                            "UTC",
+                          weekday:
+                            "short",
+                          day:
+                            "2-digit",
+                          month:
+                            "2-digit",
+                          year:
+                            "numeric",
+                        }
+                      )}
 
                     </Button>
 
@@ -312,8 +308,6 @@ export default function ScheduleAppointmentModal({
               </div>
 
             </div>
-
-            {/* HORARIOS */}
 
             {selectedDate && (
 
@@ -327,10 +321,10 @@ export default function ScheduleAppointmentModal({
 
                 <div
                   className="
-                    grid
-                    grid-cols-2
-                    md:grid-cols-4
-                    gap-2
+                  grid
+                  grid-cols-2
+                  md:grid-cols-4
+                  gap-2
                   "
                 >
 
@@ -352,19 +346,21 @@ export default function ScheduleAppointmentModal({
                         }
                       >
 
-                        {
-                          new Date(
-                            slot
-                          ).toLocaleTimeString(
-                            "es-CO",
-                            {
-                              hour:
-                                "2-digit",
-                              minute:
-                                "2-digit",
-                            }
-                          )
-                        }
+                        {new Date(
+                          slot
+                        ).toLocaleTimeString(
+                          "es-CO",
+                          {
+                            timeZone:
+                              "UTC",
+                            hour:
+                              "2-digit",
+                            minute:
+                              "2-digit",
+                            hour12:
+                              false,
+                          }
+                        )}
 
                       </Button>
 
@@ -376,8 +372,6 @@ export default function ScheduleAppointmentModal({
               </div>
 
             )}
-
-            {/* FOOTER */}
 
             <div className="flex justify-end gap-2">
 

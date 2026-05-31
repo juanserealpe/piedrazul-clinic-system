@@ -36,51 +36,60 @@ export default function GenerateUnavailabilityButton({
 
   const handleSubmit = async () => {
 
-    try {
+  try {
 
-      setLoading(true);
+    setLoading(true);
 
-      const start =
-        new Date(
-          `${startDate}T${startTime}`
-        );
+    const startUtc =
+      `${startDate}T${startTime}:00.000Z`;
 
-      const end =
-        new Date(
-          `${endDate}T${endTime}`
-        );
+    const endUtc =
+      `${endDate}T${endTime}:00.000Z`;
 
-      await createUnavailabilityRequest(
-        {
-          startDate:
-            start.toISOString(),
+    console.log(
+      "START UTC:",
+      startUtc
+    );
 
-          endDate:
-            end.toISOString(),
+    console.log(
+      "END UTC:",
+      endUtc
+    );
 
-          reason,
-        }
-      );
+    await createUnavailabilityRequest(
+      {
+        startDate: startUtc,
+        endDate: endUtc,
+        reason,
+      }
+    );
 
-      alert(
-        "Incapacidad registrada"
-      );
+    alert(
+      "Incapacidad registrada"
+    );
 
-      setOpen(false);
+    setOpen(false);
 
-    } catch (error) {
+    setStartDate("");
+    setStartTime("");
+    setEndDate("");
+    setEndTime("");
+    setReason("");
 
-      console.error(error);
+  } catch (error) {
 
-      alert(
-        "Error registrando incapacidad"
-      );
+    console.error(error);
 
-    } finally {
+    alert(
+      "Error registrando incapacidad"
+    );
 
-      setLoading(false);
-    }
-  };
+  } finally {
+
+    setLoading(false);
+
+  }
+};
 
   return (
 
