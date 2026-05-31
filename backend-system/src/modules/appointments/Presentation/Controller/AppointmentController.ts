@@ -49,9 +49,6 @@ export class AppointmentController {
     if(!body.patientId) body.patientId = req.user.preferred_username;
     if(!body.doctorId) body.doctorId = req.user.preferred_username;
     console.log("BODY:", body);
-    const doctorId =
-    req.user.preferred_username;
-    body.doctorId = doctorId;
     const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId, body);
     return await this.createAppointmentUseCase.execute(vInput);               
   }
