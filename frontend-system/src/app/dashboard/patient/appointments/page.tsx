@@ -58,8 +58,8 @@ export default function PatientAppointmentsPage() {
       {/* Tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
         {[
-          { key: "citas", label: "📋 Mis Citas" },
-          { key: "agendar", label: "➕ Agendar Nueva Cita" },
+          { key: "citas", label: "Mis Citas" },
+          { key: "agendar", label: "+ Agendar Nueva Cita" },
         ].map((t) => (
           <button
             key={t.key}
@@ -97,7 +97,7 @@ export default function PatientAppointmentsPage() {
             <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
               <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--pz-border)" }}>
                 <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
-                  📋 Sus Citas Médicas
+                  Sus Citas Médicas
                 </h3>
                 <p style={{ margin: "4px 0 0", color: "var(--pz-text-soft)", fontSize: "0.88rem" }}>
                   Total: <strong>{appointments.length}</strong> citas
@@ -121,7 +121,7 @@ export default function PatientAppointmentsPage() {
                             fontWeight: 700, padding: "4px 12px", borderRadius: "999px",
                             fontSize: "0.9rem", fontFamily: "monospace",
                           }}>
-                            📅 {new Date(apt.date).toLocaleDateString("es-CO", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" })}
+                            {new Date(apt.date).toLocaleDateString("es-CO", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" })}
                             {" "}{new Date(apt.date).toLocaleTimeString("es-CO", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </td>
