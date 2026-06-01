@@ -25,6 +25,7 @@ import { CreateAppointment } from "./UseCases/Appointment/Create/CreateAppointme
 import { UpdateAppointment } from "./UseCases/Appointment/Update/UpdateAppointment";
 import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
 import { GetAvailableSlotsUseCase } from "./UseCases/Appointment/GetAvaibleSlotsByDoctor/GetAvailableSlots";
+import { GetAppointmentsByPatient } from "./UseCases/Appointment/Get/GetAppointmentsByPatient/GetAppointmentsByPatient";
 
 // Schedule Use Cases
 import { CreateScheduleUseCase } from "./UseCases/Schedule/Create/CreateScheduleUseCase";
@@ -356,6 +357,13 @@ export const DOCTOR_UNAVAILABILITY_REPOSITORY =
           APPOINTMENT_REPOSITORY,
       ],
     },
+
+    {
+  provide: GetAppointmentsByPatient,
+  useFactory: (appointmentRepo) =>
+    new GetAppointmentsByPatient(appointmentRepo),
+  inject: [APPOINTMENT_REPOSITORY],
+},
       ],
 })
 export class AppointmentModule {}

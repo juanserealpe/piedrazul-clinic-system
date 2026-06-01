@@ -12,14 +12,7 @@ export const registerSchema = z.object({
   .trim()
   .min(1, "El correo es obligatorio")
   .email("Correo inválido")
-  .max(100, "Correo demasiado largo")
-  .refine(
-    (email) => email.endsWith("@unicauca.edu.co"),
-    {
-      message:
-        "Solo se permiten correos @unicauca.edu.co",
-    }
-  ),
+  .max(100, "Correo demasiado largo"),
 
   password: z
     .string()

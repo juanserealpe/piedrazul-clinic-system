@@ -28,6 +28,7 @@ import { GetAllPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Ge
 import { GetPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Get/GetPendingsToReschedule/GetPendingsToRescheduleUseCase";
 import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
 import { UpdateAppointmentOutput } from "../../UseCases/Appointment/Update/UpdateAppointmentOutput";
+import { GetAppointmentsByPatient } from "../../UseCases/Appointment/Get/GetAppointmentsByPatient/GetAppointmentsByPatient";
 
 @Controller("appointments")
 export class AppointmentController {
@@ -38,6 +39,8 @@ export class AppointmentController {
     private readonly csvExportUseCase: CsvExportUseCase,
     private readonly getAllPendingsToRescheduleUseCase: GetAllPendingsToRescheduleUseCase,
     private readonly getPendingsToRescheduleUseCase: GetPendingsToRescheduleUseCase,
+    private readonly getAppointmentsByPatientUseCase: GetAppointmentsByPatient,
+    
   ) {}
 
   // -------- CREATE APPOINTMENT --------
@@ -121,4 +124,12 @@ export class AppointmentController {
          .execute(vInput);
          return a;
     }
+    @Get("by-patient")
+@HttpCode(HttpStatus.OK)
+@UseGuards(JwtGuard, RolesGuard)
+@Roles("PATIENT")
+async getByPatient(@Req() req) {
+  const patientId = req.user.preferred_username;
+  return await this.getAppointmentsByPatientUseCase.execute(patientId);
+}
 }

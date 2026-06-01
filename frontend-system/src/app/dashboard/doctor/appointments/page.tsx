@@ -3,26 +3,26 @@
 import { useEffect, useState } from "react";
 
 import AppointmentToolbar
-from "@/src/components/appointments/AppointmentToolbar";
+from "@/components/appointments/AppointmentToolbar";
 
 import AppointmentFilters
-from "@/src/components/appointments/AppointmentFilters";
+from "@/components/appointments/AppointmentFilters";
 
 import AppointmentTable
-from "@/src/components/appointments/AppointmentTable";
+from "@/components/appointments/AppointmentTable";
 
 import AppointmentNotifications
-from "@/src/components/appointments/AppointmentNotifications";
+from "@/components/appointments/AppointmentNotifications";
 import {
   getTodayUtc,
-} from "@/src/lib/date";
+} from "@/lib/date";
 import {
   getAppointments,
-} from "@/src/services/appointment.service";
+} from "@/services/appointment.service";
 
 import {
   AppointmentsResponse,
-} from "@/src/types/appointment";
+} from "@/types/appointment";
 
 export default function AppointmentsPage() {
 

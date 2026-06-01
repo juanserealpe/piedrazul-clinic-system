@@ -27,4 +27,8 @@ export class UserRepository {
     const patients = await this.repo.find({ where: { roles: 'PATIENT' } });
     return patients.map(pat => ({ id: pat.id, name: pat.names, lastnames: pat.lastnames }));
   }
+  async getAllUsers(): Promise<{ id: string; name: string; lastnames: string }[]> {
+  const users = await this.repo.find();
+  return users.map(u => ({ id: u.id, name: u.names, lastnames: u.lastnames }));
+}
 }

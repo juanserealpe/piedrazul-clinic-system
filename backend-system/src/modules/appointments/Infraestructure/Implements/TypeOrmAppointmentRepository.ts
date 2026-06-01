@@ -194,4 +194,11 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
 
       return vResult.affected ?? 0;
   }
+  async findByPatientId(patientId: string): Promise<Appointment[]> {
+  const results = await this.repo.find({
+    where: { patientId },
+    order: { date: "DESC" },
+  });
+  return results.map(AppointmentPersistenceMapper.toDomain);
+}
 }

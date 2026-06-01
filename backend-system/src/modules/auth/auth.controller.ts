@@ -51,4 +51,8 @@ export class AuthController {
   async getAllPatients() : Promise<{ id: string; name: string, lastnames: string }[]> {
     return this.authService.getAllPatients();
   }
+  @Get('all-users')
+async getAllUsers(): Promise<{ id: string; name: string; lastnames: string }[]> {
+  return this.authService.getAllUsers();
+}
 }

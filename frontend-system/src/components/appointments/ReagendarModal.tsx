@@ -1,27 +1,16 @@
 "use client";
-
 import { X, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useState } from "react";
 
-const MONTHS = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-];
+const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 
-interface ReagendarModalProps {
-  appointmentId: string;
-  fechaAnterior: string;
-  onClose: () => void;
-  onConfirm: (appointmentId: string, newDate: string) => void;
+interface Props {
+  appointmentId: string; fechaAnterior: string;
+  onClose: () => void; onConfirm: (appointmentId: string, newDate: string) => void;
 }
 
-export default function ReagendarModal({
-  appointmentId,
-  fechaAnterior,
-  onClose,
-  onConfirm,
-}: ReagendarModalProps) {
+export default function ReagendarModal({ appointmentId, fechaAnterior, onClose, onConfirm }: Props) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -29,122 +18,88 @@ export default function ReagendarModal({
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
-
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
+  const cells = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const isPast = (day: number) =>
-    new Date(year, month, day) <
-    new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const isSelected = (day: number) =>
-    !!selectedDate &&
-    selectedDate.getDate() === day &&
-    selectedDate.getMonth() === month &&
-    selectedDate.getFullYear() === year;
-
-  const isToday = (day: number) =>
-    today.getDate() === day &&
-    today.getMonth() === month &&
-    today.getFullYear() === year;
-
-  const formatSelected = (date: Date) => {
-    const d = date.getDate().toString().padStart(2, "0");
-    const m = (date.getMonth() + 1).toString().padStart(2, "0");
-    return `${date.getFullYear()}-${m}-${d}`;
-  };
+  const isPast = (day: number) => new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const isSelected = (day: number) => !!selectedDate && selectedDate.getDate() === day && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
+  const isToday = (day: number) => today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+  const formatSelected = (date: Date) => `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,"0")}-${date.getDate().toString().padStart(2,"0")}`;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="pz-overlay" onClick={onClose}>
+      <div className="pz-modal" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Reagendar</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
-            <X size={18} className="text-gray-500" />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+          <h2 style={{ margin: 0, fontSize: "1.2rem", color: "var(--pz-green)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+            🔄 Reagendar Cita
+          </h2>
+          <button onClick={onClose} style={{ background: "var(--pz-sand)", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer" }}>
+            <X size={16} />
           </button>
         </div>
 
         {/* Fecha anterior */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            Fecha anterior
-          </label>
-          <div className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-600 text-sm select-none">
+        <div style={{ marginBottom: "16px" }}>
+          <label className="pz-label">Fecha anterior</label>
+          <div style={{ background: "var(--pz-sand)", borderRadius: "8px", padding: "12px 16px", color: "var(--pz-text-mid)", fontSize: "0.95rem", border: "1px solid var(--pz-border)" }}>
             {fechaAnterior}
           </div>
         </div>
 
         {/* Nueva fecha */}
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            Nueva fecha
-          </label>
+        <div style={{ marginBottom: "20px" }}>
+          <label className="pz-label">Nueva fecha</label>
           <button
             onClick={() => setCalendarOpen(!calendarOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm hover:border-blue-400 transition-colors"
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 16px", background: "var(--pz-white)",
+              border: `2px solid ${selectedDate ? "var(--pz-green)" : "var(--pz-border)"}`,
+              borderRadius: "8px", cursor: "pointer", fontSize: "0.95rem",
+            }}
           >
-            <span className={selectedDate ? "text-gray-800 font-medium" : "text-gray-400"}>
-              {selectedDate ? formatSelected(selectedDate) : "Selecciona una fecha"}
+            <span style={{ color: selectedDate ? "var(--pz-text)" : "var(--pz-text-soft)", fontWeight: selectedDate ? 600 : 400 }}>
+              {selectedDate ? `${formatSelected(selectedDate)}` : "Selecciona una fecha..."}
             </span>
-            <CalendarDays size={16} className="text-blue-500" />
+            <CalendarDays size={18} style={{ color: "var(--pz-green)" }} />
           </button>
 
           {calendarOpen && (
-            <div className="mt-2 border border-gray-200 rounded-xl bg-white shadow-lg overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b">
-                <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded-lg hover:bg-gray-100">
-                  <ChevronLeft size={16} />
+            <div style={{ marginTop: "8px", border: "2px solid var(--pz-border)", borderRadius: "12px", background: "var(--pz-white)", overflow: "hidden", boxShadow: "var(--pz-shadow)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--pz-border)", background: "var(--pz-green-light)" }}>
+                <button onClick={() => setViewDate(new Date(year, month-1, 1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px" }}>
+                  <ChevronLeft size={18} style={{ color: "var(--pz-green)" }} />
                 </button>
-                <span className="font-semibold text-sm text-gray-800">
-                  {MONTHS[month]} {year}
-                </span>
-                <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 rounded-lg hover:bg-gray-100">
-                  <ChevronRight size={16} />
+                <span style={{ fontWeight: 700, color: "var(--pz-green)", fontSize: "0.95rem" }}>{MONTHS[month]} {year}</span>
+                <button onClick={() => setViewDate(new Date(year, month+1, 1))} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px" }}>
+                  <ChevronRight size={18} style={{ color: "var(--pz-green)" }} />
                 </button>
               </div>
-              <div className="grid grid-cols-7 text-center px-2 pt-2">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", textAlign: "center", padding: "8px 8px 0" }}>
                 {DAYS.map((d) => (
-                  <div key={d} className="text-xs font-semibold text-gray-400 py-1">{d}</div>
+                  <div key={d} style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--pz-text-soft)", padding: "4px 0" }}>{d}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 text-center px-2 pb-3">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", textAlign: "center", padding: "0 8px 12px" }}>
                 {cells.map((day, idx) => (
-                  <div key={idx} className="p-0.5">
+                  <div key={idx} style={{ padding: "2px" }}>
                     {day === null ? <div /> : (
                       <button
-                        onClick={() => {
-                          if (!isPast(day)) {
-                            setSelectedDate(new Date(year, month, day));
-                            setCalendarOpen(false);
-                          }
-                        }}
+                        onClick={() => { if (!isPast(day)) { setSelectedDate(new Date(year, month, day)); setCalendarOpen(false); } }}
                         disabled={isPast(day)}
-                        className={`
-                          w-full aspect-square rounded-lg text-sm font-medium transition-colors
-                          ${isPast(day)
-                            ? "text-gray-300 cursor-not-allowed"
-                            : isSelected(day)
-                            ? "bg-blue-600 text-white"
-                            : isToday(day)
-                            ? "border-2 border-blue-400 text-blue-600 hover:bg-blue-50"
-                            : "text-gray-700 hover:bg-blue-50"
-                          }
-                        `}
-                      >
-                        {day}
-                      </button>
+                        style={{
+                          width: "100%", aspectRatio: "1", borderRadius: "8px",
+                          fontSize: "0.88rem", fontWeight: 600,
+                          border: isToday(day) ? "2px solid var(--pz-green-mid)" : "none",
+                          background: isSelected(day) ? "var(--pz-green)" : "transparent",
+                          color: isPast(day) ? "#ccc" : isSelected(day) ? "white" : isToday(day) ? "var(--pz-green)" : "var(--pz-text)",
+                          cursor: isPast(day) ? "not-allowed" : "pointer",
+                          transition: "background 0.12s",
+                        }}
+                      >{day}</button>
                     )}
                   </div>
                 ))}
@@ -153,13 +108,13 @@ export default function ReagendarModal({
           )}
         </div>
 
-        {/* Confirmar */}
         <button
           onClick={() => selectedDate && onConfirm(appointmentId, formatSelected(selectedDate))}
           disabled={!selectedDate}
-          className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+          className="pz-btn-primary"
+          style={{ width: "100%", justifyContent: "center", opacity: !selectedDate ? 0.5 : 1, fontSize: "1rem", padding: "14px" }}
         >
-          Confirmar reagendamiento
+          ✓ Confirmar reagendamiento
         </button>
       </div>
     </div>

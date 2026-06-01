@@ -41,4 +41,5 @@ export interface AppointmentRepository{
     pIds: string[],
     pStatus: Status,
     ): Promise<number>;
+    findByPatientId(patientId: string): Promise<Appointment[]>;
 }

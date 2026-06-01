@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 
-import PatientTable from "@/src/components/appointments/PattientTable";
+import PatientTable from "@/components/appointments/PattientTable";
 import DoctorsSelectModal from "../../../../components/appointments/DoctorSelectModal";
-import AppointmentSchedulerModal from "@/src/components/appointments/AppointmentSchedulerModal";
+import AppointmentSchedulerModal from "@/components/appointments/AppointmentSchedulerModal";
 
-import { getAllDoctorsRequest } from "@/src/services/auth.service";
+import { getAllDoctorsRequest } from "@/services/auth.service";
 
 export default function AppointmentsPage() {
 

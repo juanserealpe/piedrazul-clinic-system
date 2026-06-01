@@ -1,307 +1,87 @@
 "use client";
-
 import { useState } from "react";
+import { createUnavailabilityRequest } from "@/services/schedule.service";
+import { showSuccess, showError } from "@/lib/notifications";
 
-import {
-  createUnavailabilityRequest,
-} from "../../services/schedule.service";
-
-import { Button } from "../ui/button";
-import { Card } from "../ui/card";
-
-
-export default function GenerateUnavailabilityButton({
-}) {
-
-  const [open, setOpen] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [startDate, setStartDate] =
-    useState("");
-
-  const [startTime, setStartTime] =
-    useState("");
-
-  const [endDate, setEndDate] =
-    useState("");
-
-  const [endTime, setEndTime] =
-    useState("");
-
-  const [reason, setReason] =
-    useState("");
+export default function GenerateUnavailabilityButton() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [reason, setReason] = useState("");
 
   const handleSubmit = async () => {
-
-  try {
-
-    setLoading(true);
-
-    const startUtc =
-      `${startDate}T${startTime}:00.000Z`;
-
-    const endUtc =
-      `${endDate}T${endTime}:00.000Z`;
-
-    console.log(
-      "START UTC:",
-      startUtc
-    );
-
-    console.log(
-      "END UTC:",
-      endUtc
-    );
-
-    await createUnavailabilityRequest(
-      {
-        startDate: startUtc,
-        endDate: endUtc,
+    try {
+      setLoading(true);
+      await createUnavailabilityRequest({
+        startDate: `${startDate}T${startTime}:00.000Z`,
+        endDate: `${endDate}T${endTime}:00.000Z`,
         reason,
-      }
-    );
-
-    alert(
-      "Incapacidad registrada"
-    );
-
-    setOpen(false);
-
-    setStartDate("");
-    setStartTime("");
-    setEndDate("");
-    setEndTime("");
-    setReason("");
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Error registrando incapacidad"
-    );
-
-  } finally {
-
-    setLoading(false);
-
-  }
-};
+      });
+      showSuccess("Incapacidad registrada correctamente");
+      setOpen(false);
+      setStartDate(""); setStartTime(""); setEndDate(""); setEndTime(""); setReason("");
+    } catch (error) { console.error(error); showError("Error registrando incapacidad"); }
+    finally { setLoading(false); }
+  };
 
   return (
-
     <>
-
-      <Button
-        onClick={() =>
-          setOpen(true)
-        }
-      >
-        Generar incapacidad
-      </Button>
+      <button onClick={() => setOpen(true)} className="pz-btn-outline" style={{ marginTop: "8px" }}>
+        Registrar incapacidad
+      </button>
 
       {open && (
-
-        <div
-          className="
-            fixed
-            inset-0
-            bg-black/40
-            flex
-            items-center
-            justify-center
-            z-50
-          "
-        >
-
-          <Card
-            className="
-              w-full
-              max-w-lg
-              p-6
-              space-y-4
-            "
-          >
-
-            <h2
-              className="
-                text-xl
-                font-bold
-              "
-            >
-              Registrar incapacidad
-            </h2>
-
-            {/* FECHA INICIO */}
-
-            <div>
-
-              <label>
-                Fecha inicio
-              </label>
-
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) =>
-                  setStartDate(
-                    e.target.value
-                  )
-                }
-                className="
-                  w-full
-                  border
-                  rounded
-                  p-2
-                "
-              />
-
+        <div className="pz-overlay">
+          <div className="pz-modal" style={{ maxWidth: "480px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <h2 style={{ margin: 0, fontSize: "1.2rem", color: "var(--pz-green)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+                Registrar Incapacidad
+              </h2>
+              <button onClick={() => setOpen(false)} style={{ background: "var(--pz-sand)", border: "none", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontWeight: 700 }}>Cerrar</button>
             </div>
 
-            {/* HORA INICIO */}
-
-            <div>
-
-              <label>
-                Hora inicio
-              </label>
-
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) =>
-                  setStartTime(
-                    e.target.value
-                  )
-                }
-                className="
-                  w-full
-                  border
-                  rounded
-                  p-2
-                "
-              />
-
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div>
+                <label className="pz-label">Fecha inicio</label>
+                <input className="pz-input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="pz-label">Hora inicio</label>
+                <input className="pz-input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              </div>
+              <div>
+                <label className="pz-label">Fecha fin</label>
+                <input className="pz-input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="pz-label">Hora fin</label>
+                <input className="pz-input" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label className="pz-label">Motivo de la incapacidad</label>
+                <textarea
+                  className="pz-input"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  rows={3}
+                  placeholder="Describa el motivo..."
+                  style={{ height: "auto", resize: "vertical" }}
+                />
+              </div>
             </div>
 
-            {/* FECHA FIN */}
-
-            <div>
-
-              <label>
-                Fecha fin
-              </label>
-
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) =>
-                  setEndDate(
-                    e.target.value
-                  )
-                }
-                className="
-                  w-full
-                  border
-                  rounded
-                  p-2
-                "
-              />
-
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+              <button onClick={() => setOpen(false)} className="pz-btn-outline">Cancelar</button>
+              <button onClick={handleSubmit} disabled={loading} className="pz-btn-primary" style={{ opacity: loading ? 0.6 : 1 }}>
+                {loading ? "Guardando..." : "Registrar"}
+              </button>
             </div>
-
-            {/* HORA FIN */}
-
-            <div>
-
-              <label>
-                Hora fin
-              </label>
-
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) =>
-                  setEndTime(
-                    e.target.value
-                  )
-                }
-                className="
-                  w-full
-                  border
-                  rounded
-                  p-2
-                "
-              />
-
-            </div>
-
-            {/* MOTIVO */}
-
-            <div>
-
-              <label>
-                Motivo
-              </label>
-
-              <textarea
-                value={reason}
-                onChange={(e) =>
-                  setReason(
-                    e.target.value
-                  )
-                }
-                className="
-                  w-full
-                  border
-                  rounded
-                  p-2
-                "
-                rows={4}
-              />
-
-            </div>
-
-            <div
-              className="
-                flex
-                justify-end
-                gap-2
-              "
-            >
-
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                disabled={loading}
-                onClick={handleSubmit}
-              >
-                {
-                  loading
-                    ? "Guardando..."
-                    : "Guardar"
-                }
-              </Button>
-
-            </div>
-
-          </Card>
-
+          </div>
         </div>
-
       )}
-
     </>
-
   );
 }
