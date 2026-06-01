@@ -94,7 +94,7 @@ export default function SchedulerAppointmentsPage() {
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
         {[
           { key: "ver", label: "Ver Citas" },
-          { key: "crear", label: "➕ Crear Cita" },
+          { key: "crear", label: "+ Crear Cita" },
         ].map((t) => (
           <button key={t.key} onClick={() => setTab(t.key as any)} style={{
             padding: "10px 22px", borderRadius: "8px",
@@ -134,7 +134,7 @@ export default function SchedulerAppointmentsPage() {
               {appointments.length > 0 && (
                 <button onClick={handleExport} disabled={exporting} className="pz-btn-outline"
                   style={{ marginBottom: "2px", opacity: exporting ? 0.6 : 1 }}>
-                  {exporting ? "⏳ Exportando..." : "⬇ Exportar CSV"}
+                  {exporting ? " Exportando..." : "⬇ Exportar CSV"}
                 </button>
               )}
             </div>
@@ -156,7 +156,7 @@ export default function SchedulerAppointmentsPage() {
             <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
               <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--pz-border)" }}>
                 <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
-                  📅 Citas del {new Date(filterDate + "T12:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+                  Citas del {new Date(filterDate + "T12:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
                 </h3>
                 <p style={{ margin: "4px 0 0", color: "var(--pz-text-soft)", fontSize: "0.88rem" }}>
                   {doctorName(selectedDoctorId)} — Total: <strong>{count}</strong> citas
