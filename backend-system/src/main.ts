@@ -25,8 +25,11 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors(); // Enable CORS for all origins
-
+  app.enableCors({
+    origin: 'http://localhost:4000',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   await app.listen(3000);
   
   const dataSource = app.get<DataSource>(getDataSourceToken());

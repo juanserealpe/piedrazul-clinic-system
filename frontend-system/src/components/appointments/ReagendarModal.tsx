@@ -1,19 +1,30 @@
 "use client";
 
-import { X, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const MONTHS = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-];
-const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 
-interface ReagendarModalProps {
+import { Button } from "../../components/ui/button";
+
+import { reScheduleAppointment } from "@/src/services/appointment.service";
+import { getAvailableSlots } from "@/src/services/schedule.service";
+
+interface AvailableDate {
+  date: string;
+  slots: string[];
+}
+
+interface Props {
   appointmentId: string;
+  /** Fecha actual de la cita (ISO string). Se muestra como label no editable. */
   fechaAnterior: string;
   onClose: () => void;
-  onConfirm: (appointmentId: string, newDate: string) => void;
+  onConfirm?: () => void;
 }
 
 export default function ReagendarModal({
@@ -21,147 +32,218 @@ export default function ReagendarModal({
   fechaAnterior,
   onClose,
   onConfirm,
-}: ReagendarModalProps) {
-  const today = new Date();
-  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+}: Props) {
 
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingConfirm, setLoadingConfirm] = useState(false);
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
+  const [slotsVisible, setSlotsVisible] = useState(false);
+  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
 
-  const isPast = (day: number) =>
-    new Date(year, month, day) <
-    new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
 
-  const isSelected = (day: number) =>
-    !!selectedDate &&
-    selectedDate.getDate() === day &&
-    selectedDate.getMonth() === month &&
-    selectedDate.getFullYear() === year;
+  useEffect(() => {
+    if (!open) {
+      setSlotsVisible(false);
+      setAvailableDates([]);
+      setSelectedDate("");
+      setSelectedSlot("");
+    }
+  }, [open]);
 
-  const isToday = (day: number) =>
-    today.getDate() === day &&
-    today.getMonth() === month &&
-    today.getFullYear() === year;
+  // ─── Cargar slots disponibles ────────────────────────────────────────────────
 
-  const formatSelected = (date: Date) => {
-    const d = date.getDate().toString().padStart(2, "0");
-    const m = (date.getMonth() + 1).toString().padStart(2, "0");
-    return `${date.getFullYear()}-${m}-${d}`;
+  const loadAvailableDates = async () => {
+    try {
+      setLoadingSlots(true);
+      setAvailableDates([]);
+      setSelectedDate("");
+      setSelectedSlot("");
+
+      const promises = [];
+
+      for (let i = 0; i < 12; i++) {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() + i);
+        // No se envía doctorId — el back lo toma del JWT
+        promises.push(getAvailableSlots(date.toISOString(), undefined));
+      }
+
+      const results = await Promise.allSettled(promises);
+
+      const available = results
+        .filter((r) => r.status === "fulfilled")
+        .map((r: any) => r.value)
+        .filter((item) => item?.slots && item.slots.length > 0);
+
+      setAvailableDates(available);
+    } catch (error) {
+      console.error("ERROR CARGANDO DISPONIBILIDAD:", error);
+    } finally {
+      setLoadingSlots(false);
+    }
   };
 
+  const handleSelectNuevaFecha = () => {
+    setSlotsVisible(true);
+    loadAvailableDates();
+  };
+
+  // ─── Confirmar reagendamiento ────────────────────────────────────────────────
+
+  const handleConfirm = async () => {
+    if (!selectedSlot) return;
+
+    try {
+      setLoadingConfirm(true);
+
+      // No se envía doctorId — el back lo toma del JWT
+      await reScheduleAppointment({
+        appointmentId,
+        newDate: new Date(selectedSlot).toISOString(),
+      });
+
+      onConfirm?.();
+      onClose();
+    } catch (error) {
+      console.error("ERROR AL REAGENDAR:", error);
+      alert("Error al reagendar la cita. Intenta nuevamente.");
+    } finally {
+      setLoadingConfirm(false);
+    }
+  };
+
+  // ─── Slots de la fecha seleccionada ─────────────────────────────────────────
+
+  const currentSlots =
+    availableDates.find((item) => item.date === selectedDate)?.slots ?? [];
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
+
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Reagendar</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
-            <X size={18} className="text-gray-500" />
-          </button>
-        </div>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Reagendar cita</DialogTitle>
+        </DialogHeader>
 
-        {/* Fecha anterior */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            Fecha anterior
-          </label>
-          <div className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-600 text-sm select-none">
-            {fechaAnterior}
-          </div>
-        </div>
+        <div className="space-y-6">
 
-        {/* Nueva fecha */}
-        <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            Nueva fecha
-          </label>
-          <button
-            onClick={() => setCalendarOpen(!calendarOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm hover:border-blue-400 transition-colors"
-          >
-            <span className={selectedDate ? "text-gray-800 font-medium" : "text-gray-400"}>
-              {selectedDate ? formatSelected(selectedDate) : "Selecciona una fecha"}
-            </span>
-            <CalendarDays size={16} className="text-blue-500" />
-          </button>
-
-          {calendarOpen && (
-            <div className="mt-2 border border-gray-200 rounded-xl bg-white shadow-lg overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b">
-                <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded-lg hover:bg-gray-100">
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="font-semibold text-sm text-gray-800">
-                  {MONTHS[month]} {year}
-                </span>
-                <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 rounded-lg hover:bg-gray-100">
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="grid grid-cols-7 text-center px-2 pt-2">
-                {DAYS.map((d) => (
-                  <div key={d} className="text-xs font-semibold text-gray-400 py-1">{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 text-center px-2 pb-3">
-                {cells.map((day, idx) => (
-                  <div key={idx} className="p-0.5">
-                    {day === null ? <div /> : (
-                      <button
-                        onClick={() => {
-                          if (!isPast(day)) {
-                            setSelectedDate(new Date(year, month, day));
-                            setCalendarOpen(false);
-                          }
-                        }}
-                        disabled={isPast(day)}
-                        className={`
-                          w-full aspect-square rounded-lg text-sm font-medium transition-colors
-                          ${isPast(day)
-                            ? "text-gray-300 cursor-not-allowed"
-                            : isSelected(day)
-                            ? "bg-blue-600 text-white"
-                            : isToday(day)
-                            ? "border-2 border-blue-400 text-blue-600 hover:bg-blue-50"
-                            : "text-gray-700 hover:bg-blue-50"
-                          }
-                        `}
-                      >
-                        {day}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+          {/* ── Fecha actual (solo lectura) ── */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">
+              Fecha actual de la cita
+            </p>
+            <div className="rounded-md border bg-muted px-4 py-2 text-sm font-medium">
+              {new Date(fechaAnterior).toLocaleString("es-CO", {
+                timeZone: "UTC",
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Confirmar */}
-        <button
-          onClick={() => selectedDate && onConfirm(appointmentId, formatSelected(selectedDate))}
-          disabled={!selectedDate}
-          className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
-        >
-          Confirmar reagendamiento
-        </button>
-      </div>
-    </div>
+          {/* ── Botón para desplegar selector de nueva fecha ── */}
+          {!slotsVisible && (
+            <Button variant="outline" onClick={handleSelectNuevaFecha}>
+              Seleccionar nueva fecha
+            </Button>
+          )}
+
+          {/* ── Selector de fecha y hora ── */}
+          {slotsVisible && (
+            <>
+              {loadingSlots && availableDates.length === 0 && (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  Cargando disponibilidad...
+                </div>
+              )}
+
+              {!loadingSlots && availableDates.length === 0 && (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  No hay horarios disponibles para los próximos 12 días.
+                </div>
+              )}
+
+              {availableDates.length > 0 && (
+                <div className="space-y-5">
+
+                  <div>
+                    <h3 className="font-semibold mb-3 text-sm">
+                      Seleccione una nueva fecha
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {availableDates.map((item) => (
+                        <Button
+                          key={item.date}
+                          variant={selectedDate === item.date ? "default" : "outline"}
+                          onClick={() => {
+                            setSelectedDate(item.date);
+                            setSelectedSlot("");
+                          }}
+                        >
+                          {new Date(item.date).toLocaleDateString("es-CO", {
+                            timeZone: "UTC",
+                            weekday: "short",
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedDate && (
+                    <div>
+                      <h3 className="font-semibold mb-3 text-sm">
+                        Seleccione una hora
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {currentSlots.map((slot) => (
+                          <Button
+                            key={slot}
+                            variant={selectedSlot === slot ? "default" : "outline"}
+                            onClick={() => setSelectedSlot(slot)}
+                          >
+                            {new Date(slot).toLocaleTimeString("es-CO", {
+                              timeZone: "UTC",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Acciones ── */}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={onClose} disabled={loadingConfirm}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!selectedSlot || loadingConfirm}
+              onClick={handleConfirm}
+            >
+              {loadingConfirm ? "Reagendando..." : "Confirmar reagendamiento"}
+            </Button>
+          </div>
+
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -5,10 +5,15 @@ import { useEffect, useState } from "react";
 import { getPendingAppointmentsToReschedule } from "@/src/services/appointment.service";
 import ReagendarModal from "./ReagendarModal";
 
+interface ModalData {
+  id: string;
+  fecha: string;
+}
+
 export default function AppointmentNotifications() {
   const [open, setOpen] = useState(false);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [modalData, setModalData] = useState<{ id: string; fecha: string } | null>(null);
+  const [modalData, setModalData] = useState<ModalData | null>(null);
 
   useEffect(() => {
     loadNotifications();
@@ -25,7 +30,6 @@ export default function AppointmentNotifications() {
         end.toISOString()
       );
 
-      console.log("Notifications response:", response);
       setAppointments(response?.appointments || []);
     } catch (error) {
       console.error(error);
@@ -41,15 +45,12 @@ export default function AppointmentNotifications() {
     return `${dateStr.slice(0, 10)} ${hour12}:${minutes} ${period}`;
   };
 
-  const handleReagendar = (appointmentId: string, date: string) => {
-    setModalData({ id: appointmentId, fecha: formatDate(date) });
+  const handleReagendar = (appointment: any) => {
+    setModalData({
+      id: appointment.appointmentId,
+      fecha: appointment.date,
+    });
     setOpen(false);
-  };
-
-  const handleConfirm = (appointmentId: string, newDate: string) => {
-    // TODO: llamar a tu servicio de reagendamiento aquí
-    console.log("Reagendando:", appointmentId, "→", newDate);
-    setModalData(null);
   };
 
   return (
@@ -71,7 +72,9 @@ export default function AppointmentNotifications() {
             </div>
             <div className="max-h-96 overflow-auto">
               {appointments.length === 0 ? (
-                <p className="p-3 text-sm text-muted-foreground">No hay notificaciones</p>
+                <p className="p-3 text-sm text-muted-foreground">
+                  No hay notificaciones
+                </p>
               ) : (
                 appointments.map((appointment) => (
                   <div
@@ -86,7 +89,7 @@ export default function AppointmentNotifications() {
                     </div>
                     <div className="mt-2">
                       <button
-                        onClick={() => handleReagendar(appointment.appointmentId, appointment.date)}
+                        onClick={() => handleReagendar(appointment)}
                         className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150"
                       >
                         Reagendar
@@ -105,7 +108,10 @@ export default function AppointmentNotifications() {
           appointmentId={modalData.id}
           fechaAnterior={modalData.fecha}
           onClose={() => setModalData(null)}
-          onConfirm={handleConfirm}
+          onConfirm={() => {
+            setModalData(null);
+            loadNotifications();
+          }}
         />
       )}
     </>

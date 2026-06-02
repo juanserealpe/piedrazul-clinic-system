@@ -91,7 +91,7 @@ export class AppointmentController {
   async reScheduleByDoctor(@Body() body: ReScheduleRequestDto, @Req() req)
   : Promise<UpdateAppointmentOutput> {
     if(!body.doctorId) body.doctorId = req.user.preferred_username; 
-    const vInput = AppointmentControllerMapper.toRescheduleInput(body.appointmentId,body);
+    const vInput = AppointmentControllerMapper.toRescheduleInput(body.doctorId,body);
     return await this.reScheduleAppointmentUseCase.execute(vInput);
   }
   //UNAVAILABILITY

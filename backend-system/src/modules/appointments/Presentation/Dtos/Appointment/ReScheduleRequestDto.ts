@@ -1,7 +1,8 @@
-import { IsISO8601, IsNotEmpty, IsString, Matches } from "class-validator"
+import { IsISO8601, IsNotEmpty, IsOptional, IsString, Matches } from "class-validator"
 
 export class ReScheduleRequestDto{
     @IsString()
+    @IsOptional() 
     doctorId: string
 
     @IsString()
