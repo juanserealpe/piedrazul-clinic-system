@@ -1,8 +1,7 @@
 "use client";
-
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getPendingAppointmentsToReschedule } from "@/src/services/appointment.service";
+import { getPendingAppointmentsToReschedule } from "@/services/appointment.service";
 import ReagendarModal from "./ReagendarModal";
 
 interface ModalData {
@@ -15,9 +14,7 @@ export default function AppointmentNotifications() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [modalData, setModalData] = useState<ModalData | null>(null);
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  useEffect(() => { loadNotifications(); }, []);
 
   const loadNotifications = async () => {
     try {
@@ -31,10 +28,7 @@ export default function AppointmentNotifications() {
       );
 
       setAppointments(response?.appointments || []);
-    } catch (error) {
-      console.error(error);
-      setAppointments([]);
-    }
+    } catch (error) { console.error(error); setAppointments([]); }
   };
 
   const formatDate = (dateStr: string) => {
@@ -55,20 +49,45 @@ export default function AppointmentNotifications() {
 
   return (
     <>
-      <div className="relative">
-        <button onClick={() => setOpen(!open)} className="relative">
-          <Bell size={22} />
-          {appointments.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {appointments.length}
-            </span>
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={() => setOpen(!open)}
+          style={{
+            position: "relative",
+            background: appointments.length > 0 ? "var(--pz-amber-light)" : "var(--pz-green-light)",
+            border: `2px solid ${appointments.length > 0 ? "#f6d87a" : "#a7d9c8"}`,
+            borderRadius: "10px",
+            padding: "9px 14px",
+            cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "8px",
+            fontWeight: 600,
+            color: appointments.length > 0 ? "var(--pz-amber)" : "var(--pz-green)",
+            fontSize: "0.9rem",
+          }}
+        >
+          <Bell size={18} />
+          {appointments.length > 0 ? (
+            <>
+              <span>{appointments.length} alerta{appointments.length > 1 ? "s" : ""}</span>
+              <span style={{
+                background: "var(--pz-amber)",
+                color: "white", borderRadius: "999px",
+                width: "20px", height: "20px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.72rem", fontWeight: 700,
+              }}>{appointments.length}</span>
+            </>
+          ) : (
+            <span>Sin alertas</span>
           )}
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-            <div className="p-3 border-b">
-              <h3 className="font-semibold">Citas próximas a reprogramar</h3>
+          <div className="pz-notif-panel" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50 }}>
+            <div style={{ padding: "14px 16px", borderBottom: "2px solid var(--pz-border)", background: "var(--pz-green-light)" }}>
+              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--pz-green)" }}>
+                🔔 Citas por reagendar
+              </h3>
             </div>
             <div className="max-h-96 overflow-auto">
               {appointments.length === 0 ? (
@@ -96,9 +115,19 @@ export default function AppointmentNotifications() {
                       </button>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                  <div style={{ fontSize: "0.82rem", color: "var(--pz-text-soft)", marginBottom: "8px" }}>
+                    📅 {formatDate(appointment.date)}
+                  </div>
+                  <button
+                    onClick={() => handleReagendar(appointment.appointmentId, appointment.date)}
+                    className="pz-btn-primary"
+                    style={{ padding: "7px 14px", fontSize: "0.82rem" }}
+                  >
+                    🔄 Reagendar
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

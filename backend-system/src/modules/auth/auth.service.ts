@@ -158,6 +158,9 @@ private buildResponse(user: any, roles: any[]): UserResponseDto {
     roles: roles.map(r => r.name),
   };
 }
+async getAllUsers(): Promise<{ id: string; name: string; lastnames: string }[]> {
+  return this.userRepo.getAllUsers();
+}
 
 }
 
