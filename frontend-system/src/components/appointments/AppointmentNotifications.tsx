@@ -1,148 +1,401 @@
 "use client";
-import { Bell } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getPendingAppointmentsToReschedule } from "@/services/appointment.service";
-import ReagendarModal from "./ReagendarModal";
 
-interface ModalData {
-  id: string;
-  fecha: string;
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+
+import {
+  Button,
+} from "../../components/ui/button";
+import { getAvailableSlots } from "@/services/schedule.service";
+import { createAppointment } from "@/services/appointment.service";
+
+interface AvailableDate {
+  date: string;
+  slots: string[];
 }
 
-export default function AppointmentNotifications() {
-  const [open, setOpen] = useState(false);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [modalData, setModalData] = useState<ModalData | null>(null);
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  doctor: any;
+}
 
-  useEffect(() => { loadNotifications(); }, []);
+export default function ScheduleAppointmentModal({
+  open,
+  onClose,
+  doctor,
+}: Props) {
 
-  const loadNotifications = async () => {
+  const [loading, setLoading] =
+    useState(false);
+
+  const [availableDates,
+    setAvailableDates] =
+      useState<AvailableDate[]>([]);
+
+  const [selectedDate,
+    setSelectedDate] =
+      useState("");
+
+  const [selectedSlot,
+    setSelectedSlot] =
+      useState("");
+
+  useEffect(() => {
+
+    if (!open || !doctor)
+      return;
+
+    loadAvailableDates();
+
+  }, [open, doctor]);
+
+  const loadAvailableDates =
+    async () => {
+
+      try {
+
+        setLoading(true);
+
+        setAvailableDates([]);
+
+        setSelectedDate("");
+
+        setSelectedSlot("");
+
+        const promises = [];
+
+        for (
+          let i = 0;
+          i < 12;
+          i++
+        ) {
+
+          const date =
+            new Date();
+
+          date.setUTCDate(
+            date.getUTCDate() + i
+          );
+
+          promises.push(
+            getAvailableSlots(
+              date.toISOString(),
+              doctor.id
+            )
+          );
+        }
+
+        const results =
+          await Promise.allSettled(
+            promises
+          );
+
+        const available =
+          results
+            .filter(
+              (result) =>
+                result.status ===
+                "fulfilled"
+            )
+            .map(
+              (result: any) =>
+                result.value
+            )
+            .filter(
+              (item) =>
+                item?.slots &&
+                item.slots.length > 0
+            );
+
+        console.log(
+          "AVAILABLE RAW:",
+          JSON.stringify(
+            available,
+            null,
+            2
+          )
+        );
+
+        setAvailableDates(
+          available
+        );
+
+      } catch (error) {
+
+        console.error(
+          "ERROR CARGANDO DISPONIBILIDAD:",
+          error
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+  const currentSlots =
+    availableDates.find(
+      (item) =>
+        item.date ===
+        selectedDate
+    )?.slots || [];
+
+
+const handleSchedule = async () => {
     try {
-      const start = new Date();
-      const end = new Date();
-      end.setDate(end.getDate() + 12);
+      if (!selectedSlot || !doctor?.id ) return;
 
-      const response = await getPendingAppointmentsToReschedule(
-        start.toISOString(),
-        end.toISOString()
-      );
+      setLoading(true);
 
-      setAppointments(response?.appointments || []);
-    } catch (error) { console.error(error); setAppointments([]); }
+      const utcDate = new Date(selectedSlot).toISOString();
+
+            const payload = {
+        doctorId: doctor.id,
+        patientId: "",
+        date: utcDate,
+      };
+
+      console.log("PAYLOAD:", payload);
+
+      await createAppointment(payload);
+
+      alert("Cita creada correctamente");
+      onClose();
+    } catch (error) {
+      console.error("ERROR CREANDO CITA:", error);
+      alert("Error al crear cita");
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const formatDate = (dateStr: string) => {
-    const hour = parseInt(dateStr.slice(11, 13));
-    const minutes = dateStr.slice(14, 16);
-    const period = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${dateStr.slice(0, 10)} ${hour12}:${minutes} ${period}`;
-  };
-
-  const handleReagendar = (appointment: any) => {
-    setModalData({
-      id: appointment.appointmentId,
-      fecha: appointment.date,
-    });
-    setOpen(false);
-  };
-
   return (
-    <>
-      <div style={{ position: "relative" }}>
-        <button
-          onClick={() => setOpen(!open)}
-          style={{
-            position: "relative",
-            background: appointments.length > 0 ? "var(--pz-amber-light)" : "var(--pz-green-light)",
-            border: `2px solid ${appointments.length > 0 ? "#f6d87a" : "#a7d9c8"}`,
-            borderRadius: "10px",
-            padding: "9px 14px",
-            cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "8px",
-            fontWeight: 600,
-            color: appointments.length > 0 ? "var(--pz-amber)" : "var(--pz-green)",
-            fontSize: "0.9rem",
-          }}
-        >
-          <Bell size={18} />
-          {appointments.length > 0 ? (
-            <>
-              <span>{appointments.length} alerta{appointments.length > 1 ? "s" : ""}</span>
-              <span style={{
-                background: "var(--pz-amber)",
-                color: "white", borderRadius: "999px",
-                width: "20px", height: "20px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "0.72rem", fontWeight: 700,
-              }}>{appointments.length}</span>
-            </>
-          ) : (
-            <span>Sin alertas</span>
-          )}
-        </button>
 
-        {open && (
-          <div className="pz-notif-panel" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50 }}>
-            <div style={{ padding: "14px 16px", borderBottom: "2px solid var(--pz-border)", background: "var(--pz-green-light)" }}>
-              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--pz-green)" }}>
-                🔔 Citas por reagendar
-              </h3>
+    <Dialog
+      open={open}
+      onOpenChange={onClose}
+    >
+
+      <DialogContent className="max-w-2xl">
+
+        <DialogHeader>
+
+          <DialogTitle>
+
+            Agendar con{" "}
+            {doctor?.name}
+            {" "}
+            {doctor?.lastnames}
+
+          </DialogTitle>
+
+        </DialogHeader>
+
+        {loading &&
+          availableDates.length === 0 && (
+
+            <div className="py-6 text-center">
+
+              Cargando disponibilidad...
+
             </div>
-            <div className="max-h-96 overflow-auto">
-              {appointments.length === 0 ? (
-                <p className="p-3 text-sm text-muted-foreground">
-                  No hay notificaciones
-                </p>
-              ) : (
-                appointments.map((appointment) => (
-                  <div
-                    key={appointment.appointmentId}
-                    className="p-3 border-b hover:bg-gray-50"
-                  >
-                    <div className="font-medium">
-                      Paciente: {appointment.patientId}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(appointment.date)}
-                    </div>
-                    <div className="mt-2">
-                      <button
-                        onClick={() => handleReagendar(appointment)}
-                        className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150"
-                      >
-                        Reagendar
-                      </button>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--pz-text-soft)", marginBottom: "8px" }}>
-                    📅 {formatDate(appointment.date)}
-                  </div>
-                  <button
-                    onClick={() => handleReagendar(appointment.appointmentId, appointment.date)}
-                    className="pz-btn-primary"
-                    style={{ padding: "7px 14px", fontSize: "0.82rem" }}
-                  >
-                    🔄 Reagendar
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
 
-      {modalData && (
-        <ReagendarModal
-          appointmentId={modalData.id}
-          fechaAnterior={modalData.fecha}
-          onClose={() => setModalData(null)}
-          onConfirm={() => {
-            setModalData(null);
-            loadNotifications();
-          }}
-        />
-      )}
-    </>
+          )}
+
+        {!loading &&
+          availableDates.length === 0 && (
+
+            <div
+              className="
+              py-6
+              text-center
+              text-muted-foreground
+              "
+            >
+
+              No hay horarios disponibles
+              para los próximos 12 días.
+
+            </div>
+
+          )}
+
+        {availableDates.length > 0 && (
+
+          <div className="space-y-6">
+
+            <div>
+
+              <h3 className="font-semibold mb-3">
+
+                Seleccione una fecha
+
+              </h3>
+
+              <div
+                className="
+                grid
+                grid-cols-2
+                md:grid-cols-3
+                gap-2
+                "
+              >
+
+                {availableDates.map(
+                  (item) => (
+
+                    <Button
+                      key={item.date}
+                      variant={
+                        selectedDate ===
+                        item.date
+                          ? "default"
+                          : "outline"
+                      }
+                      onClick={() => {
+
+                        setSelectedDate(
+                          item.date
+                        );
+
+                        setSelectedSlot(
+                          ""
+                        );
+
+                      }}
+                    >
+
+                      {new Date(
+                        item.date
+                      ).toLocaleDateString(
+                        "es-CO",
+                        {
+                          timeZone:
+                            "UTC",
+                          weekday:
+                            "short",
+                          day:
+                            "2-digit",
+                          month:
+                            "2-digit",
+                          year:
+                            "numeric",
+                        }
+                      )}
+
+                    </Button>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+            {selectedDate && (
+
+              <div>
+
+                <h3 className="font-semibold mb-3">
+
+                  Seleccione una hora
+
+                </h3>
+
+                <div
+                  className="
+                  grid
+                  grid-cols-2
+                  md:grid-cols-4
+                  gap-2
+                  "
+                >
+
+                  {currentSlots.map(
+                    (slot) => (
+
+                      <Button
+                        key={slot}
+                        variant={
+                          selectedSlot ===
+                          slot
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() =>
+                          setSelectedSlot(
+                            slot
+                          )
+                        }
+                      >
+
+                        {new Date(
+                          slot
+                        ).toLocaleTimeString(
+                          "es-CO",
+                          {
+                            timeZone:
+                              "UTC",
+                            hour:
+                              "2-digit",
+                            minute:
+                              "2-digit",
+                            hour12:
+                              false,
+                          }
+                        )}
+
+                      </Button>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+            )}
+
+            <div className="flex justify-end gap-2">
+
+              <Button
+                variant="outline"
+                onClick={onClose}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                disabled={
+                  !selectedSlot ||
+                  loading
+                }
+                onClick={
+                  handleSchedule
+                }
+              >
+                Confirmar cita
+              </Button>
+
+            </div>
+
+          </div>
+
+        )}
+
+      </DialogContent>
+
+    </Dialog>
+
   );
 }

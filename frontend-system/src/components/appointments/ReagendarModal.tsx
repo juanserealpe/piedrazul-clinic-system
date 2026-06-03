@@ -10,9 +10,8 @@ import {
 } from "../../components/ui/dialog";
 
 import { Button } from "../../components/ui/button";
-
-import { reScheduleAppointment } from "@/src/services/appointment.service";
-import { getAvailableSlots } from "@/src/services/schedule.service";
+import { getAvailableSlots } from "@/services/schedule.service";
+import { reScheduleAppointment } from "@/services/appointment.service";
 
 interface AvailableDate {
   date: string;
