@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getAllPatientsRequest } from "@/src/services/auth.service";
+import { getAllPatientsRequest, getPatientByIdRequest } from "@/src/services/auth.service";
 
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
@@ -18,6 +18,11 @@ interface Props {
 }
 
 export default function PatientTable({ onCreateAppointment }: Props) {
+
+  const [searchId, setSearchId] = useState("");
+  const [searchResult, setSearchResult] = useState<Patient | null>(null);
+  const [searching, setSearching] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState<Patient[]>([]);
 
@@ -47,6 +52,29 @@ export default function PatientTable({ onCreateAppointment }: Props) {
     );
   }
 
+  const handleSearch = async () => {
+  try {
+    if (!searchId.trim()) return;
+
+    setSearching(true);
+    setSearchResult(null);
+
+    const result = await getPatientByIdRequest(searchId);
+
+    setSearchResult(result);
+  } catch (error) {
+    console.error(error);
+    setSearchResult(null);
+  } finally {
+    setSearching(false);
+  }
+};
+
+const clearSearch = () => {
+  setSearchId("");
+  setSearchResult(null);
+};
+
   return (
     <Card>
       <CardHeader>
@@ -55,6 +83,23 @@ export default function PatientTable({ onCreateAppointment }: Props) {
           Total pacientes: {patients.length}
         </p>
       </CardHeader>
+
+      <div className="mb-4 flex gap-2">
+  <input
+    className="border px-3 py-2 rounded w-full"
+    placeholder="Buscar paciente por ID..."
+    value={searchId}
+    onChange={(e) => setSearchId(e.target.value)}
+  />
+
+  <Button onClick={handleSearch}>
+    Buscar
+  </Button>
+
+  <Button variant="outline" onClick={clearSearch}>
+    Limpiar
+  </Button>
+</div>
 
       <CardContent>
         <div className="overflow-x-auto">

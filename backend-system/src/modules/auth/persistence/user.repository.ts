@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { UserOrmEntity } from "./user.orm-entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { UserResponseDto } from "../dtos/user-response-dto";
 
 @Injectable()
 export class UserRepository {
@@ -26,5 +27,10 @@ export class UserRepository {
   async getAllPatients(): Promise<{ id: string; name: string, lastnames: string }[]> {
     const patients = await this.repo.find({ where: { roles: 'PATIENT' } });
     return patients.map(pat => ({ id: pat.id, name: pat.names, lastnames: pat.lastnames }));
+  }
+  async getPatientById(id: string): Promise<{ id: string; name: string, lastnames: string } | null> {
+    const patient = await this.repo.findOne({ where: { id, roles: 'PATIENT' } });
+    if (!patient) return null;
+    return { id: patient.id, name: patient.names, lastnames: patient.lastnames };
   }
 }

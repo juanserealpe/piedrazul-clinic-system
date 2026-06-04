@@ -158,12 +158,12 @@ private buildResponse(user: any, roles: any[]): UserResponseDto {
     roles: roles.map(r => r.name),
   };
 }
-
+async getPatientById(id: string): Promise<{ id: string; name: string, lastnames: string } | null> {
+  const user = await this.userRepo.getPatientById(id);
+  if (!user) {
+    throw AppError.userNotFound();
+  }
+  return user;
 }
 
-/*
-PATIENT
-DOCTOR
-ADMIN
-SCHEDULER
-*/
+}
