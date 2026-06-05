@@ -16,10 +16,8 @@ export class ScheduleOrmEntity {
   @Column("varchar", { name: "doctor_id" })
   doctorId: string;
 
-  @Column({
-    type: "enum",
-    enum: DayOfWeek,
-  })
+  // FIX: eliminado el decorador @Column duplicado.
+  // SQLite no soporta enum nativo → se usa "text" con los valores del enum.
   @Column({
     type: "text",
     enum: DayOfWeek,
@@ -41,13 +39,10 @@ export class ScheduleOrmEntity {
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-    @OneToMany(
+  @OneToMany(
     () => AppointmentScheduleOrmEntity,
     (vSchedule) => vSchedule.appointment,
-    {
-      cascade: true,
-    },
+    { cascade: true },
   )
   schedules: AppointmentScheduleOrmEntity[];
-
 }

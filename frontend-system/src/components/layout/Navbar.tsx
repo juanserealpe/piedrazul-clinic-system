@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { useEffect, useState } from "react";
 import api from "@/lib/axios";
+import AppointmentNotifications from "../appointments/AppointmentNotifications";
 
 export default function Navbar() {
   const router = useRouter();
@@ -19,12 +20,12 @@ export default function Navbar() {
   const userRole = user?.roles?.[0] || "";
 
   useEffect(() => {
-  if (!user?.id) return;
-  api.get("/auth/all-users").then((res) => {
-    const found = res.data.find((u: any) => u.id === user.id);
-    if (found) setNombre(`${found.name} ${found.lastnames}`);
-  }).catch(() => {});
-}, [user]);
+    if (!user?.id) return;
+    api.get("/auth/all-users").then((res) => {
+      const found = res.data.find((u: any) => u.id === user.id);
+      if (found) setNombre(`${found.name} ${found.lastnames}`);
+    }).catch(() => {});
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -53,22 +54,27 @@ export default function Navbar() {
         </div>
       </div>
 
-      <button
-        onClick={handleLogout}
-        style={{
-          background: "var(--pz-red-light)",
-          color: "var(--pz-red)",
-          border: "2px solid #f5c6c1",
-          borderRadius: "8px",
-          padding: "8px 20px",
-          fontWeight: 700,
-          fontSize: "0.9rem",
-          cursor: "pointer",
-          display: "flex", alignItems: "center", gap: "6px",
-        }}
-      >
-        Cerrar Sesión
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {(userRole === "DOCTOR" || userRole === "SCHEDULER") && (
+          <AppointmentNotifications />
+        )}
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "var(--pz-red-light)",
+            color: "var(--pz-red)",
+            border: "2px solid #f5c6c1",
+            borderRadius: "8px",
+            padding: "8px 20px",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "6px",
+          }}
+        >
+          Cerrar Sesión
+        </button>
+      </div>
     </header>
   );
 }

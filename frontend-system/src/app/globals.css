@@ -572,3 +572,160 @@ button {
     font-size: 16px; /* Prevents mobile zoom on focus */
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE FIX — agregar al final de globals.css
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Base font — más pequeña en desktop para evitar zoom ─── */
+html {
+  font-size: 15px;          /* antes 17px — reducido para no necesitar zoom */
+}
+
+/* Recuperar tamaño en pantallas grandes */
+@media (min-width: 1280px) {
+  html { font-size: 16px; }
+}
+
+/* ── Layout del dashboard — sidebar + contenido ─────────── */
+.dashboard-layout {
+  display:   flex;
+  min-height: 100vh;
+}
+
+/* Sidebar oculto en móvil */
+.sidebar-container {
+  display:    none;
+  width:      240px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .sidebar-container {
+    display: block;
+  }
+}
+
+/* Área principal se adapta */
+.dashboard-main {
+  flex:       1;
+  min-width:  0;           /* evita overflow en flex */
+  padding:    16px;
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  .dashboard-main {
+    padding: 24px 28px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .dashboard-main {
+    padding: 28px 36px;
+    max-width: 1200px;      /* evita que el contenido se estire demasiado */
+  }
+}
+
+/* ── Navbar responsive ───────────────────────────────────── */
+.pz-navbar {
+  padding: 0 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 60px;
+  height: auto;
+}
+
+@media (min-width: 768px) {
+  .pz-navbar {
+    padding: 0 28px;
+    height:  68px;
+    flex-wrap: nowrap;
+  }
+}
+
+/* ── Tablas — scroll horizontal en móvil ─────────────────── */
+.pz-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Cards — padding adaptado ────────────────────────────── */
+.pz-card {
+  padding: 18px;
+}
+
+@media (min-width: 768px) {
+  .pz-card {
+    padding: 24px 28px;
+  }
+}
+
+/* ── Botones — tamaño legible sin ser gigantes ───────────── */
+button {
+  min-height: 40px;
+  font-size:  0.9rem;
+}
+
+@media (min-width: 768px) {
+  button {
+    min-height: 44px;
+    font-size:  0.95rem;
+  }
+}
+
+/* ── Dialog / Modal — ocupa bien la pantalla en mobile ───── */
+[data-slot="dialog-content"] {
+  max-width: calc(100vw - 24px) !important;
+  max-height: 92vh !important;
+}
+
+@media (min-width: 640px) {
+  [data-slot="dialog-content"] {
+    max-width: 640px !important;
+  }
+}
+
+/* ── Inputs — sin zoom en iOS ────────────────────────────── */
+@media (max-width: 768px) {
+  input, select, textarea, .pz-input {
+    font-size: 16px !important;   /* iOS no hace zoom si ≥ 16px */
+  }
+}
+
+/* ── Grillas de slots y fechas — más columnas en pantallas anchas ── */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  }
+}
+
+/* ── page header — título menor en mobile ────────────────── */
+.pz-page-header h1 {
+  font-size: 1.4rem;
+}
+
+@media (min-width: 768px) {
+  .pz-page-header h1 {
+    font-size: 1.8rem;
+  }
+}
+
+/* ── Formulario de horarios — columnas adaptadas ─────────── */
+.schedule-block-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .schedule-block-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

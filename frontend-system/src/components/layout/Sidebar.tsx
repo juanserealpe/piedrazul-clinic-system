@@ -43,7 +43,7 @@ export default function Sidebar() {
             borderRadius: "10px",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "1.4rem", flexShrink: 0,
-          }}>🏥</div>
+          }}></div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: "1rem", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", lineHeight: 1.2 }}>
               Piedrazul

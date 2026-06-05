@@ -54,7 +54,7 @@ export default function DoctorSchedulesList() {
   return (
     <div className="pz-card" style={{ padding: "24px" }}>
       <h3 style={{ margin: "0 0 20px", fontSize: "1.05rem", color: "var(--pz-green)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-        📅 Sus Horarios Registrados
+        Sus Horarios Registrados
       </h3>
       <div style={{
         display: "grid",
@@ -75,7 +75,7 @@ export default function DoctorSchedulesList() {
                 grouped[day].map((s, i) => (
                   <div key={i} className="pz-schedule-block">
                     <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--pz-green)" }}>
-                      ⏰ {formatHour(s.startHour)}
+                      {formatHour(s.startHour)}
                     </div>
                     <div style={{ fontSize: "0.78rem", color: "var(--pz-text-mid)" }}>
                       hasta {formatHour(s.endHour)}
