@@ -1,48 +1,61 @@
 "use client";
 import { useState, useEffect } from "react";
 import { getAllDoctorsRequest } from "@/services/auth.service";
-import { getAppointments, exportAppointmentsCsv } from "@/services/appointment.service";
+import {
+  getAppointments,
+  exportAppointmentsCsv,
+  reScheduleAppointment,
+} from "@/services/appointment.service";
 import PatientTable from "@/components/appointments/PattientTable";
 import DoctorsSelectModal from "@/components/appointments/DoctorSelectModal";
 import AppointmentSchedulerModal from "@/components/appointments/AppointmentSchedulerModal";
 import ReagendarModal from "@/components/appointments/ReagendarModal";
-import AppointmentNotifications from "@/components/appointments/AppointmentNotifications";
 import { getApiErrorMessage } from "@/lib/api-errors";
+
+// ── Hora Colombia UTC-5, 12 h ─────────────────────────────────────────────────
+function toCol12h(isoStr: string): string {
+  const utc = new Date(isoStr);
+  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
+  let h     = col.getUTCHours();
+  const m   = col.getUTCMinutes().toString().padStart(2, "0");
+  const ap  = h >= 12 ? "PM" : "AM";
+  h         = h % 12 || 12;
+  return `${h}:${m} ${ap}`;
+}
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED:          "Programada",
   PENDING_RESCHEDULE: "Por reagendar",
   RESCHEDULED:        "Reagendada",
   COMPLETED:          "Completada",
+  CANCELLED:          "Cancelada",
 };
-
 const STATUS_COLORS: Record<string, string> = {
   SCHEDULED:          "pz-badge-green",
   PENDING_RESCHEDULE: "pz-badge-amber",
   RESCHEDULED:        "pz-badge-green",
   COMPLETED:          "pz-badge-green",
+  CANCELLED:          "pz-badge-red",
 };
 
-export default function SchedulerAppointmentsPage() {
-  const [tab,              setTab]              = useState<"ver" | "crear">("ver");
-  const [doctors,          setDoctors]          = useState<any[]>([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState("");
-  const [filterDate,       setFilterDate]       = useState(new Date().toISOString().split("T")[0]);
-  const [appointments,     setAppointments]     = useState<any[]>([]);
-  const [loadingCitas,     setLoadingCitas]     = useState(false);
-  const [count,            setCount]            = useState(0);
-  const [selectedPatient,  setSelectedPatient]  = useState<any>(null);
-  const [selectedDoctor,   setSelectedDoctor]   = useState<any>(null);
-  const [openDoctors,      setOpenDoctors]      = useState(false);
-  const [openScheduler,    setOpenScheduler]    = useState(false);
-  const [exporting,        setExporting]        = useState(false);
-  const [errorMsg,         setErrorMsg]         = useState("");
+interface ReagendarData { id: string; fecha: string; }
 
-  // ISO string — no string formateado (evita Invalid Date en el modal)
-  const [reagendarData, setReagendarData] = useState<{
-    id:      string;
-    fechaIso: string;
-  } | null>(null);
+export default function SchedulerAppointmentsPage() {
+  const [tab,              setTab]            = useState<"ver" | "crear">("ver");
+  const [doctors,          setDoctors]        = useState<any[]>([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [filterDate,       setFilterDate]     = useState(new Date().toISOString().split("T")[0]);
+  const [appointments,     setAppointments]   = useState<any[]>([]);
+  const [loadingCitas,     setLoadingCitas]   = useState(false);
+  const [count,            setCount]          = useState(0);
+  const [selectedPatient,  setSelectedPatient] = useState<any>(null);
+  const [selectedDoctor,   setSelectedDoctor] = useState<any>(null);
+  const [openDoctors,      setOpenDoctors]    = useState(false);
+  const [openScheduler,    setOpenScheduler]  = useState(false);
+  const [reagendarData,    setReagendarData]  = useState<ReagendarData | null>(null);
+  const [exporting,        setExporting]      = useState(false);
+  const [errorMsg,         setErrorMsg]       = useState("");
+  const [successMsg,       setSuccessMsg]     = useState("");
 
   useEffect(() => { loadDoctors(); }, []);
 
@@ -51,19 +64,24 @@ export default function SchedulerAppointmentsPage() {
       const res = await getAllDoctorsRequest();
       setDoctors(res);
       if (res.length > 0) setSelectedDoctorId(res[0].id);
-    } catch (e) { setErrorMsg(getApiErrorMessage(e)); }
+    } catch (e) { console.error(e); }
   };
 
   const loadCitas = async () => {
     if (!selectedDoctorId || !filterDate) return;
     setErrorMsg("");
+    setSuccessMsg("");
     try {
       setLoadingCitas(true);
       const res = await getAppointments(`${filterDate}T00:00:00.000Z`, selectedDoctorId);
-      setAppointments(res.appointments || []);
-      setCount(res.count || 0);
-    } catch (e) { setErrorMsg(getApiErrorMessage(e)); setAppointments([]); }
-    finally { setLoadingCitas(false); }
+      setAppointments(res.appointments ?? []);
+      setCount(res.count ?? 0);
+    } catch (e) {
+      setErrorMsg(getApiErrorMessage(e));
+      setAppointments([]);
+    } finally {
+      setLoadingCitas(false);
+    }
   };
 
   const handleExport = async () => {
@@ -76,14 +94,11 @@ export default function SchedulerAppointmentsPage() {
       a.href = url; a.download = `citas-${filterDate}.csv`;
       document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (e) { setErrorMsg(getApiErrorMessage(e)); }
-    finally { setExporting(false); }
-  };
-
-  // Sin async y sin parámetros — coincide con onConfirm?: () => void
-  const handleConfirmReagendar = () => {
-    setReagendarData(null);
-    loadCitas();
+    } catch (e) {
+      setErrorMsg(getApiErrorMessage(e));
+    } finally {
+      setExporting(false);
+    }
   };
 
   const doctorName = (id: string) => {
@@ -93,53 +108,82 @@ export default function SchedulerAppointmentsPage() {
 
   return (
     <div>
-      {/* Header con campana */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "28px", paddingBottom: "20px", borderBottom: "2px solid var(--pz-border)" }}>
-        <div>
-          <h1 style={{ fontSize: "1.8rem", color: "var(--pz-green)", margin: "0 0 4px" }}>Gestión de Citas</h1>
-          <p style={{ color: "var(--pz-text-soft)", margin: 0 }}>Administre y agende citas médicas</p>
-        </div>
-        <AppointmentNotifications />
+      <div className="pz-page-header">
+        <h1>Gestión de Citas</h1>
+        <p>Administre y agende citas médicas</p>
       </div>
 
-      {errorMsg && <div className="pz-error" style={{ marginBottom: "16px" }}>⚠️ {errorMsg}</div>}
-
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
-        {[{ key: "ver", label: "Ver Citas" }, { key: "crear", label: "+ Crear Cita" }].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key as any)} style={{
-            padding: "10px 22px", borderRadius: "8px",
-            border:     tab === t.key ? "2px solid var(--pz-green)" : "2px solid var(--pz-border)",
-            background: tab === t.key ? "var(--pz-green)" : "var(--pz-white)",
-            color:      tab === t.key ? "#fff" : "var(--pz-text-mid)",
-            fontWeight: 700, fontSize: "0.95rem", cursor: "pointer",
-          }}>{t.label}</button>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
+        {[
+          { key: "ver",   label: "Ver Citas"      },
+          { key: "crear", label: "+ Crear Cita"   },
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key as any)}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "8px",
+              border: tab === t.key ? "2px solid var(--pz-green)" : "2px solid var(--pz-border)",
+              background: tab === t.key ? "var(--pz-green)" : "var(--pz-white)",
+              color: tab === t.key ? "#fff" : "var(--pz-text-mid)",
+              fontWeight: 700, fontSize: "0.95rem", cursor: "pointer",
+            }}
+          >
+            {t.label}
+          </button>
         ))}
       </div>
 
-      {/* Tab: Ver citas */}
+      {/* ── Tab: ver citas ── */}
       {tab === "ver" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+          {/* Mensajes globales */}
+          {errorMsg   && <div className="pz-error">⚠️ {errorMsg}</div>}
+          {successMsg && <div className="pz-success">{successMsg}</div>}
+
+          {/* Filtros */}
           <div className="pz-card" style={{ padding: "20px 24px" }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>Filtrar Citas</h3>
+            <h3 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
+              Filtrar Citas
+            </h3>
             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
               <div>
                 <label className="pz-label">Médico</label>
-                <select value={selectedDoctorId} onChange={e => setSelectedDoctorId(e.target.value)}
-                  className="pz-input" style={{ minWidth: "220px", cursor: "pointer" }}>
+                <select
+                  value={selectedDoctorId}
+                  onChange={e => setSelectedDoctorId(e.target.value)}
+                  className="pz-input"
+                  style={{ minWidth: "220px", cursor: "pointer" }}
+                >
                   <option value="">-- Seleccionar médico --</option>
-                  {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.name} {d.lastnames}</option>)}
+                  {doctors.map(d => (
+                    <option key={d.id} value={d.id}>Dr. {d.name} {d.lastnames}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="pz-label">Fecha</label>
-                <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-                  className="pz-input" style={{ width: "180px" }} />
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={e => setFilterDate(e.target.value)}
+                  className="pz-input"
+                  style={{ width: "180px" }}
+                />
               </div>
-              <button onClick={loadCitas} className="pz-btn-primary" style={{ marginBottom: "2px" }}>Buscar</button>
+              <button onClick={loadCitas} className="pz-btn-primary" style={{ marginBottom: "2px" }}>
+                Buscar
+              </button>
               {appointments.length > 0 && (
-                <button onClick={handleExport} disabled={exporting} className="pz-btn-outline"
-                  style={{ marginBottom: "2px", opacity: exporting ? 0.6 : 1 }}>
+                <button
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="pz-btn-outline"
+                  style={{ marginBottom: "2px", opacity: exporting ? 0.6 : 1 }}
+                >
                   {exporting ? "Exportando..." : "⬇ Exportar CSV"}
                 </button>
               )}
@@ -153,7 +197,9 @@ export default function SchedulerAppointmentsPage() {
               <div className="pz-empty">
                 <div className="pz-empty-icon">📋</div>
                 <p style={{ fontWeight: 600 }}>No hay citas para esta fecha y médico</p>
-                <p style={{ fontSize: "0.9rem", marginTop: "6px" }}>Seleccione otro médico o fecha y haga clic en Buscar.</p>
+                <p style={{ fontSize: "0.9rem", marginTop: "6px" }}>
+                  Seleccione otro médico o fecha y haga clic en Buscar.
+                </p>
               </div>
             </div>
           )}
@@ -162,7 +208,10 @@ export default function SchedulerAppointmentsPage() {
             <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
               <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--pz-border)" }}>
                 <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
-                  Citas del {new Date(filterDate + "T12:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+                  Citas del{" "}
+                  {new Date(filterDate + "T12:00:00").toLocaleDateString("es-CO", {
+                    weekday: "long", day: "2-digit", month: "long", year: "numeric",
+                  })}
                 </h3>
                 <p style={{ margin: "4px 0 0", color: "var(--pz-text-soft)", fontSize: "0.88rem" }}>
                   {doctorName(selectedDoctorId)} — Total: <strong>{count}</strong> citas
@@ -172,7 +221,7 @@ export default function SchedulerAppointmentsPage() {
                 <table className="pz-table">
                   <thead>
                     <tr>
-                      <th>Hora</th>
+                      <th>Hora (Colombia)</th>
                       <th>Paciente</th>
                       <th style={{ textAlign: "center" }}>Estado</th>
                       <th style={{ textAlign: "center" }}>Acción</th>
@@ -182,8 +231,17 @@ export default function SchedulerAppointmentsPage() {
                     {appointments.map(apt => (
                       <tr key={apt.appointmentId}>
                         <td>
-                          <span style={{ background: "var(--pz-green-light)", color: "var(--pz-green)", fontWeight: 700, padding: "4px 12px", borderRadius: "999px", fontSize: "0.9rem", fontFamily: "monospace" }}>
-                            🕐 {new Date(apt.date).toLocaleTimeString("es-CO", { timeZone: "UTC", hour: "2-digit", minute: "2-digit", hour12: false })}
+                          <span style={{
+                            background: "var(--pz-green-light)",
+                            color: "var(--pz-green)",
+                            fontWeight: 700,
+                            padding: "4px 14px",
+                            borderRadius: "999px",
+                            fontSize: "0.9rem",
+                            fontFamily: "monospace",
+                            whiteSpace: "nowrap",
+                          }}>
+                            🕐 {toCol12h(apt.date)}
                           </span>
                         </td>
                         <td style={{ fontWeight: 600 }}>{apt.patientId}</td>
@@ -194,11 +252,20 @@ export default function SchedulerAppointmentsPage() {
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <button
-                            onClick={() => setReagendarData({
-                              id:       apt.appointmentId,
-                              fechaIso: apt.date,           // ISO string, no formateado
-                            })}
-                            style={{ background: "var(--pz-amber-light)", color: "var(--pz-amber)", border: "2px solid #f6d87a", borderRadius: "8px", padding: "7px 14px", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+                            onClick={() =>
+                              setReagendarData({ id: apt.appointmentId, fecha: apt.date })
+                            }
+                            style={{
+                              background: "var(--pz-amber-light)",
+                              color: "var(--pz-amber)",
+                              border: "2px solid #f6d87a",
+                              borderRadius: "8px",
+                              padding: "7px 14px",
+                              fontWeight: 700,
+                              fontSize: "0.85rem",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                            }}
                           >
                             Reagendar
                           </button>
@@ -213,26 +280,47 @@ export default function SchedulerAppointmentsPage() {
         </div>
       )}
 
-      {/* Tab: Crear cita */}
+      {/* ── Tab: crear cita ── */}
       {tab === "crear" && (
         <div>
-          <PatientTable onCreateAppointment={patient => { setSelectedPatient(patient); setOpenDoctors(true); }} />
-          <DoctorsSelectModal open={openDoctors} onClose={() => setOpenDoctors(false)} doctors={doctors}
-            onSelect={doctor => { setSelectedDoctor(doctor); setOpenDoctors(false); setOpenScheduler(true); }} />
+          <PatientTable
+            onCreateAppointment={patient => {
+              setSelectedPatient(patient);
+              setOpenDoctors(true);
+            }}
+          />
+          <DoctorsSelectModal
+            open={openDoctors}
+            onClose={() => setOpenDoctors(false)}
+            doctors={doctors}
+            onSelect={doctor => {
+              setSelectedDoctor(doctor);
+              setOpenDoctors(false);
+              setOpenScheduler(true);
+            }}
+          />
           {selectedDoctor && selectedPatient && (
-            <AppointmentSchedulerModal open={openScheduler} onClose={() => setOpenScheduler(false)}
-              doctor={selectedDoctor} patient={selectedPatient} />
+            <AppointmentSchedulerModal
+              open={openScheduler}
+              onClose={() => setOpenScheduler(false)}
+              doctor={selectedDoctor}
+              patient={selectedPatient}
+            />
           )}
         </div>
       )}
 
-      {/* Modal reagendar */}
+      {/* ── Modal reagendar ── */}
       {reagendarData && (
         <ReagendarModal
           appointmentId={reagendarData.id}
-          fechaAnterior={reagendarData.fechaIso}   // ISO string → modal lo formatea
+          fechaAnterior={reagendarData.fecha}
           onClose={() => setReagendarData(null)}
-          onConfirm={handleConfirmReagendar}        // () => void — sin async, sin parámetros
+          onConfirm={() => {
+            setSuccessMsg("¡Cita reagendada correctamente!");
+            setReagendarData(null);
+            loadCitas();
+          }}
         />
       )}
     </div>

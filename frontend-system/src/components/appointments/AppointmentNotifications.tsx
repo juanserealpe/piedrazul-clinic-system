@@ -9,14 +9,30 @@ const POLL_INTERVAL_MS = 60_000; // refresca cada 60 s
 function getDateWindow() {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
-
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 12);
+  return { startDate: start.toISOString(), endDate: end.toISOString() };
+}
 
-  return {
-    startDate: start.toISOString(),
-    endDate:   end.toISOString(),
-  };
+// ── Formateador Colombia 12h ──────────────────────────────────────────────────
+function toCol12h(isoStr: string): string {
+  const utc = new Date(isoStr);
+  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
+  let h     = col.getUTCHours();
+  const m   = col.getUTCMinutes().toString().padStart(2, "0");
+  const ap  = h >= 12 ? "PM" : "AM";
+  h         = h % 12 || 12;
+  return `${h}:${m} ${ap}`;
+}
+
+function toColDate(isoStr: string): string {
+  return new Date(isoStr).toLocaleDateString("es-CO", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function AppointmentNotifications() {
@@ -25,7 +41,7 @@ export default function AppointmentNotifications() {
   const [loading,       setLoading]       = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // ── Cargar pendientes ──────────────────────────────────────
+  // ── Cargar pendientes ──────────────────────────────────────────────────────
   const loadPendings = async () => {
     try {
       setLoading(true);
@@ -46,7 +62,7 @@ export default function AppointmentNotifications() {
     return () => clearInterval(interval);
   }, []);
 
-  // Cerrar al hacer clic fuera del panel
+  // Cerrar al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -59,51 +75,50 @@ export default function AppointmentNotifications() {
 
   const count = notifications.length;
 
-  // ── Render ─────────────────────────────────────────────────
   return (
-    <div style={{ position: "relative" }} ref={panelRef}>
+    <div style={{ position: "relative", flexShrink: 0 }} ref={panelRef}>
 
       {/* ── Botón campana ── */}
       <button
         onClick={() => setOpen(prev => !prev)}
         aria-label={`Notificaciones${count > 0 ? ` — ${count} citas por reagendar` : ""}`}
         style={{
-          position:        "relative",
-          background:      count > 0 ? "var(--pz-amber-light)" : "var(--pz-green-light)",
-          border:          `2px solid ${count > 0 ? "#f6d87a" : "#a7d9c8"}`,
-          borderRadius:    "10px",
-          width:           "44px",
-          height:          "44px",
-          display:         "flex",
-          alignItems:      "center",
-          justifyContent:  "center",
-          cursor:          "pointer",
-          fontSize:        "1.3rem",
-          transition:      "transform 0.15s ease",
+          position:       "relative",
+          background:     count > 0 ? "var(--pz-amber-light)" : "var(--pz-green-light)",
+          border:         `2px solid ${count > 0 ? "#f6d87a" : "#a7d9c8"}`,
+          borderRadius:   "10px",
+          width:          "44px",
+          height:         "44px",
+          display:        "flex",
+          alignItems:     "center",
+          justifyContent: "center",
+          cursor:         "pointer",
+          fontSize:       "1.3rem",
+          flexShrink:     0,
+          transition:     "transform 0.15s ease",
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
         onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
       >
         🔔
-        {/* Badge con conteo */}
         {count > 0 && (
           <span style={{
-            position:        "absolute",
-            top:             "-6px",
-            right:           "-6px",
-            background:      "var(--pz-red)",
-            color:           "#fff",
-            borderRadius:    "999px",
-            minWidth:        "20px",
-            height:          "20px",
-            fontSize:        "0.72rem",
-            fontWeight:      700,
-            display:         "flex",
-            alignItems:      "center",
-            justifyContent:  "center",
-            padding:         "0 5px",
-            border:          "2px solid var(--pz-white)",
-            lineHeight:      1,
+            position:       "absolute",
+            top:            "-6px",
+            right:          "-6px",
+            background:     "var(--pz-red)",
+            color:          "#fff",
+            borderRadius:   "999px",
+            minWidth:       "20px",
+            height:         "20px",
+            fontSize:       "0.7rem",
+            fontWeight:     700,
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            padding:        "0 5px",
+            border:         "2px solid var(--pz-white)",
+            lineHeight:     1,
           }}>
             {count > 99 ? "99+" : count}
           </span>
@@ -114,35 +129,29 @@ export default function AppointmentNotifications() {
       {open && (
         <div
           className="pz-notif-panel"
-          style={{
-            position:  "absolute",
-            top:       "52px",
-            right:     0,
-            zIndex:    100,
-            minWidth:  "340px",
-          }}
+          style={{ position: "absolute", top: "52px", right: 0, zIndex: 100 }}
         >
           {/* Cabecera */}
           <div style={{
-            padding:      "14px 16px 10px",
-            borderBottom: "1px solid var(--pz-border)",
-            display:      "flex",
-            alignItems:   "center",
+            padding:        "14px 16px 10px",
+            borderBottom:   "1px solid var(--pz-border)",
+            display:        "flex",
+            alignItems:     "center",
             justifyContent: "space-between",
           }}>
             <div>
               <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--pz-green)" }}>
-                🔔 Citas por reagendar
+                Citas por reagendar
               </span>
               {count > 0 && (
                 <span style={{
-                  marginLeft:     "8px",
-                  background:     "var(--pz-red-light)",
-                  color:          "var(--pz-red)",
-                  borderRadius:   "999px",
-                  padding:        "2px 8px",
-                  fontSize:       "0.78rem",
-                  fontWeight:     700,
+                  marginLeft:   "8px",
+                  background:   "var(--pz-red-light)",
+                  color:        "var(--pz-red)",
+                  borderRadius: "999px",
+                  padding:      "2px 8px",
+                  fontSize:     "0.78rem",
+                  fontWeight:   700,
                 }}>
                   {count}
                 </span>
@@ -185,19 +194,7 @@ export default function AppointmentNotifications() {
                         Paciente: <span style={{ fontFamily: "monospace" }}>{notif.patientId}</span>
                       </div>
                       <div style={{ fontSize: "0.82rem", color: "var(--pz-text-soft)", marginTop: "2px" }}>
-                        {new Date(notif.date).toLocaleDateString("es-CO", {
-                          timeZone: "UTC",
-                          weekday:  "short",
-                          day:      "2-digit",
-                          month:    "short",
-                          year:     "numeric",
-                        })}{" "}
-                        {new Date(notif.date).toLocaleTimeString("es-CO", {
-                          timeZone: "UTC",
-                          hour:     "2-digit",
-                          minute:   "2-digit",
-                          hour12:   false,
-                        })}
+                        {toColDate(notif.date)}{" "}{toCol12h(notif.date)}
                       </div>
                     </div>
                     <span style={{
@@ -209,6 +206,7 @@ export default function AppointmentNotifications() {
                       fontSize:     "0.75rem",
                       fontWeight:   700,
                       flexShrink:   0,
+                      whiteSpace:   "nowrap",
                     }}>
                       Por reagendar
                     </span>
@@ -221,11 +219,11 @@ export default function AppointmentNotifications() {
           {/* Pie */}
           {notifications.length > 0 && (
             <div style={{
-              padding:    "10px 16px",
-              borderTop:  "1px solid var(--pz-border)",
-              fontSize:   "0.78rem",
-              color:      "var(--pz-text-soft)",
-              textAlign:  "center",
+              padding:   "10px 16px",
+              borderTop: "1px solid var(--pz-border)",
+              fontSize:  "0.76rem",
+              color:     "var(--pz-text-soft)",
+              textAlign: "center",
             }}>
               Próximos 12 días · Actualización automática cada 60 s
             </div>

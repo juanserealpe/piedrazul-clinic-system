@@ -50,7 +50,6 @@
 
 /* ─── PIEDRAZUL DESIGN TOKENS ─────────────────────────── */
 :root {
-  /* Paleta salud: azul oscuro profundo + cálido crema */
   --pz-green:        #1a3a6b;
   --pz-green-mid:    #2a5a8a;
   --pz-green-light:  #e6f0f8;
@@ -72,7 +71,7 @@
   --pz-radius-sm:    8px;
   --pz-radius-lg:    20px;
 
-  /* shadcn tokens → Piedrazul */
+  /* shadcn tokens */
   --background:            oklch(0.98 0.006 80);
   --foreground:            oklch(0.13 0.01 200);
   --card:                  oklch(1 0 0);
@@ -102,10 +101,8 @@
   --sidebar-ring:          oklch(0.5 0.1 165);
 }
 
-/* ─── BASE STYLES (accesibilidad adultos mayores) ─────── */
-html {
-  font-size: 17px; /* base más grande */
-}
+/* ─── BASE ────────────────────────────────────────────── */
+html { font-size: 16px; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -115,7 +112,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Tipografía clara y legible */
 h1, h2, h3, h4, h5, h6 {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 700;
@@ -123,56 +119,91 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
-/* Inputs grandes y cómodos */
 input, select, textarea {
   font-size: 1rem !important;
-  min-height: 48px;
+  min-height: 44px;
   border-radius: var(--pz-radius-sm) !important;
 }
 
-/* Botones grandes para fácil clic */
-button {
-  min-height: 44px;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
+button { min-height: 40px; font-size: 0.95rem; cursor: pointer; }
 
-/* Foco visible claro */
 *:focus-visible {
   outline: 3px solid var(--pz-green-mid);
   outline-offset: 2px;
 }
 
-/* Transiciones suaves */
-* {
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+* { transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+
+/* ─── LAYOUT — dashboard ─────────────────────────────── */
+/*
+  ✅ CORRECCIÓN RESPONSIVE:
+  El layout siempre muestra la sidebar en desktop (≥768px).
+  En móvil (<768px) la sidebar se oculta.
+*/
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
 }
 
-/* ─── SIDEBAR PIEDRAZUL ───────────────────────────────── */
+/* Sidebar visible por defecto en desktop */
+.sidebar-container {
+  display: flex;        /* siempre flex en escritorio */
+  flex-shrink: 0;
+  width: 240px;
+}
+
+/* En móvil la ocultamos */
+@media (max-width: 767px) {
+  .sidebar-container {
+    display: none;
+  }
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 24px 32px;
+  min-width: 0;         /* evita overflow en flex */
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  .dashboard-main {
+    padding: 16px;
+  }
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────────── */
 .pz-sidebar {
   background: linear-gradient(180deg, #1a2d4d 0%, #1a3a6b 100%);
   box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+  width: 240px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .pz-sidebar-link {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 13px 18px;
   border-radius: var(--pz-radius-sm);
-  font-size: 1rem;
+  font-size: 0.97rem;
   font-weight: 500;
   color: rgba(255,255,255,0.82);
   text-decoration: none;
   transition: all 0.18s ease;
 }
-
 .pz-sidebar-link:hover {
   background: rgba(255,255,255,0.12);
   color: #fff;
   transform: translateX(3px);
 }
-
 .pz-sidebar-link.active {
   background: rgba(255,255,255,0.18);
   color: #fff;
@@ -189,60 +220,51 @@ button {
   padding: 28px;
 }
 
-/* ─── BOTONES PIEDRAZUL ───────────────────────────────── */
+/* ─── BOTONES ─────────────────────────────────────────── */
 .pz-btn-primary {
   background: var(--pz-green);
   color: #fff;
   border: none;
   border-radius: var(--pz-radius-sm);
-  padding: 13px 28px;
-  font-size: 1rem;
+  padding: 12px 24px;
+  font-size: 0.97rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 8px rgba(26,107,82,0.22);
+  box-shadow: 0 2px 8px rgba(26,58,107,0.18);
 }
-
 .pz-btn-primary:hover {
   background: var(--pz-green-mid);
-  box-shadow: 0 4px 16px rgba(26,107,82,0.3);
+  box-shadow: 0 4px 16px rgba(26,58,107,0.28);
   transform: translateY(-1px);
 }
-
 .pz-btn-outline {
   background: transparent;
   color: var(--pz-green);
   border: 2px solid var(--pz-green);
   border-radius: var(--pz-radius-sm);
-  padding: 11px 24px;
-  font-size: 1rem;
+  padding: 10px 22px;
+  font-size: 0.97rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
-
-.pz-btn-outline:hover {
-  background: var(--pz-green-light);
-}
-
+.pz-btn-outline:hover { background: var(--pz-green-light); }
 .pz-btn-danger {
   background: var(--pz-red);
   color: #fff;
   border: none;
   border-radius: var(--pz-radius-sm);
-  padding: 11px 24px;
-  font-size: 1rem;
+  padding: 10px 22px;
+  font-size: 0.97rem;
   font-weight: 600;
   cursor: pointer;
 }
-
-.pz-btn-danger:hover {
-  background: #a93226;
-}
+.pz-btn-danger:hover { background: #a93226; }
 
 /* ─── TABLES ──────────────────────────────────────────── */
 .pz-table {
@@ -251,7 +273,6 @@ button {
   border-spacing: 0;
   font-size: 0.97rem;
 }
-
 .pz-table thead th {
   background: var(--pz-green-light);
   color: var(--pz-green);
@@ -259,22 +280,13 @@ button {
   padding: 14px 16px;
   text-align: left;
   border-bottom: 2px solid var(--pz-border);
+  white-space: nowrap;
 }
+.pz-table tbody tr { border-bottom: 1px solid var(--pz-border); }
+.pz-table tbody tr:hover { background: var(--pz-green-light); }
+.pz-table tbody td { padding: 13px 16px; vertical-align: middle; }
 
-.pz-table tbody tr {
-  border-bottom: 1px solid var(--pz-border);
-}
-
-.pz-table tbody tr:hover {
-  background: var(--pz-green-light);
-}
-
-.pz-table tbody td {
-  padding: 14px 16px;
-  vertical-align: middle;
-}
-
-/* ─── BADGE ROLES ─────────────────────────────────────── */
+/* ─── BADGES ──────────────────────────────────────────── */
 .pz-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -282,42 +294,28 @@ button {
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
+.pz-badge-green  { background: var(--pz-green-light); color: var(--pz-green); border: 1px solid #a7d9c8; }
+.pz-badge-amber  { background: var(--pz-amber-light); color: var(--pz-amber); border: 1px solid #f6d87a; }
+.pz-badge-red    { background: var(--pz-red-light);   color: var(--pz-red);   border: 1px solid #f5c6c1; }
 
-.pz-badge-green {
-  background: var(--pz-green-light);
-  color: var(--pz-green);
-  border: 1px solid #a7d9c8;
-}
-
-.pz-badge-amber {
-  background: var(--pz-amber-light);
-  color: var(--pz-amber);
-  border: 1px solid #f6d87a;
-}
-
-.pz-badge-red {
-  background: var(--pz-red-light);
-  color: var(--pz-red);
-}
-
-/* ─── INPUTS STYLED ───────────────────────────────────── */
+/* ─── INPUTS ──────────────────────────────────────────── */
 .pz-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 11px 16px;
   border: 2px solid var(--pz-border);
   border-radius: var(--pz-radius-sm);
   font-size: 1rem;
   color: var(--pz-text);
   background: var(--pz-white);
   outline: none;
+  box-sizing: border-box;
 }
-
 .pz-input:focus {
   border-color: var(--pz-green-mid);
-  box-shadow: 0 0 0 3px rgba(42,138,106,0.15);
+  box-shadow: 0 0 0 3px rgba(42,90,138,0.12);
 }
-
 .pz-label {
   display: block;
   font-size: 0.9rem;
@@ -327,7 +325,7 @@ button {
   letter-spacing: 0.01em;
 }
 
-/* ─── MODAL OVERLAY ───────────────────────────────────── */
+/* ─── MODALES ─────────────────────────────────────────── */
 .pz-overlay {
   position: fixed;
   inset: 0;
@@ -339,18 +337,17 @@ button {
   z-index: 50;
   padding: 16px;
 }
-
 .pz-modal {
   background: var(--pz-white);
   border-radius: var(--pz-radius-lg);
   box-shadow: var(--pz-shadow-lg);
   padding: 32px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
 }
 
-/* ─── LOADING STATE ───────────────────────────────────── */
+/* ─── LOADING ─────────────────────────────────────────── */
 .pz-loading {
   display: flex;
   align-items: center;
@@ -360,31 +357,29 @@ button {
   font-size: 1rem;
   gap: 12px;
 }
-
 .pz-loading::before {
   content: '';
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: 3px solid var(--pz-border);
   border-top-color: var(--pz-green);
   border-radius: 50%;
   animation: pz-spin 0.8s linear infinite;
 }
-
-@keyframes pz-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes pz-spin { to { transform: rotate(360deg); } }
 
 /* ─── NAVBAR ──────────────────────────────────────────── */
 .pz-navbar {
   background: var(--pz-white);
   border-bottom: 2px solid var(--pz-border);
-  padding: 0 28px;
-  height: 68px;
+  padding: 0 24px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  gap: 16px;
+  flex-wrap: nowrap;
 }
 
 /* ─── EMPTY STATE ─────────────────────────────────────── */
@@ -393,30 +388,20 @@ button {
   padding: 48px 16px;
   color: var(--pz-text-soft);
 }
-
-.pz-empty-icon {
-  font-size: 3rem;
-  margin-bottom: 12px;
-  opacity: 0.4;
-}
+.pz-empty-icon { font-size: 2.8rem; margin-bottom: 12px; opacity: 0.4; }
 
 /* ─── PAGE HEADER ─────────────────────────────────────── */
 .pz-page-header {
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
   border-bottom: 2px solid var(--pz-border);
 }
-
 .pz-page-header h1 {
-  font-size: 1.8rem;
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
   color: var(--pz-green);
   margin-bottom: 4px;
 }
-
-.pz-page-header p {
-  color: var(--pz-text-soft);
-  font-size: 1rem;
-}
+.pz-page-header p { color: var(--pz-text-soft); font-size: 1rem; }
 
 /* ─── SCHEDULE GRID ───────────────────────────────────── */
 .pz-schedule-day {
@@ -425,24 +410,22 @@ button {
   border: 1px solid var(--pz-border);
   background: var(--pz-white);
 }
-
 .pz-schedule-day-header {
   background: var(--pz-green);
   color: white;
   text-align: center;
   font-weight: 700;
-  padding: 12px;
-  font-size: 0.9rem;
+  padding: 10px;
+  font-size: 0.88rem;
   letter-spacing: 0.04em;
 }
-
 .pz-schedule-block {
   background: var(--pz-green-light);
   border: 1px solid #a7d9c8;
   border-radius: 6px;
-  padding: 10px 12px;
-  margin: 8px;
-  font-size: 0.88rem;
+  padding: 9px 12px;
+  margin: 7px;
+  font-size: 0.85rem;
 }
 
 /* ─── SLOT BUTTONS ────────────────────────────────────── */
@@ -457,47 +440,28 @@ button {
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
-
-.pz-slot-btn:hover {
-  border-color: var(--pz-green-mid);
-  background: var(--pz-green-light);
-  color: var(--pz-green);
-}
-
-.pz-slot-btn.selected {
-  border-color: var(--pz-green);
-  background: var(--pz-green);
-  color: white;
-  box-shadow: 0 2px 8px rgba(26,107,82,0.25);
-}
+.pz-slot-btn:hover { border-color: var(--pz-green-mid); background: var(--pz-green-light); color: var(--pz-green); }
+.pz-slot-btn.selected { border-color: var(--pz-green); background: var(--pz-green); color: white; box-shadow: 0 2px 8px rgba(26,58,107,0.22); }
 
 /* ─── DATE BUTTONS ────────────────────────────────────── */
 .pz-date-btn {
-  padding: 12px 8px;
+  padding: 11px 8px;
   border: 2px solid var(--pz-border);
   border-radius: var(--pz-radius-sm);
   background: var(--pz-white);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 600;
   cursor: pointer;
   text-align: center;
   line-height: 1.3;
   transition: all 0.15s ease;
 }
+.pz-date-btn:hover { border-color: var(--pz-green-mid); background: var(--pz-green-light); }
+.pz-date-btn.selected { border-color: var(--pz-green); background: var(--pz-green); color: white; }
 
-.pz-date-btn:hover {
-  border-color: var(--pz-green-mid);
-  background: var(--pz-green-light);
-}
-
-.pz-date-btn.selected {
-  border-color: var(--pz-green);
-  background: var(--pz-green);
-  color: white;
-}
-
-/* ─── ERROR / SUCCESS MESSAGES ────────────────────────── */
+/* ─── MENSAJES ────────────────────────────────────────── */
 .pz-error {
   color: var(--pz-red);
   background: var(--pz-red-light);
@@ -507,7 +471,6 @@ button {
   font-size: 0.92rem;
   font-weight: 500;
 }
-
 .pz-success {
   color: var(--pz-green);
   background: var(--pz-green-light);
@@ -525,207 +488,24 @@ button {
   border-radius: var(--pz-radius);
   box-shadow: var(--pz-shadow-lg);
   width: 360px;
-  max-height: 420px;
+  max-height: 440px;
   overflow-y: auto;
 }
-
 .pz-notif-item {
-  padding: 14px 16px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--pz-border);
   transition: background 0.12s ease;
 }
+.pz-notif-item:hover { background: var(--pz-green-light); }
 
-.pz-notif-item:hover {
-  background: var(--pz-green-light);
-}
-
-/* ─── RESPONSIVE DESIGN (MOBILE FIRST) ────────────────── */
-
-/* Sidebar: hide on mobile, show on tablets+ */
-.sidebar-container {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .sidebar-container {
-    display: block;
-  }
-}
-
-/* Dashboard main: adjust padding for mobile */
-.dashboard-main {
-  flex: 1;
-  padding: 16px;
-}
-
-@media (min-width: 768px) {
-  .dashboard-main {
-    padding: 28px 32px;
-  }
-}
-
-/* Form inputs: responsive font sizes */
+/* ─── FORMULARIO MÓVIL ────────────────────────────────── */
 @media (max-width: 480px) {
   .pz-input,
   .pz-label,
   .pz-btn-primary {
-    font-size: 16px; /* Prevents mobile zoom on focus */
+    font-size: 16px;   /* evita zoom en iOS */
   }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE FIX — agregar al final de globals.css
-   ════════════════════════════════════════════════════════════ */
-
-/* ── Base font — más pequeña en desktop para evitar zoom ─── */
-html {
-  font-size: 15px;          /* antes 17px — reducido para no necesitar zoom */
-}
-
-/* Recuperar tamaño en pantallas grandes */
-@media (min-width: 1280px) {
-  html { font-size: 16px; }
-}
-
-/* ── Layout del dashboard — sidebar + contenido ─────────── */
-.dashboard-layout {
-  display:   flex;
-  min-height: 100vh;
-}
-
-/* Sidebar oculto en móvil */
-.sidebar-container {
-  display:    none;
-  width:      240px;
-  flex-shrink: 0;
-}
-
-@media (min-width: 768px) {
-  .sidebar-container {
-    display: block;
-  }
-}
-
-/* Área principal se adapta */
-.dashboard-main {
-  flex:       1;
-  min-width:  0;           /* evita overflow en flex */
-  padding:    16px;
-  overflow-x: hidden;
-}
-
-@media (min-width: 768px) {
-  .dashboard-main {
-    padding: 24px 28px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .dashboard-main {
-    padding: 28px 36px;
-    max-width: 1200px;      /* evita que el contenido se estire demasiado */
-  }
-}
-
-/* ── Navbar responsive ───────────────────────────────────── */
-.pz-navbar {
-  padding: 0 16px;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 60px;
-  height: auto;
-}
-
-@media (min-width: 768px) {
-  .pz-navbar {
-    padding: 0 28px;
-    height:  68px;
-    flex-wrap: nowrap;
-  }
-}
-
-/* ── Tablas — scroll horizontal en móvil ─────────────────── */
-.pz-table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ── Cards — padding adaptado ────────────────────────────── */
-.pz-card {
-  padding: 18px;
-}
-
-@media (min-width: 768px) {
-  .pz-card {
-    padding: 24px 28px;
-  }
-}
-
-/* ── Botones — tamaño legible sin ser gigantes ───────────── */
-button {
-  min-height: 40px;
-  font-size:  0.9rem;
-}
-
-@media (min-width: 768px) {
-  button {
-    min-height: 44px;
-    font-size:  0.95rem;
-  }
-}
-
-/* ── Dialog / Modal — ocupa bien la pantalla en mobile ───── */
-[data-slot="dialog-content"] {
-  max-width: calc(100vw - 24px) !important;
-  max-height: 92vh !important;
-}
-
-@media (min-width: 640px) {
-  [data-slot="dialog-content"] {
-    max-width: 640px !important;
-  }
-}
-
-/* ── Inputs — sin zoom en iOS ────────────────────────────── */
-@media (max-width: 768px) {
-  input, select, textarea, .pz-input {
-    font-size: 16px !important;   /* iOS no hace zoom si ≥ 16px */
-  }
-}
-
-/* ── Grillas de slots y fechas — más columnas en pantallas anchas ── */
-.slots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 8px;
-}
-
-@media (min-width: 640px) {
-  .slots-grid {
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  }
-}
-
-/* ── page header — título menor en mobile ────────────────── */
-.pz-page-header h1 {
-  font-size: 1.4rem;
-}
-
-@media (min-width: 768px) {
-  .pz-page-header h1 {
-    font-size: 1.8rem;
-  }
-}
-
-/* ── Formulario de horarios — columnas adaptadas ─────────── */
-.schedule-block-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-@media (min-width: 768px) {
-  .schedule-block-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  .pz-card { padding: 16px; }
+  .pz-modal { padding: 20px; }
+  .pz-notif-panel { width: calc(100vw - 32px); }
 }
