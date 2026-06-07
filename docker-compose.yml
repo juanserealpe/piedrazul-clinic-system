@@ -18,7 +18,7 @@ services:
     command:
       - start-dev
       - --import-realm
-
+      - --hostname-strict-https=false 
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
