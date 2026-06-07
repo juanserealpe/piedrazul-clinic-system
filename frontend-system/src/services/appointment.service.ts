@@ -9,13 +9,14 @@ export const createAppointment = async (payload: {
   patientId: string;
   date: string;
 }) => {
-  // Garantizar UTC
   const normalizedDate = payload.date.endsWith("Z")
     ? payload.date
     : new Date(payload.date).toISOString();
 
-  const normalizedPayload = { ...payload, date: normalizedDate };
-  const response = await api.post("/appointments", normalizedPayload);
+  const response = await api.post("/appointments", {
+    ...payload,
+    date: normalizedDate,
+  });
   return response.data;
 };
 
@@ -43,12 +44,38 @@ export const reScheduleAppointment = async (payload: {
   return response.data;
 };
 
+/**
+ * Obtiene citas pendientes de reagendar en un rango de fechas.
+ *
+ * - Si se pasa doctorId: el backend filtra por ese medico (uso del agendador).
+ * - Si NO se pasa doctorId: el backend usa el ID del usuario autenticado del JWT
+ *   (uso del medico, que solo ve sus propias citas).
+ */
 export const getPendingAppointmentsToReschedule = async (
   startDate: string,
-  endDate: string
+  endDate: string,
+  doctorId?: string
 ): Promise<AppointmentNotificationResponse> => {
-  const response = await api.get("/appointments/pending-reschedule/range", {
-    params: { startDate, endDate },
-  });
+
+  console.log("=================================");
+  console.log("Consultando citas pendientes");
+  console.log("Doctor ID:", doctorId);
+  console.log("Fecha inicio:", startDate);
+  console.log("Fecha fin:", endDate);
+
+  const response = await api.get(
+    "/appointments/pending-reschedule/range",
+    {
+      params: {
+        startDate,
+        endDate,
+        ...(doctorId ? { doctorId } : {}),
+      },
+    }
+  );
+
+  console.log("Respuesta backend:");
+  console.log(response.data);
+
   return response.data;
 };

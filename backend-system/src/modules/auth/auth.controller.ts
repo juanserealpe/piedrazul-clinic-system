@@ -51,8 +51,11 @@ export class AuthController {
   async getAllPatients() : Promise<{ id: string; name: string, lastnames: string }[]> {
     return this.authService.getAllPatients();
   }
-  @Get('all-users')
-async getAllUsers(): Promise<{ id: string; name: string; lastnames: string }[]> {
-  return this.authService.getAllUsers();
+  @Get('patient/:id')
+  async getPatientById(@Param('id') id: string): Promise<{ id: string; name: string, lastnames: string } | null> {
+    const a =  await this.authService.getPatientById(id);  
+    console.log("GET PATIENT BY ID:", a);
+    return a;
+  }
 }
 }

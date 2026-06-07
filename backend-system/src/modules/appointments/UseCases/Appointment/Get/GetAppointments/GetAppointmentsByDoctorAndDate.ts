@@ -5,16 +5,13 @@ import { AppointmentDtoMapper } from "../../../Mappers/AppointmentDtoMapper";
 import { GetAppointmentsInput } from "./GetAppointmentsInput";
 import { GetAppointmentsOutput } from "./GetAppointmentsOutput";
 import { AppError } from "src/common/errors/app-error.factory";
- 
+
 export class GetAppointmentsByDoctorAndDate {
-constructor(
+  constructor(
     private readonly appointmentRepository: AppointmentRepository
   ) {}
 
-  async execute(
-    pInput: GetAppointmentsInput
-  ): Promise<GetAppointmentsOutput> {
-    console.log("INPUT:", pInput);
+  async execute(pInput: GetAppointmentsInput): Promise<GetAppointmentsOutput> {
     if (!pInput.doctorId || !pInput.date) {
       throw AppError.invalidInput();
     }
@@ -27,6 +24,8 @@ constructor(
         [
           Status.SCHEDULED,
           Status.RESCHEDULED,
+          // ✅ CORREGIDO: incluye PENDING_RESCHEDULE para mostrar estas citas al agendador
+          Status.PENDING_RESCHEDULE,
         ],
         vStart,
         vEnd

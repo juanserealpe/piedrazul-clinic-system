@@ -15,10 +15,8 @@ const DAYS = [
   { label: "Domingo",   value: "SUNDAY"    },
 ];
 
-// Hora inicio: 0–23 como selector tipo "HH AM/PM"
-// Hora fin:   1–24
-const HOUR_OPTIONS_START = Array.from({ length: 24 }, (_, i) => i);  // 0..23
-const HOUR_OPTIONS_END   = Array.from({ length: 24 }, (_, i) => i + 1); // 1..24
+const HOUR_OPTIONS_START = Array.from({ length: 24 }, (_, i) => i);
+const HOUR_OPTIONS_END   = Array.from({ length: 24 }, (_, i) => i + 1);
 
 function formatHour(h: number): string {
   if (h === 0)  return "12:00 AM (medianoche)";
@@ -36,7 +34,6 @@ interface ScheduleBlock {
   interval:  number | "";
 }
 
-// Intervalo mínimo: 10 minutos
 const MIN_INTERVAL = 10;
 const DEFAULT_BLOCK: ScheduleBlock = { day: "MONDAY", startHour: 8, endHour: 12, interval: 30 };
 
@@ -44,15 +41,14 @@ function toInt(val: number | ""): number {
   return val === "" ? 0 : Number(val);
 }
 
-// ── Validación ────────────────────────────────────────────────────────────────
 function validate(schedules: ScheduleBlock[]): string | null {
   if (schedules.length === 0) return "Agrega al menos un bloque de horario.";
 
   for (let i = 0; i < schedules.length; i++) {
-    const s   = schedules[i];
-    const day = DAYS.find(d => d.value === s.day)?.label ?? s.day;
-    const sH  = toInt(s.startHour);
-    const eH  = toInt(s.endHour);
+    const s    = schedules[i];
+    const day  = DAYS.find(d => d.value === s.day)?.label ?? s.day;
+    const sH   = toInt(s.startHour);
+    const eH   = toInt(s.endHour);
     const intv = toInt(s.interval);
 
     if (s.startHour === "" || s.endHour === "" || s.interval === "") {
@@ -67,7 +63,6 @@ function validate(schedules: ScheduleBlock[]): string | null {
     if (sH >= eH) {
       return `Bloque ${i + 1} (${day}): la hora de inicio (${formatHour(sH)}) debe ser menor a la hora de fin (${formatHour(eH)}).`;
     }
-    // Intervalo mínimo 10 minutos
     if (intv < MIN_INTERVAL) {
       return `Bloque ${i + 1} (${day}): el intervalo mínimo es de ${MIN_INTERVAL} minutos.`;
     }
@@ -76,7 +71,7 @@ function validate(schedules: ScheduleBlock[]): string | null {
     }
     const durationMin = (eH - sH) * 60;
     if (durationMin % intv !== 0) {
-      return `Bloque ${i + 1} (${day}): la duración total (${durationMin} min) debe ser divisible entre el intervalo (${intv} min). Prueba con ${intv === 30 ? 30 : intv} min y un rango diferente.`;
+      return `Bloque ${i + 1} (${day}): la duración total (${durationMin} min) debe ser divisible entre el intervalo (${intv} min).`;
     }
   }
   return null;
@@ -91,7 +86,7 @@ export default function WeeklyScheduleForm() {
 
   const addSchedule = () => setSchedules(prev => [...prev, { ...DEFAULT_BLOCK }]);
 
-  // FIX campo numérico: si el usuario borra, queda "" en lugar de forzar 0
+  // Solo para campos numéricos (interval)
   const updateSchedule = (index: number, field: keyof ScheduleBlock, raw: string) => {
     setSchedules(prev => {
       const copy = [...prev];
@@ -105,11 +100,20 @@ export default function WeeklyScheduleForm() {
     });
   };
 
-  // Selector de hora (startHour/endHour) usa select, no input numérico
+  // Para selectores de hora
   const updateHour = (index: number, field: "startHour" | "endHour", val: number) => {
     setSchedules(prev => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: val };
+      return copy;
+    });
+  };
+
+  // ✅ Para el selector de día — string directo, sin parseInt
+  const updateDay = (index: number, val: string) => {
+    setSchedules(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], day: val };
       return copy;
     });
   };
@@ -168,8 +172,8 @@ export default function WeeklyScheduleForm() {
       </div>
 
       {/* Mensajes globales */}
-      {errorMsg && <div className="pz-error"   style={{ marginBottom: "16px" }}>⚠️ {errorMsg}</div>}
-      {okMsg    && <div className="pz-success"  style={{ marginBottom: "16px" }}>✅ {okMsg}</div>}
+      {errorMsg && <div className="pz-error"  style={{ marginBottom: "16px" }}>⚠️ {errorMsg}</div>}
+      {okMsg    && <div className="pz-success" style={{ marginBottom: "16px" }}>✅ {okMsg}</div>}
 
       {/* Estado vacío */}
       {schedules.length === 0 && !okMsg && (
@@ -185,23 +189,21 @@ export default function WeeklyScheduleForm() {
       {/* Bloques */}
       <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
         {schedules.map((schedule, index) => {
-          const sH   = toInt(schedule.startHour);
-          const eH   = toInt(schedule.endHour);
-          const intv = toInt(schedule.interval);
-          const durMin = sH < eH ? (eH - sH) * 60 : 0;
+          const sH      = toInt(schedule.startHour);
+          const eH      = toInt(schedule.endHour);
+          const intv    = toInt(schedule.interval);
+          const durMin  = sH < eH ? (eH - sH) * 60 : 0;
 
-          // Advertencia en tiempo real de divisibilidad
           const divisWarning =
             schedule.startHour !== "" &&
-            schedule.endHour !== "" &&
-            schedule.interval !== "" &&
+            schedule.endHour   !== "" &&
+            schedule.interval  !== "" &&
             sH < eH &&
             intv >= MIN_INTERVAL &&
             durMin % intv !== 0
               ? `La duración (${durMin} min) no es divisible entre el intervalo (${intv} min)`
               : null;
 
-          // Advertencia intervalo mínimo
           const minIntWarning =
             schedule.interval !== "" && intv > 0 && intv < MIN_INTERVAL
               ? `El intervalo mínimo es ${MIN_INTERVAL} minutos`
@@ -237,12 +239,12 @@ export default function WeeklyScheduleForm() {
                 gap: "14px",
                 paddingRight: "80px",
               }}>
-                {/* Día */}
+                {/* ✅ Día — usa updateDay */}
                 <div>
                   <label className="pz-label">Día de la semana</label>
                   <select
                     value={schedule.day}
-                    onChange={e => updateSchedule(index, "day", e.target.value)}
+                    onChange={e => updateDay(index, e.target.value)}
                     className="pz-input"
                     style={{ cursor: "pointer" }}
                   >
@@ -252,7 +254,7 @@ export default function WeeklyScheduleForm() {
                   </select>
                 </div>
 
-                {/* ✅ Hora inicio — SELECT con formato 12h Colombia */}
+                {/* Hora inicio */}
                 <div>
                   <label className="pz-label">Hora inicio</label>
                   <select
@@ -267,7 +269,7 @@ export default function WeeklyScheduleForm() {
                   </select>
                 </div>
 
-                {/* Hora fin — SELECT con formato 12h Colombia */}
+                {/* Hora fin */}
                 <div>
                   <label className="pz-label">Hora fin</label>
                   <select
@@ -282,7 +284,7 @@ export default function WeeklyScheduleForm() {
                   </select>
                 </div>
 
-                {/* Intervalo — mínimo 10, sin bug del 0 */}
+                {/* Intervalo */}
                 <div>
                   <label className="pz-label">Intervalo (min, mín. {MIN_INTERVAL})</label>
                   <input
@@ -294,11 +296,8 @@ export default function WeeklyScheduleForm() {
                     value={schedule.interval === "" ? "" : schedule.interval}
                     onChange={e => updateSchedule(index, "interval", e.target.value)}
                     placeholder={`Ej: 30 (mín. ${MIN_INTERVAL})`}
-                    style={{
-                      borderColor: minIntWarning ? "var(--pz-amber)" : undefined,
-                    }}
+                    style={{ borderColor: minIntWarning ? "var(--pz-amber)" : undefined }}
                   />
-                  {/* Advertencia intervalo mínimo */}
                   {minIntWarning && (
                     <p style={{ color: "var(--pz-amber)", fontSize: "0.78rem", marginTop: "3px", fontWeight: 600 }}>
                       ⚠️ {minIntWarning}
@@ -307,7 +306,7 @@ export default function WeeklyScheduleForm() {
                 </div>
               </div>
 
-              {/* Advertencia divisibilidad en tiempo real */}
+              {/* Advertencia divisibilidad */}
               {divisWarning && (
                 <div style={{
                   marginTop: "10px",
@@ -322,13 +321,13 @@ export default function WeeklyScheduleForm() {
                 </div>
               )}
 
-              {/* Preview — solo cuando todos los campos son válidos */}
+              {/* Preview */}
               {schedule.startHour !== "" &&
-                schedule.endHour !== "" &&
-                schedule.interval !== "" &&
-                sH < eH &&
-                !divisWarning &&
-                !minIntWarning && (
+               schedule.endHour   !== "" &&
+               schedule.interval  !== "" &&
+               sH < eH &&
+               !divisWarning &&
+               !minIntWarning && (
                 <div style={{
                   marginTop: "12px",
                   padding: "10px 14px",

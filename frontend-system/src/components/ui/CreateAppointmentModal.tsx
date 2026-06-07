@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getAvailableSlots } from "@/services/schedule.service";
 import { createAppointment } from "@/services/appointment.service";
 import { getApiErrorMessage } from "@/lib/api-errors";
+import { formatSlotTime12h, formatDateShort } from "@/lib/date";
 
 interface Props {
   open: boolean;
@@ -15,47 +16,27 @@ interface AvailableDate {
   slots: string[];
 }
 
-// ── Formateador hora Colombia (UTC-5) en 12h ──────────────────────────────────
-function toCol12h(isoStr: string): string {
-  const utc = new Date(isoStr);
-  // Colombia = UTC-5
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let h    = col.getUTCHours();
-  const m  = col.getUTCMinutes().toString().padStart(2, "0");
-  const ap = h >= 12 ? "PM" : "AM";
-  h        = h % 12 || 12;
-  return `${h}:${m} ${ap}`;
-}
-
-function toColDate(isoStr: string): string {
-  const utc = new Date(isoStr);
-  return utc.toLocaleDateString("es-CO", {
-    timeZone: "UTC",
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
-}
-
 export default function CreateAppointmentModal({ open, onClose, onCreated }: Props) {
-  const [patientId,       setPatientId]       = useState("");
-  const [loadingSlots,    setLoadingSlots]     = useState(false);
-  const [loadingSave,     setLoadingSave]      = useState(false);
-  const [availableDates,  setAvailableDates]   = useState<AvailableDate[]>([]);
-  const [selectedDate,    setSelectedDate]     = useState("");
-  const [selectedSlot,    setSelectedSlot]     = useState("");
-  const [errorMsg,        setErrorMsg]         = useState("");
-  const [successMsg,      setSuccessMsg]       = useState("");
+  const [patientId, setPatientId] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
+  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  // Reset al cerrar
   useEffect(() => {
     if (!open) {
-      setPatientId(""); setAvailableDates([]); setSelectedDate("");
-      setSelectedSlot(""); setErrorMsg(""); setSuccessMsg("");
+      setPatientId("");
+      setAvailableDates([]);
+      setSelectedDate("");
+      setSelectedSlot("");
+      setErrorMsg("");
+      setSuccessMsg("");
     }
   }, [open]);
 
-  // Cargar slots cuando hay patientId (o sin él — el back lo toma del JWT)
   const loadSlots = async () => {
     setLoadingSlots(true);
     setAvailableDates([]);
@@ -70,12 +51,12 @@ export default function CreateAppointmentModal({ open, onClose, onCreated }: Pro
       });
       const results = await Promise.allSettled(promises);
       const available = results
-        .filter(r => r.status === "fulfilled")
+        .filter((r) => r.status === "fulfilled")
         .map((r: any) => r.value)
         .filter((item: any) => item?.slots?.length > 0);
       setAvailableDates(available);
       if (available.length === 0) {
-        setErrorMsg("No hay horarios disponibles para los próximos 12 días.");
+        setErrorMsg("No hay horarios disponibles para los proximos 12 dias.");
       }
     } catch (err) {
       setErrorMsg(getApiErrorMessage(err));
@@ -89,17 +70,17 @@ export default function CreateAppointmentModal({ open, onClose, onCreated }: Pro
     setErrorMsg("");
     setSuccessMsg("");
     if (!patientId.trim()) {
-      setErrorMsg("Ingresa el número de cédula del paciente.");
+      setErrorMsg("Ingrese el numero de cedula del paciente.");
       return;
     }
     setLoadingSave(true);
     try {
       await createAppointment({
         patientId: patientId.trim(),
-        doctorId: "",            // el back lo toma del JWT
+        doctorId: "",
         date: new Date(selectedSlot).toISOString(),
       });
-      setSuccessMsg("¡Cita creada correctamente!");
+      setSuccessMsg("Cita creada correctamente.");
       onCreated?.();
       setTimeout(onClose, 1500);
     } catch (err) {
@@ -111,49 +92,58 @@ export default function CreateAppointmentModal({ open, onClose, onCreated }: Pro
 
   if (!open) return null;
 
-  const currentSlots = availableDates.find(d => d.date === selectedDate)?.slots ?? [];
+  const currentSlots = availableDates.find((d) => d.date === selectedDate)?.slots ?? [];
 
   return (
     <div className="pz-overlay">
       <div className="pz-modal" style={{ maxWidth: "540px" }}>
-        {/* Encabezado */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "24px",
+          }}
+        >
           <h2 style={{ margin: 0, fontSize: "1.2rem", color: "var(--pz-green)" }}>
             Crear Nueva Cita
           </h2>
           <button
             onClick={onClose}
             style={{
-              background: "var(--pz-sand)", border: "none",
-              borderRadius: "8px", padding: "6px 12px",
-              cursor: "pointer", fontWeight: 700,
+              background: "var(--pz-sand)",
+              border: "none",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              cursor: "pointer",
+              fontWeight: 700,
             }}
           >
             Cerrar
           </button>
         </div>
 
-        {/* Mensajes */}
-        {errorMsg   && <div className="pz-error"   style={{ marginBottom: "16px" }}>⚠️ {errorMsg}</div>}
-        {successMsg && <div className="pz-success"  style={{ marginBottom: "16px" }}>{successMsg}</div>}
+        {errorMsg && (
+          <div className="pz-error" style={{ marginBottom: "16px" }}>
+            {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div className="pz-success" style={{ marginBottom: "16px" }}>
+            {successMsg}
+          </div>
+        )}
 
-        {/* Cédula paciente */}
         <div style={{ marginBottom: "20px" }}>
-          <label className="pz-label">Cédula del Paciente *</label>
+          <label className="pz-label">Cedula del Paciente</label>
           <input
             className="pz-input"
-            placeholder="Número de cédula del paciente"
+            placeholder="Numero de cedula del paciente"
             value={patientId}
-            onChange={e => setPatientId(e.target.value)}
+            onChange={(e) => setPatientId(e.target.value)}
           />
         </div>
 
-        {/* Botón cargar slots */}
         {availableDates.length === 0 && !loadingSlots && (
           <button
             onClick={loadSlots}
@@ -170,48 +160,54 @@ export default function CreateAppointmentModal({ open, onClose, onCreated }: Pro
           </div>
         )}
 
-        {/* Selector de fecha */}
         {availableDates.length > 0 && (
           <>
             <div style={{ marginBottom: "16px" }}>
               <p style={{ fontWeight: 700, marginBottom: "10px", fontSize: "0.95rem" }}>
                 1. Seleccione una fecha:
               </p>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-                gap: "8px",
-              }}>
-                {availableDates.map(item => (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+                  gap: "8px",
+                }}
+              >
+                {availableDates.map((item) => (
                   <button
                     key={item.date}
                     className={`pz-date-btn${selectedDate === item.date ? " selected" : ""}`}
-                    onClick={() => { setSelectedDate(item.date); setSelectedSlot(""); }}
+                    onClick={() => {
+                      setSelectedDate(item.date);
+                      setSelectedSlot("");
+                    }}
                   >
-                    {toColDate(item.date)}
+                    {formatDateShort(item.date)}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Selector de hora */}
             {selectedDate && (
               <div style={{ marginBottom: "16px" }}>
                 <p style={{ fontWeight: 700, marginBottom: "10px", fontSize: "0.95rem" }}>
-                  2. Seleccione la hora (hora Colombia):
+                  2. Seleccione la hora:
                 </p>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
-                  gap: "8px",
-                }}>
-                  {currentSlots.map(slot => (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
+                    gap: "8px",
+                  }}
+                >
+                  {currentSlots.map((slot) => (
                     <button
                       key={slot}
                       className={`pz-slot-btn${selectedSlot === slot ? " selected" : ""}`}
                       onClick={() => setSelectedSlot(slot)}
                     >
-                      {toCol12h(slot)}
+                      {/* formatSlotTime12h lee UTC directo, sin restar 5 horas */}
+                      {formatSlotTime12h(slot)}
                     </button>
                   ))}
                 </div>
@@ -220,21 +216,24 @@ export default function CreateAppointmentModal({ open, onClose, onCreated }: Pro
           </>
         )}
 
-        {/* Acciones */}
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "12px",
-          marginTop: "24px",
-          paddingTop: "16px",
-          borderTop: "1px solid var(--pz-border)",
-        }}>
-          <button onClick={onClose} className="pz-btn-outline">Cancelar</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+            paddingTop: "16px",
+            borderTop: "1px solid var(--pz-border)",
+          }}
+        >
+          <button onClick={onClose} className="pz-btn-outline">
+            Cancelar
+          </button>
           <button
             onClick={handleSave}
             disabled={!selectedSlot || loadingSave}
             className="pz-btn-primary"
-            style={{ opacity: (!selectedSlot || loadingSave) ? 0.6 : 1 }}
+            style={{ opacity: !selectedSlot || loadingSave ? 0.6 : 1 }}
           >
             {loadingSave ? "Guardando..." : "Guardar cita"}
           </button>
