@@ -75,18 +75,19 @@ async refresh(dto: RefreshDto): Promise<LoginResponseDto> {
 
 private async validateRoles(roleNames: string[], token: string) {
   Logger.log(`Validating roles: ${roleNames.join(', ')}`);
-  const roles = await Promise.all(
-    roleNames.map(async (name) => {
-      try {
-        Logger.log(`Validating role: ${name}`);
-        return await this.kc.getRole(name, token);
-      } catch {
-        Logger.error(`Role not found: ${name}`);
-        throw AppError.roleNotFound(name);
-      }
-    }),
-  );
-  return roles;
+
+  const allRoles = await this.kc.getAllRealmRoles(token);
+
+  return roleNames.map((name) => {
+    const role = allRoles.find((r) => r.name === name);
+
+    if (!role) {
+      Logger.error(`Role not found: ${name}`);
+      throw AppError.roleNotFound(name);
+    }
+
+    return role;
+  });
 }
 
 private async ensureUserNotExists(id: string, token: string) {
