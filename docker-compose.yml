@@ -1,0 +1,75 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    container_name: keycloak
+    restart: unless-stopped
+    command:
+      - start-dev
+      - --import-realm
+
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: admin
+
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+    volumes:
+      - ./realm:/opt/keycloak/data/import:Z
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - postgres
+
+  backend:
+    build:
+      context: ./backend-system
+
+    container_name: backend
+    restart: unless-stopped
+
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: my-app-realm
+      KEYCLOAK_CLIENT_ID: nestjs-backend
+      KEYCLOAK_CLIENT_SECRET: CODi0yC3d0CSiuVAJYrfyc96UoW2Em3b
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - keycloak
+
+  frontend:
+    build:
+      context: ./frontend-system
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000
+
+    container_name: frontend
+    restart: unless-stopped
+
+    ports:
+      - "4000:3000"
+
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

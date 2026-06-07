@@ -26,11 +26,16 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: 'http://localhost:4000',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
-  await app.listen(3000);
+  origin: [
+    'http://localhost:4000',
+    'http://172.19.0.5:3000',
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+});
+
+await app.listen(3000, '0.0.0.0');
   
   const dataSource = app.get<DataSource>(getDataSourceToken());
 }
