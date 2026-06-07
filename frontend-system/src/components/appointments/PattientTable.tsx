@@ -1,11 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
-
-import { getAllPatientsRequest, getPatientByIdRequest } from "@/src/services/auth.service";
-
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
+import { getAllPatientsRequest } from "@/services/auth.service";
 
 interface Patient {
   id: string;
@@ -15,16 +10,14 @@ interface Patient {
 
 interface Props {
   onCreateAppointment: (patient: Patient) => void;
+  // Prop opcional para filtrar desde el padre por nombre o documento
+  searchQuery?: string;
 }
 
-export default function PatientTable({ onCreateAppointment }: Props) {
-
-  const [searchId, setSearchId] = useState("");
-  const [searchResult, setSearchResult] = useState<Patient | null>(null);
-  const [searching, setSearching] = useState(false);
-
+export default function PatientTable({ onCreateAppointment, searchQuery = "" }: Props) {
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadPatients();
@@ -33,22 +26,43 @@ export default function PatientTable({ onCreateAppointment }: Props) {
   const loadPatients = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await getAllPatientsRequest();
       setPatients(response);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo cargar la lista de pacientes. Intente de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Filtrar por nombre completo o por numero de documento segun lo que escriba el usuario
+  const term = searchQuery.toLowerCase().trim();
+  const filtered = term
+    ? patients.filter(
+        (p) =>
+          p.id.toLowerCase().includes(term) ||
+          `${p.name} ${p.lastnames}`.toLowerCase().includes(term)
+      )
+    : patients;
+
   if (loading) {
+    return <div className="pz-loading">Cargando pacientes...</div>;
+  }
+
+  if (error) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">Cargando pacientes...</p>
-        </CardContent>
-      </Card>
+      <div className="pz-card">
+        <div className="pz-error">{error}</div>
+        <button
+          onClick={loadPatients}
+          className="pz-btn-outline"
+          style={{ marginTop: "12px" }}
+        >
+          Intentar de nuevo
+        </button>
+      </div>
     );
   }
 
@@ -76,78 +90,121 @@ const clearSearch = () => {
 };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pacientes Registrados</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Total pacientes: {patients.length}
-        </p>
-      </CardHeader>
+    <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
+      <div
+        style={{
+          padding: "20px 24px 16px",
+          borderBottom: "1px solid var(--pz-border)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1rem",
+              fontWeight: 700,
+              color: "var(--pz-green)",
+            }}
+          >
+            Pacientes Registrados
+          </h3>
+          <p
+            style={{
+              margin: "4px 0 0",
+              color: "var(--pz-text-soft)",
+              fontSize: "0.88rem",
+            }}
+          >
+            {term
+              ? `Se encontraron ${filtered.length} resultado(s) para "${searchQuery}"`
+              : `Total: ${patients.length} pacientes`}
+          </p>
+        </div>
+      </div>
 
-      <div className="mb-4 flex gap-2">
-  <input
-    className="border px-3 py-2 rounded w-full"
-    placeholder="Buscar paciente por ID..."
-    value={searchId}
-    onChange={(e) => setSearchId(e.target.value)}
-  />
-
-  <Button onClick={handleSearch}>
-    Buscar
-  </Button>
-
-  <Button variant="outline" onClick={clearSearch}>
-    Limpiar
-  </Button>
-</div>
-
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      {filtered.length === 0 ? (
+        <div className="pz-empty" style={{ padding: "32px 16px" }}>
+          <p style={{ fontWeight: 600 }}>
+            {term
+              ? `No se encontro ningun paciente con "${searchQuery}"`
+              : "No hay pacientes registrados"}
+          </p>
+          {term && (
+            <p style={{ fontSize: "0.88rem", marginTop: "6px", color: "var(--pz-text-soft)" }}>
+              Verifique el nombre o numero de cedula e intente nuevamente.
+            </p>
+          )}
+        </div>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table className="pz-table">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-3 px-4">Documento</th>
-                <th className="text-left py-3 px-4">Nombre</th>
-                <th className="text-left py-3 px-4">Apellidos</th>
-                <th className="text-center py-3 px-4">Acciones</th>
+              <tr>
+                <th>Paciente</th>
+                <th>Numero de documento</th>
+                <th style={{ textAlign: "center" }}>Accion</th>
               </tr>
             </thead>
-
             <tbody>
-              {patients.map((patient) => (
-                <tr key={patient.id} className="border-b hover:bg-muted/40 transition-colors">
-                  <td className="px-4 py-3">
-                    <span className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                      {patient.id}
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-3 font-medium">{patient.name}</td>
-                  <td className="px-4 py-3">{patient.lastnames}</td>
-
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center gap-2">
-                      <Button size="sm" variant="outline">
-                        Ver
-                      </Button>
-
-                      <Button
-                      size="sm"
-                      onClick={() => {
-                        console.log("CLICK BOTON");
-                        onCreateAppointment(patient);
+              {filtered.map((patient) => (
+                <tr key={patient.id}>
+                  <td>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
                       }}
                     >
-                      Crear Cita
-                    </Button>
+                      <div
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          background: "var(--pz-sand)",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.85rem",
+                          fontWeight: 700,
+                          color: "var(--pz-green)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {patient.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ fontWeight: 700 }}>
+                        {patient.name} {patient.lastnames}
+                      </div>
                     </div>
+                  </td>
+                  <td
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "0.9rem",
+                      color: "var(--pz-text-mid)",
+                    }}
+                  >
+                    {patient.id}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    <button
+                      onClick={() => onCreateAppointment(patient)}
+                      className="pz-btn-primary"
+                      style={{ padding: "9px 18px", fontSize: "0.88rem" }}
+                    >
+                      Crear Cita
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

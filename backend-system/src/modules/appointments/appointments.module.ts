@@ -25,6 +25,8 @@ import { CreateAppointment } from "./UseCases/Appointment/Create/CreateAppointme
 import { UpdateAppointment } from "./UseCases/Appointment/Update/UpdateAppointment";
 import { CsvExportUseCase } from "./UseCases/Appointment/Export/CsvExportUseCase";
 import { GetAvailableSlotsUseCase } from "./UseCases/Appointment/GetAvaibleSlotsByDoctor/GetAvailableSlots";
+import { GetAppointmentsByPatient } from "./UseCases/Appointment/Get/GetAppointmentsByPatient/GetAppointmentsByPatient";
+import { CancelAppointmentUseCase } from "./UseCases/Appointment/Cancel/CancelAppointmentUseCase";
 
 // Schedule Use Cases
 import { CreateScheduleUseCase } from "./UseCases/Schedule/Create/CreateScheduleUseCase";
@@ -39,103 +41,53 @@ import { GetActivesByDoctorUseCase } from "./UseCases/DoctorUnavailability/Get/G
 import { UpdateScheduleUseCase } from "./UseCases/Schedule/Update/UpdateScheduleUseCase";
 import { ChangeScheduleStatusUseCase } from "./UseCases/Schedule/ChangeScheduleStatus/ChangeScheduleStatusUseCase";
 
-export const APPOINTMENT_REPOSITORY =
-  "APPOINTMENT_REPOSITORY";
+export const APPOINTMENT_REPOSITORY          = "APPOINTMENT_REPOSITORY";
+export const SCHEDULE_REPOSITORY             = "SCHEDULE_REPOSITORY";
+export const DOCTOR_UNAVAILABILITY_REPOSITORY = "DOCTOR_UNAVAILABILITY_REPOSITORY";
 
-export const SCHEDULE_REPOSITORY =
-  "SCHEDULE_REPOSITORY";
-
-export const DOCTOR_UNAVAILABILITY_REPOSITORY = 
-  "DOCTOR_UNAVAILABILITY_REPOSITORY";
-  
 @Module({
-
   imports: [
-
     TypeOrmModule.forFeature([
-
       AppointmentOrmEntity,
       ScheduleOrmEntity,
       AppointmentScheduleOrmEntity,
       DoctorUnavailabilityOrmEntity,
     ]),
-
     AuthModule,
-
   ],
 
   controllers: [
-
     AppointmentController,
     ScheduleController,
-
   ],
 
   providers: [
 
-    // ─────────────────────────────────────────────
-    // REPOSITORIES
-    // ─────────────────────────────────────────────
+    // ── REPOSITORIES ────────────────────────────────────────────────────────
     {
-      provide: DOCTOR_UNAVAILABILITY_REPOSITORY,
-      
-      useClass: 
-      TypeOrmDoctorUnavailabilityRepository,
+      provide:  DOCTOR_UNAVAILABILITY_REPOSITORY,
+      useClass: TypeOrmDoctorUnavailabilityRepository,
+    },
+    {
+      provide:  APPOINTMENT_REPOSITORY,
+      useClass: TypeOrmAppointmentRepository,
+    },
+    {
+      provide:  SCHEDULE_REPOSITORY,
+      useClass: TypeOrmScheduleRepository,
     },
 
+    // ── APPOINTMENT USE CASES ────────────────────────────────────────────────
     {
-      provide: APPOINTMENT_REPOSITORY,
-
-      useClass:
-        TypeOrmAppointmentRepository,
+      provide:    GetAppointmentsByDoctorAndDate,
+      useFactory: (appointmentRepo) =>
+        new GetAppointmentsByDoctorAndDate(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
     },
-
     {
-      provide: SCHEDULE_REPOSITORY,
-
-      useClass:
-        TypeOrmScheduleRepository,
-    },
-
-    // ─────────────────────────────────────────────
-    // APPOINTMENT USE CASES
-    // ─────────────────────────────────────────────
-
-    {
-      provide:
-        GetAppointmentsByDoctorAndDate,
-
-      useFactory: (
-        appointmentRepo,
-      ) =>
-
-        new GetAppointmentsByDoctorAndDate(
-          appointmentRepo,
-        ),
-
-      inject: [
-        APPOINTMENT_REPOSITORY,
-      ],
-    },
-
-    {
-      provide:
-        CreateAppointment,
-
-      useFactory: (
-        appointmentRepo,
-        scheduleRepo,
-        authService: AuthService,
-        DoctorUnavailabilityRepository,
-      ) =>
-
-        new CreateAppointment(
-          appointmentRepo,
-          scheduleRepo,
-          authService,
-          DoctorUnavailabilityRepository,
-        ),
-
+      provide:    CreateAppointment,
+      useFactory: (appointmentRepo, scheduleRepo, authService, doctorUnavailRepo) =>
+        new CreateAppointment(appointmentRepo, scheduleRepo, authService, doctorUnavailRepo),
       inject: [
         APPOINTMENT_REPOSITORY,
         SCHEDULE_REPOSITORY,
@@ -143,219 +95,101 @@ export const DOCTOR_UNAVAILABILITY_REPOSITORY =
         DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
-
     {
-      provide:
-        UpdateAppointment,
-
-      useFactory: (
-        appointmentRepo,
-        scheduleRepo,
-        DoctorUnavailabilityRepository,
-      ) =>
-
-        new UpdateAppointment(
-          appointmentRepo,
-          scheduleRepo,
-          DoctorUnavailabilityRepository,
-        ),
-
+      provide:    UpdateAppointment,
+      useFactory: (appointmentRepo, scheduleRepo, doctorUnavailRepo) =>
+        new UpdateAppointment(appointmentRepo, scheduleRepo, doctorUnavailRepo),
       inject: [
         APPOINTMENT_REPOSITORY,
         SCHEDULE_REPOSITORY,
         DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
-
     {
-      provide:
-        CsvExportUseCase,
-
-      useFactory: (
-        getAppointmentsUseCase,
-      ) =>
-
-        new CsvExportUseCase(
-          getAppointmentsUseCase,
-        ),
-
-      inject: [
-        GetAppointmentsByDoctorAndDate,
-      ],
-    },
-    //
-    {
-      provide:
-          GetAllPendingsToRescheduleUseCase,
-
-      useFactory: (
-          appointmentRepo,
-      ) =>
-
-          new GetAllPendingsToRescheduleUseCase(
-              appointmentRepo,
-          ),
-
-      inject: [
-          APPOINTMENT_REPOSITORY,
-        ],
+      provide:    CsvExportUseCase,
+      useFactory: (getAppointmentsUseCase) =>
+        new CsvExportUseCase(getAppointmentsUseCase),
+      inject: [GetAppointmentsByDoctorAndDate],
     },
     {
-      provide:
-          GetPendingsToRescheduleUseCase,
-
-      useFactory: (
-          appointmentRepo,
-      ) =>
-
-          new GetPendingsToRescheduleUseCase(
-              appointmentRepo,
-          ),
-
-      inject: [
-          APPOINTMENT_REPOSITORY,
-        ],
-        
+      provide:    GetAllPendingsToRescheduleUseCase,
+      useFactory: (appointmentRepo) =>
+        new GetAllPendingsToRescheduleUseCase(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
     },
-    // ─────────────────────────────────────────────
-    // SCHEDULE USE CASES
-    // ─────────────────────────────────────────────
-
     {
-      provide:
-        GetAvailableSlotsUseCase,
+      provide:    GetPendingsToRescheduleUseCase,
+      useFactory: (appointmentRepo) =>
+        new GetPendingsToRescheduleUseCase(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
+    },
+    {
+      provide:    GetAppointmentsByPatient,
+      useFactory: (appointmentRepo) =>
+        new GetAppointmentsByPatient(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
+    },
+    // Cancel
+    {
+      provide:    CancelAppointmentUseCase,
+      useFactory: (appointmentRepo) =>
+        new CancelAppointmentUseCase(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
+    },
 
-      useFactory: (
-        scheduleRepo,
-        appointmentRepo,
-        doctorUnavailableRepo,
-      ) =>
-
-        new GetAvailableSlotsUseCase(
-          scheduleRepo,
-          appointmentRepo,
-          doctorUnavailableRepo
-        ),
-
+    // ── SCHEDULE USE CASES ───────────────────────────────────────────────────
+    {
+      provide:    GetAvailableSlotsUseCase,
+      useFactory: (scheduleRepo, appointmentRepo, doctorUnavailRepo) =>
+        new GetAvailableSlotsUseCase(scheduleRepo, appointmentRepo, doctorUnavailRepo),
       inject: [
         SCHEDULE_REPOSITORY,
         APPOINTMENT_REPOSITORY,
         DOCTOR_UNAVAILABILITY_REPOSITORY,
       ],
     },
-
     {
-      provide:
-        CreateScheduleUseCase,
-
-      useFactory: (
-        scheduleRepo,
-        authService: AuthService,
-      ) =>
-
-        new CreateScheduleUseCase(
-          scheduleRepo,
-          authService,
-        ),
-
-      inject: [
-        SCHEDULE_REPOSITORY,
-        AuthService,
-      ],
-    },
-
-    {
-      provide:
-        CreateManySchedulesUseCase,
-
-      useFactory: (
-        scheduleRepo,
-      ) =>
-
-        new CreateManySchedulesUseCase(
-          scheduleRepo,
-        ),
-
-      inject: [
-        SCHEDULE_REPOSITORY,
-      ],
-    },
-
-    {
-      provide:
-        GetScheduleUseCase,
-
-      useFactory: (
-        scheduleRepo,
-      ) =>
-
-        new GetScheduleUseCase(
-          scheduleRepo,
-        ),
-
-      inject: [
-        SCHEDULE_REPOSITORY,
-      ],
+      provide:    CreateScheduleUseCase,
+      useFactory: (scheduleRepo, authService) =>
+        new CreateScheduleUseCase(scheduleRepo, authService),
+      inject: [SCHEDULE_REPOSITORY, AuthService],
     },
     {
-      provide: CreateDoctorUnavailabilityUseCase,
-      useFactory: (
-        doctorUnavailabilityRepo,
-        appointmentRepo,
-      ) => new CreateDoctorUnavailabilityUseCase(
-        doctorUnavailabilityRepo,
-        appointmentRepo,
-      ),
-      inject: [
-        DOCTOR_UNAVAILABILITY_REPOSITORY,
-        APPOINTMENT_REPOSITORY,
-      ],
+      provide:    CreateManySchedulesUseCase,
+      useFactory: (scheduleRepo) =>
+        new CreateManySchedulesUseCase(scheduleRepo),
+      inject: [SCHEDULE_REPOSITORY],
     },
-
     {
-      provide: GetActivesByDoctorUseCase,
-      useFactory: (doctorUnavailabilityRepo) => 
-        new GetActivesByDoctorUseCase(doctorUnavailabilityRepo),
+      provide:    GetScheduleUseCase,
+      useFactory: (scheduleRepo) =>
+        new GetScheduleUseCase(scheduleRepo),
+      inject: [SCHEDULE_REPOSITORY],
+    },
+    {
+      provide:    CreateDoctorUnavailabilityUseCase,
+      useFactory: (doctorUnavailRepo, appointmentRepo) =>
+        new CreateDoctorUnavailabilityUseCase(doctorUnavailRepo, appointmentRepo),
+      inject: [DOCTOR_UNAVAILABILITY_REPOSITORY, APPOINTMENT_REPOSITORY],
+    },
+    {
+      provide:    GetActivesByDoctorUseCase,
+      useFactory: (doctorUnavailRepo) =>
+        new GetActivesByDoctorUseCase(doctorUnavailRepo),
       inject: [DOCTOR_UNAVAILABILITY_REPOSITORY],
     },
     {
-      provide:
-        UpdateScheduleUseCase,
-
-      useFactory: (
-        scheduleRepo,
-        appointmentRepo
-      ) =>
-
-        new UpdateScheduleUseCase(
-          scheduleRepo,
-          appointmentRepo,
-        ),
-
-      inject: [
-        SCHEDULE_REPOSITORY,
-        APPOINTMENT_REPOSITORY,
-      ],
+      provide:    UpdateScheduleUseCase,
+      useFactory: (scheduleRepo, appointmentRepo) =>
+        new UpdateScheduleUseCase(scheduleRepo, appointmentRepo),
+      inject: [SCHEDULE_REPOSITORY, APPOINTMENT_REPOSITORY],
     },
     {
-      provide:
-          ChangeScheduleStatusUseCase,
-
-      useFactory: (
-          scheduleRepo,
-          appointmentRepo
-      ) =>
-
-          new ChangeScheduleStatusUseCase(
-              scheduleRepo,
-              appointmentRepo,
-          ),
-
-      inject: [
-          SCHEDULE_REPOSITORY,
-          APPOINTMENT_REPOSITORY,
-      ],
+      provide:    ChangeScheduleStatusUseCase,
+      useFactory: (scheduleRepo, appointmentRepo) =>
+        new ChangeScheduleStatusUseCase(scheduleRepo, appointmentRepo),
+      inject: [SCHEDULE_REPOSITORY, APPOINTMENT_REPOSITORY],
     },
-      ],
+  ],
 })
 export class AppointmentModule {}

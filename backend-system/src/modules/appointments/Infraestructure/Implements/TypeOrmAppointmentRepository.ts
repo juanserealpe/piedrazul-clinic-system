@@ -14,38 +14,37 @@ import { AppointmentSchedulePersistenceMapper } from "../Mappers/AppointmentSche
 export class TypeOrmAppointmentRepository implements AppointmentRepository {
   constructor(
     @InjectRepository(AppointmentOrmEntity)
-    private readonly repo:
-      Repository<AppointmentOrmEntity>,
-  ){}
+    private readonly repo: Repository<AppointmentOrmEntity>,
+  ) {}
 
-  async findByAppointmentIdAndDoctorId(pDoctorId: string,pAppointmentId: string,)
-        : Promise<Appointment | null> {
+  async findById(appointmentId: string): Promise<Appointment | null> {
+    const result = await this.repo.findOne({
+      where: { id: appointmentId },
+    });
+    if (!result) return null;
+    return AppointmentPersistenceMapper.toDomain(result);
+  }
 
+  async findByAppointmentIdAndDoctorId(
+    pDoctorId: string,
+    pAppointmentId: string,
+  ): Promise<Appointment | null> {
     const vResult = await this.repo.findOne({
       where: {
         id: pAppointmentId,
         doctorId: pDoctorId,
       },
     });
-
-    if (!vResult) {
-      return null;
-    }
-
-  return AppointmentPersistenceMapper.toDomain(
-    vResult,
-    );
+    if (!vResult) return null;
+    return AppointmentPersistenceMapper.toDomain(vResult);
   }
 
-
   async findByAppointmentIdDoctorAndStatus(
-      pAppointmentId: string,
-      pDoctorId: string,
-      pStatus: Status[])
-      :Promise<Appointment | null>{
-
-    const vStatusFilter = Array.isArray(pStatus)
-    ? In(pStatus): pStatus;
+    pAppointmentId: string,
+    pDoctorId: string,
+    pStatus: Status[],
+  ): Promise<Appointment | null> {
+    const vStatusFilter = Array.isArray(pStatus) ? In(pStatus) : pStatus;
     const vResult = await this.repo.findOne({
       where: {
         id: pAppointmentId,
@@ -53,16 +52,10 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
         status: vStatusFilter,
       },
     });
+    if (!vResult) return null;
+    return AppointmentPersistenceMapper.toDomain(vResult);
+  }
 
-    if (!vResult) {
-      return null;
-    }
-
-    return AppointmentPersistenceMapper.toDomain(
-      vResult,
-    );
-
-      }
   async save(appointment: Appointment): Promise<Appointment> {
     const orm = AppointmentPersistenceMapper.toOrm(appointment);
     const saved = await this.repo.save(orm);
@@ -73,12 +66,9 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
     doctorId: string,
     status: Status[],
     start: Date,
-    end: Date
+    end: Date,
   ): Promise<Appointment[]> {
-
-    const vStatusFilter = Array.isArray(status)
-    ? In(status)
-    : status;
+    const vStatusFilter = Array.isArray(status) ? In(status) : status;
     const results = await this.repo.find({
       where: {
         doctorId,
@@ -87,111 +77,94 @@ export class TypeOrmAppointmentRepository implements AppointmentRepository {
       },
       order: { date: "ASC" },
     });
-
     return results.map(AppointmentPersistenceMapper.toDomain);
   }
-    async findByDoctorStatusAndDate(doctorId: string, status: Status[], date: Date)
-    : Promise<Appointment | null>{
-        const vStatusFilter = Array.isArray(status)
-        ? In(status)
-        : status;
-        const result = await this.repo.findOne({
-          where: {
-            doctorId,
-            status: vStatusFilter,
-            date: date.toISOString(),
-          },
-          order: { date: "ASC" },
-        });
-        if(!result) return null;
-        else return AppointmentPersistenceMapper.toDomain(result);
-    }
 
- async update(pAppointment: Appointment, pNewSchedule: AppointmentSchedule,
-  ): Promise<Appointment> {
-
-    await this.repo.manager.transaction(
-      async (pManager) => {
-
-        await pManager.update(
-          AppointmentOrmEntity,
-          {
-            id: pAppointment.id!,
-          },
-          {
-            date:
-              pNewSchedule.scheduledDate.toISOString(),
-            status:
-              pAppointment.status,
-          },
-        );
-
-        const vScheduleOrm =
-          AppointmentSchedulePersistenceMapper.toOrm(pNewSchedule);
-
-        vScheduleOrm.appointment = {id: pAppointment.id!,} as AppointmentOrmEntity;
-
-        await pManager.save(AppointmentScheduleOrmEntity, vScheduleOrm,);
+  async findByDoctorStatusAndDate(
+    doctorId: string,
+    status: Status[],
+    date: Date,
+  ): Promise<Appointment | null> {
+    const vStatusFilter = Array.isArray(status) ? In(status) : status;
+    const result = await this.repo.findOne({
+      where: {
+        doctorId,
+        status: vStatusFilter,
+        date: date.toISOString(),
       },
-    );
-  
+      order: { date: "ASC" },
+    });
+    if (!result) return null;
+    return AppointmentPersistenceMapper.toDomain(result);
+  }
+
+  async update(
+    pAppointment: Appointment,
+    pNewSchedule: AppointmentSchedule,
+  ): Promise<Appointment> {
+    await this.repo.manager.transaction(async (pManager) => {
+      await pManager.update(
+        AppointmentOrmEntity,
+        { id: pAppointment.id! },
+        {
+          date: pNewSchedule.scheduledDate.toISOString(),
+          status: pAppointment.status,
+        },
+      );
+
+      const vScheduleOrm = AppointmentSchedulePersistenceMapper.toOrm(pNewSchedule);
+      vScheduleOrm.appointment = { id: pAppointment.id! } as AppointmentOrmEntity;
+      await pManager.save(AppointmentScheduleOrmEntity, vScheduleOrm);
+    });
+
     pAppointment.updateCurrentDate(pNewSchedule.scheduledDate);
     return pAppointment;
   }
 
   async updateStatusByDoctorIdAndDateRange(
-      pDoctorId: string,
-      pStartDate: Date,
-      pEndDate: Date,
-      pStatus: Status,
-    ): Promise<number> {
-
+    pDoctorId: string,
+    pStartDate: Date,
+    pEndDate: Date,
+    pStatus: Status,
+  ): Promise<number> {
     const vResult = await this.repo.update(
       {
         doctorId: pDoctorId,
-        date: Between(
-          pStartDate.toISOString(),
-          pEndDate.toISOString(),
-        ),
+        date: Between(pStartDate.toISOString(), pEndDate.toISOString()),
       },
-      {
-        status: pStatus,
-      },
+      { status: pStatus },
     );
-
-    return vResult.affected?? 0;
+    return vResult.affected ?? 0;
   }
-    async findUpcomingPendingsToRescheduleByDoctorId(
+
+  async findUpcomingPendingsToRescheduleByDoctorId(
     pDoctorId: string,
     pCurrentDate: Date,
-    ): Promise<Appointment[]>{
-        const results = await this.repo.find({
-          where: {
-            doctorId: pDoctorId,
-            status: Status.PENDING_RESCHEDULE,
-            date: MoreThanOrEqual(pCurrentDate.toISOString()),
-          },
-          order: {
-              date: "ASC",
-          },
-      });
+  ): Promise<Appointment[]> {
+    const results = await this.repo.find({
+      where: {
+        doctorId: pDoctorId,
+        status: Status.PENDING_RESCHEDULE,
+        date: MoreThanOrEqual(pCurrentDate.toISOString()),
+      },
+      order: { date: "ASC" },
+    });
     return results.map(AppointmentPersistenceMapper.toDomain);
   }
-  async updateStatusByIds(
-    pIds: string[],
-    pStatus: Status,
-  ): Promise<number> {
 
-      const vResult =
-          await this.repo.update(
-              {
-                  id: In(pIds),
-              },
-              {
-                  status: pStatus,
-              },
-          );
+  async updateStatusByIds(pIds: string[], pStatus: Status): Promise<number> {
+    const vResult = await this.repo.update(
+      { id: In(pIds) },
+      { status: pStatus },
+    );
+    return vResult.affected ?? 0;
+  }
 
-      return vResult.affected ?? 0;
+  async findByPatientId(patientId: string): Promise<Appointment[]> {
+    const results = await this.repo.find({
+      where: { patientId },
+      order: { date: "DESC" },
+    });
+    return results.map(AppointmentPersistenceMapper.toDomain);
   }
 }

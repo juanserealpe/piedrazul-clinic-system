@@ -1,408 +1,270 @@
 "use client";
-
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../../components/ui/dialog";
-
-import {
-  Button,
-} from "../../components/ui/button";
-
-import {
-  createAppointment,
-} from "@/src/services/appointment.service";
-
-import {
-  getAvailableSlots,
-} from "@/src/services/schedule.service";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { createAppointment } from "@/services/appointment.service";
+import { getAvailableSlots } from "@/services/schedule.service";
+import { getApiErrorMessage } from "@/lib/api-errors";
+import { formatSlotTime12h, formatDateShort } from "@/lib/date";
 
 interface AvailableDate {
   date: string;
   slots: string[];
 }
 
+interface Doctor {
+  id: string;
+  name: string;
+  lastnames: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  doctor: any;
+  doctor: Doctor;
 }
 
-export default function ScheduleAppointmentModal({
-  open,
-  onClose,
-  doctor,
-}: Props) {
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [availableDates,
-    setAvailableDates] =
-      useState<AvailableDate[]>([]);
-
-  const [selectedDate,
-    setSelectedDate] =
-      useState("");
-
-  const [selectedSlot,
-    setSelectedSlot] =
-      useState("");
+export default function ScheduleAppointmentModal({ open, onClose, doctor }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-
-    if (!open || !doctor)
-      return;
-
+    if (!open || !doctor) return;
     loadAvailableDates();
-
   }, [open, doctor]);
 
-  const loadAvailableDates =
-    async () => {
-
-      try {
-
-        setLoading(true);
-
-        setAvailableDates([]);
-
-        setSelectedDate("");
-
-        setSelectedSlot("");
-
-        const promises = [];
-
-        for (
-          let i = 0;
-          i < 12;
-          i++
-        ) {
-
-          const date =
-            new Date();
-
-          date.setUTCDate(
-            date.getUTCDate() + i
-          );
-
-          promises.push(
-            getAvailableSlots(
-              date.toISOString(),
-              doctor.id
-            )
-          );
-        }
-
-        const results =
-          await Promise.allSettled(
-            promises
-          );
-
-        const available =
-          results
-            .filter(
-              (result) =>
-                result.status ===
-                "fulfilled"
-            )
-            .map(
-              (result: any) =>
-                result.value
-            )
-            .filter(
-              (item) =>
-                item?.slots &&
-                item.slots.length > 0
-            );
-
-        console.log(
-          "AVAILABLE RAW:",
-          JSON.stringify(
-            available,
-            null,
-            2
-          )
-        );
-
-        setAvailableDates(
-          available
-        );
-
-      } catch (error) {
-
-        console.error(
-          "ERROR CARGANDO DISPONIBILIDAD:",
-          error
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-  const currentSlots =
-    availableDates.find(
-      (item) =>
-        item.date ===
-        selectedDate
-    )?.slots || [];
-
-
-const handleSchedule = async () => {
+  const loadAvailableDates = async () => {
+    setLoading(true);
+    setAvailableDates([]);
+    setSelectedDate("");
+    setSelectedSlot("");
+    setErrorMsg("");
+    setSuccessMsg("");
     try {
-      if (!selectedSlot || !doctor?.id ) return;
-
-      setLoading(true);
-
-      // ✅ Asegurar ISO válido
-      const utcDate = new Date(selectedSlot).toISOString();
-
-            const payload = {
-        doctorId: doctor.id,
-        patientId: "",// ✅ obligatorio según tu service
-        date: utcDate,
-      };
-
-      console.log("PAYLOAD:", payload);
-
-      await createAppointment(payload);
-
-      alert("Cita creada correctamente");
-      onClose();
-    } catch (error) {
-      console.error("ERROR CREANDO CITA:", error);
-      alert("Error al crear cita");
+      const promises = Array.from({ length: 12 }, (_, i) => {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() + i);
+        return getAvailableSlots(date.toISOString(), doctor.id);
+      });
+      const results = await Promise.allSettled(promises);
+      const available = results
+        .filter((r) => r.status === "fulfilled")
+        .map((r: any) => r.value)
+        .filter((item: any) => item?.slots?.length > 0);
+      setAvailableDates(available);
+      if (available.length === 0) {
+        setErrorMsg(
+          "Este medico no tiene horarios disponibles en los proximos 12 dias."
+        );
+      }
+    } catch (err) {
+      setErrorMsg(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
+
+  const currentSlots =
+    availableDates.find((item) => item.date === selectedDate)?.slots ?? [];
+
+  const handleSchedule = async () => {
+    if (!selectedSlot || !doctor?.id) return;
+    setErrorMsg("");
+    setSuccessMsg("");
+    setLoading(true);
+    try {
+      await createAppointment({
+        doctorId: doctor.id,
+        patientId: "",
+        date: new Date(selectedSlot).toISOString(),
+      });
+      setSuccessMsg("Cita agendada correctamente. Puede cerrar esta ventana.");
+      setTimeout(onClose, 1800);
+    } catch (err) {
+      setErrorMsg(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-
-    <Dialog
-      open={open}
-      onOpenChange={onClose}
-    >
-
-      <DialogContent className="max-w-2xl">
-
-        <DialogHeader>
-
-          <DialogTitle>
-
-            Agendar con{" "}
-            {doctor?.name}
-            {" "}
-            {doctor?.lastnames}
-
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent
+        className="max-w-2xl"
+        style={{
+          borderRadius: "16px",
+          padding: 0,
+          maxHeight: "92vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <DialogHeader
+          style={{
+            padding: "20px 24px 16px",
+            borderBottom: "1px solid var(--pz-border)",
+            flexShrink: 0,
+          }}
+        >
+          <DialogTitle style={{ fontSize: "1.1rem", color: "var(--pz-green)" }}>
+            Agendar cita con Dr. {doctor?.name} {doctor?.lastnames}
           </DialogTitle>
-
         </DialogHeader>
 
-        {loading &&
-          availableDates.length === 0 && (
-
-            <div className="py-6 text-center">
-
-              Cargando disponibilidad...
-
+        <div
+          style={{
+            overflowY: "auto",
+            flex: 1,
+            padding: "20px 24px",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {errorMsg && (
+            <div className="pz-error" style={{ marginBottom: "16px" }}>
+              {errorMsg}
             </div>
-
+          )}
+          {successMsg && (
+            <div className="pz-success" style={{ marginBottom: "16px" }}>
+              {successMsg}
+            </div>
           )}
 
-        {!loading &&
-          availableDates.length === 0 && (
-
-            <div
-              className="
-              py-6
-              text-center
-              text-muted-foreground
-              "
-            >
-
-              No hay horarios disponibles
-              para los próximos 12 días.
-
+          {loading && availableDates.length === 0 && (
+            <div className="pz-loading" style={{ padding: "32px 0" }}>
+              Buscando horarios disponibles...
             </div>
-
           )}
 
-        {availableDates.length > 0 && (
+          {!loading && availableDates.length === 0 && !errorMsg && (
+            <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <p style={{ fontWeight: 600, color: "var(--pz-text-mid)" }}>
+                No hay horarios disponibles para los proximos 12 dias
+              </p>
+            </div>
+          )}
 
-          <div className="space-y-6">
-
-            <div>
-
-              <h3 className="font-semibold mb-3">
-
-                Seleccione una fecha
-
-              </h3>
-
-              <div
-                className="
-                grid
-                grid-cols-2
-                md:grid-cols-3
-                gap-2
-                "
-              >
-
-                {availableDates.map(
-                  (item) => (
-
-                    <Button
+          {availableDates.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div>
+                <p
+                  style={{
+                    fontWeight: 700,
+                    marginBottom: "12px",
+                    color: "var(--pz-text-mid)",
+                    fontSize: "0.95rem",
+                  }}
+                >
+                  Paso 1 de 2: Seleccione una fecha disponible
+                </p>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+                    gap: "8px",
+                  }}
+                >
+                  {availableDates.map((item) => (
+                    <button
                       key={item.date}
-                      variant={
-                        selectedDate ===
-                        item.date
-                          ? "default"
-                          : "outline"
-                      }
+                      className={`pz-date-btn${selectedDate === item.date ? " selected" : ""}`}
                       onClick={() => {
-
-                        setSelectedDate(
-                          item.date
-                        );
-
-                        setSelectedSlot(
-                          ""
-                        );
-
+                        setSelectedDate(item.date);
+                        setSelectedSlot("");
                       }}
                     >
-
-                      {new Date(
-                        item.date
-                      ).toLocaleDateString(
-                        "es-CO",
-                        {
-                          timeZone:
-                            "UTC",
-                          weekday:
-                            "short",
-                          day:
-                            "2-digit",
-                          month:
-                            "2-digit",
-                          year:
-                            "numeric",
-                        }
-                      )}
-
-                    </Button>
-
-                  )
-                )}
-
-              </div>
-
-            </div>
-
-            {selectedDate && (
-
-              <div>
-
-                <h3 className="font-semibold mb-3">
-
-                  Seleccione una hora
-
-                </h3>
-
-                <div
-                  className="
-                  grid
-                  grid-cols-2
-                  md:grid-cols-4
-                  gap-2
-                  "
-                >
-
-                  {currentSlots.map(
-                    (slot) => (
-
-                      <Button
-                        key={slot}
-                        variant={
-                          selectedSlot ===
-                          slot
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() =>
-                          setSelectedSlot(
-                            slot
-                          )
-                        }
-                      >
-
-                        {new Date(
-                          slot
-                        ).toLocaleTimeString(
-                          "es-CO",
-                          {
-                            timeZone:
-                              "UTC",
-                            hour:
-                              "2-digit",
-                            minute:
-                              "2-digit",
-                            hour12:
-                              false,
-                          }
-                        )}
-
-                      </Button>
-
-                    )
-                  )}
-
+                      {formatDateShort(item.date)}
+                    </button>
+                  ))}
                 </div>
-
               </div>
 
-            )}
-
-            <div className="flex justify-end gap-2">
-
-              <Button
-                variant="outline"
-                onClick={onClose}
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                disabled={
-                  !selectedSlot ||
-                  loading
-                }
-                onClick={
-                  handleSchedule
-                }
-              >
-                Confirmar cita
-              </Button>
-
+              {selectedDate && (
+                <div>
+                  <p
+                    style={{
+                      fontWeight: 700,
+                      marginBottom: "12px",
+                      color: "var(--pz-text-mid)",
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    Paso 2 de 2: Seleccione la hora
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--pz-text-soft)",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {currentSlots.length} horarios disponibles
+                  </p>
+                  <div
+                    style={{
+                      maxHeight: "240px",
+                      overflowY: "auto",
+                      WebkitOverflowScrolling: "touch",
+                      padding: "4px",
+                      border: "1px solid var(--pz-border)",
+                      borderRadius: "10px",
+                      background: "var(--pz-cream)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
+                        gap: "8px",
+                        padding: "4px",
+                      }}
+                    >
+                      {currentSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          className={`pz-slot-btn${selectedSlot === slot ? " selected" : ""}`}
+                          onClick={() => setSelectedSlot(slot)}
+                        >
+                          {/* formatSlotTime12h lee getUTCHours directo, sin restar 5 horas */}
+                          {formatSlotTime12h(slot)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          )}
+        </div>
 
-          </div>
-
-        )}
-
+        <div
+          style={{
+            padding: "14px 24px",
+            borderTop: "1px solid var(--pz-border)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "10px",
+            flexShrink: 0,
+            background: "var(--pz-white)",
+          }}
+        >
+          <button onClick={onClose} disabled={loading} className="pz-btn-outline">
+            Cancelar
+          </button>
+          <button
+            disabled={!selectedSlot || loading}
+            onClick={handleSchedule}
+            className="pz-btn-primary"
+            style={{ opacity: !selectedSlot || loading ? 0.6 : 1 }}
+          >
+            {loading ? "Guardando..." : "Confirmar cita"}
+          </button>
+        </div>
       </DialogContent>
-
     </Dialog>
-
   );
 }

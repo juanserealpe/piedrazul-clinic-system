@@ -1,6 +1,6 @@
-import DoctorSchedulesList from "@/src/components/schedules/DoctorSchedulesList";
-import WeeklyScheduleForm from "@/src/components/schedules/WeeklyScheduleForm";
-import GenerateUnavailabilityButton from "@/src/components/ui/GenerateUnavailabilityButton";
+import DoctorSchedulesList from "@/components/schedules/DoctorSchedulesList";
+import WeeklyScheduleForm from "@/components/schedules/WeeklyScheduleForm";
+import GenerateUnavailabilityButton from "@/components/ui/GenerateUnavailabilityButton";
 
 
 export default function DoctorSchedulePage() {

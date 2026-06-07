@@ -34,3 +34,4 @@ export class UserRepository {
     return { id: patient.id, name: patient.names, lastnames: patient.lastnames };
   }
 }
+}

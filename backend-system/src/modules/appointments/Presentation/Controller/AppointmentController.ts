@@ -28,48 +28,46 @@ import { GetAllPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Ge
 import { GetPendingsToRescheduleUseCase } from "../../UseCases/Appointment/Get/GetPendingsToReschedule/GetPendingsToRescheduleUseCase";
 import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
 import { UpdateAppointmentOutput } from "../../UseCases/Appointment/Update/UpdateAppointmentOutput";
+import { GetAppointmentsByPatient } from "../../UseCases/Appointment/Get/GetAppointmentsByPatient/GetAppointmentsByPatient";
+import { CancelAppointmentUseCase } from "../../UseCases/Appointment/Cancel/CancelAppointmentUseCase";
 
 @Controller("appointments")
 export class AppointmentController {
-    constructor(
-    private readonly createAppointmentUseCase: CreateAppointment,
+  constructor(
+    private readonly createAppointmentUseCase:              CreateAppointment,
     private readonly getAppointmentsByDoctorAndDateUseCase: GetAppointmentsByDoctorAndDate,
-    private readonly reScheduleAppointmentUseCase: UpdateAppointment,
-    private readonly csvExportUseCase: CsvExportUseCase,
-    private readonly getAllPendingsToRescheduleUseCase: GetAllPendingsToRescheduleUseCase,
-    private readonly getPendingsToRescheduleUseCase: GetPendingsToRescheduleUseCase,
+    private readonly reScheduleAppointmentUseCase:          UpdateAppointment,
+    private readonly csvExportUseCase:                      CsvExportUseCase,
+    private readonly getAllPendingsToRescheduleUseCase:      GetAllPendingsToRescheduleUseCase,
+    private readonly getPendingsToRescheduleUseCase:         GetPendingsToRescheduleUseCase,
+    private readonly getAppointmentsByPatientUseCase:        GetAppointmentsByPatient,
+    private readonly cancelAppointmentUseCase:               CancelAppointmentUseCase,
   ) {}
 
-  // -------- CREATE APPOINTMENT --------
+  // ── CREATE ────────────────────────────────────────────────────────────────
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER", "PATIENT")
   async create(@Body() body: CreateAppointmentRequestDto, @Req() req) {
-    if(!body.patientId) body.patientId = req.user.preferred_username;
-    if(!body.doctorId) body.doctorId = req.user.preferred_username;
-    console.log("BODY:", body);
+    if (!body.patientId) body.patientId = req.user.preferred_username;
+    if (!body.doctorId)  body.doctorId  = req.user.preferred_username;
     const vInput = AppointmentControllerMapper.toCreateInput(body.doctorId, body);
-    return await this.createAppointmentUseCase.execute(vInput);               
+    return await this.createAppointmentUseCase.execute(vInput);
   }
-  
 
-  // -------- GET APPOINTMENTS BY DOCTOR AND DATE --------
+  // ── GET BY DOCTOR AND DATE ────────────────────────────────────────────────
   @Get("by-doctor")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER")
   async getByDoctor(@Query() query: GetAppointmentsRequestDto, @Req() req) {
-    console.log("Received query:", query);
-    console.log("Authenticated user:", req.user.preferred_username);
-    if(!query.doctorId) query.doctorId = req.user.preferred_username;
+    if (!query.doctorId) query.doctorId = req.user.preferred_username;
     const vInput = AppointmentControllerMapper.toGetInput(query);
-    const result = await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
-    console.log("Result:", result);
-    return result;
+    return await this.getAppointmentsByDoctorAndDateUseCase.execute(vInput);
   }
-  
 
+  // ── EXPORT CSV ────────────────────────────────────────────────────────────
   @Get("export/csv")
   @Header("Content-Type", "text/csv")
   @Header("Content-Disposition", 'attachment; filename="appointments.csv"')
@@ -78,47 +76,75 @@ export class AppointmentController {
   @Roles("DOCTOR", "SCHEDULER")
   async exportCsv(@Query() query: GetAppointmentsRequestDto, @Req() req) {
     query.doctorId = req.user.preferred_username;
-    console.log("Received query for CSV export:", query);
     const vInput = AppointmentControllerMapper.toGetInput(query);
     return await this.csvExportUseCase.execute(vInput);
   }
 
-
+  // ── RESCHEDULE ────────────────────────────────────────────────────────────
   @Patch("reschedule")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR")
-  async reScheduleByDoctor(@Body() body: ReScheduleRequestDto, @Req() req)
-  : Promise<UpdateAppointmentOutput> {
-    if(!body.doctorId) body.doctorId = req.user.preferred_username; 
-    const vInput = AppointmentControllerMapper.toRescheduleInput(body.appointmentId,body);
+  @Roles("DOCTOR", "SCHEDULER")
+  async reScheduleByDoctor(
+    @Body() body: ReScheduleRequestDto,
+    @Req() req,
+  ): Promise<UpdateAppointmentOutput> {
+    if (!body.doctorId) body.doctorId = req.user.preferred_username;
+    const vInput = AppointmentControllerMapper.toRescheduleInput(body.doctorId, body);
     return await this.reScheduleAppointmentUseCase.execute(vInput);
   }
-  //UNAVAILABILITY
-  ////Pendientes viaje el id por el jwt y no por url, solo para pruebas
+
+  // ── CANCEL ────────────────────────────────────────────────────────────────
+  @Patch("cancel")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("PATIENT")
+  async cancelAppointment(
+    @Body() body: { appointmentId: string },
+    @Req() req,
+  ) {
+    return await this.cancelAppointmentUseCase.execute({
+      appointmentId: body.appointmentId,
+      patientId:     req.user.preferred_username,
+    });
+  }
+
+  // ── PENDING RESCHEDULE ALL (by id param) ──────────────────────────────────
   @Get("pending-reschedule/all/:id")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR")
-    async getAll(
-      @Param("id") id: string,
-    ) {
-      return await this.getAllPendingsToRescheduleUseCase.execute(id,);
-    }
+  async getAll(@Param("id") id: string) {
+    return await this.getAllPendingsToRescheduleUseCase.execute(id);
+  }
 
-  @Get("pending-reschedule/range") 
+  // ── PENDING RESCHEDULE RANGE ──────────────────────────────────────────────
+  @Get("pending-reschedule/range")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
   @Roles("DOCTOR", "SCHEDULER")
   async getByRange(
-    @Query()
-    pQuery: GetPendingsToRescheduleRequestDto, @Req() req
-    ) {
-      const vInput =
-        AppointmentControllerMapper
-        .toGetPendingsInput(req.user.preferred_username,pQuery);
-        const a =  await this.getPendingsToRescheduleUseCase
-         .execute(vInput);
-         return a;
-    }
+    @Query() pQuery: GetPendingsToRescheduleRequestDto,
+    @Req() req,
+  ) {
+    // Doctor: no manda doctorId → usa su propio JWT
+    // Scheduler: manda doctorId del médico → lo respeta
+    if (!pQuery.doctorId) pQuery.doctorId = req.user.preferred_username;
+
+    const vInput = AppointmentControllerMapper.toGetPendingsInput(
+      pQuery.doctorId!,
+      pQuery,
+    );
+    return await this.getPendingsToRescheduleUseCase.execute(vInput);
+  }
+
+  // ── GET BY PATIENT ────────────────────────────────────────────────────────
+  @Get("by-patient")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("PATIENT")
+  async getByPatient(@Req() req) {
+    const patientId = req.user.preferred_username;
+    return await this.getAppointmentsByPatientUseCase.execute(patientId);
+  }
 }
