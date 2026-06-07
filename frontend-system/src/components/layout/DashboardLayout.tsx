@@ -172,14 +172,22 @@ function NavContent({
 
 // ── Layout principal ──────────────────────────────────────────────────────────
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router   = useRouter();
-  const logout   = useAuthStore(s => s.logout);
-  const user     = useAuthStore(s => s.user);
+  const router            = useRouter();
+  const logout            = useAuthStore(s => s.logout);
+  const setAuth           = useAuthStore(s => s.setAuth);
+  const hydrateFromStorage = useAuthStore(s => s.hydrateFromStorage);
+  const user              = useAuthStore(s => s.user);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [nombre,     setNombre]     = useState("");
 
   const userRole = user?.roles?.[0] ?? "";
 
+  // ── Hidratación: solo corre en cliente, después del primer render ─────────
+  useEffect(() => {
+    hydrateFromStorage();
+  }, []);
+
+  // ── Fetch nombre ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user?.id) return;
     api.get("/auth/all-users")

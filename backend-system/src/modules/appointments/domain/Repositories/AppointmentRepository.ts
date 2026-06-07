@@ -2,44 +2,61 @@ import { Appointment } from "../entities/Appointment.entity";
 import { AppointmentSchedule } from "../entities/AppointmentSchedule";
 import { Status } from "../entities/Status";
 
-export interface AppointmentRepository{
-    //reschedule
-    findByAppointmentIdAndDoctorId(pDoctorId: string,pAppointmentId: string,)
-      : Promise<Appointment | null>;
-    //Doctor
-    
+export interface AppointmentRepository {
+    // Cancel / generic lookup
+    findById(appointmentId: string): Promise<Appointment | null>;
+
+    // Reschedule
+    findByAppointmentIdAndDoctorId(
+        pDoctorId: string,
+        pAppointmentId: string,
+    ): Promise<Appointment | null>;
+
+    // Doctor
     findByAppointmentIdDoctorAndStatus(
-      pAppointmentId: string,
-      pDoctorId: string,
-      pStatus: Status[])
-      :Promise<Appointment | null>
+        pAppointmentId: string,
+        pDoctorId: string,
+        pStatus: Status[],
+    ): Promise<Appointment | null>;
 
-    findByDoctorStatusAndDateRange(doctorId: string, status: Status[], start: Date, end: Date)
-    : Promise<Appointment[]>;
+    findByDoctorStatusAndDateRange(
+        doctorId: string,
+        status: Status[],
+        start: Date,
+        end: Date,
+    ): Promise<Appointment[]>;
 
-    findByDoctorStatusAndDate(doctorId: string, status: Status[], date: Date)
-    : Promise<Appointment | null>;
-    
-    //Cruds
+    findByDoctorStatusAndDate(
+        doctorId: string,
+        status: Status[],
+        date: Date,
+    ): Promise<Appointment | null>;
+
+    // Patient
+    findByPatientId(patientId: string): Promise<Appointment[]>;
+
+    // CRUD
     save(appointment: Appointment): Promise<Appointment>;
-    update(pAppointment: Appointment, pNewSchedule: AppointmentSchedule,): Promise<Appointment>;
+    update(
+        pAppointment: Appointment,
+        pNewSchedule: AppointmentSchedule,
+    ): Promise<Appointment>;
 
-    //Update
+    // Bulk updates
     updateStatusByDoctorIdAndDateRange(
-      pDoctorId: string,
-      pStartDate: Date,
-      pEndDate: Date,
-      pStatus: Status,
+        pDoctorId: string,
+        pStartDate: Date,
+        pEndDate: Date,
+        pStatus: Status,
+    ): Promise<number>;
+
+    updateStatusByIds(
+        pIds: string[],
+        pStatus: Status,
     ): Promise<number>;
 
     findUpcomingPendingsToRescheduleByDoctorId(
-    pDoctorId: string,
-    pCurrentDate: Date,
+        pDoctorId: string,
+        pCurrentDate: Date,
     ): Promise<Appointment[]>;
-    
-    updateStatusByIds(
-    pIds: string[],
-    pStatus: Status,
-    ): Promise<number>;
-    findByPatientId(patientId: string): Promise<Appointment[]>;
 }

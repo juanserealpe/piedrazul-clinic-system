@@ -6,18 +6,24 @@ import api from "@/lib/axios";
 import AppointmentNotifications from "../appointments/AppointmentNotifications";
 
 export default function Navbar() {
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
-  const user = useAuthStore((state) => state.user);
-  const [nombre, setNombre] = useState("");
+  const router  = useRouter();
+  const logout  = useAuthStore((state) => state.logout);
+  const user    = useAuthStore((state) => state.user);
+  const [nombre,    setNombre]    = useState("");
+  const [hydrated,  setHydrated]  = useState(false); // ← nuevo
 
   const roleLabel: Record<string, string> = {
-    ADMIN: "Administrador",
-    DOCTOR: "Médico",
-    PATIENT: "Paciente",
+    ADMIN:     "Administrador",
+    DOCTOR:    "Médico",
+    PATIENT:   "Paciente",
     SCHEDULER: "Agendador",
   };
   const userRole = user?.roles?.[0] || "";
+
+  // ── Marca como hidratado tras el primer render en cliente ─────────────────
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -55,7 +61,8 @@ export default function Navbar() {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {(userRole === "DOCTOR" || userRole === "SCHEDULER") && (
+        {/* ← espera hidratación antes de evaluar el rol */}
+        {hydrated && (userRole === "DOCTOR" || userRole === "SCHEDULER") && (
           <AppointmentNotifications />
         )}
         <button
