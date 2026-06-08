@@ -33,4 +33,15 @@ export class UserRepository {
     if (!patient) return null;
     return { id: patient.id, name: patient.names, lastnames: patient.lastnames };
   }
+  async getAllUsers(): Promise<{ id: string; names: string; lastnames: string; roles: string[]; email?: string; phone_number: string }[]> {
+    const users = await this.repo.find({ order: { lastnames: 'ASC' } });
+    return users.map(u => ({
+      id: u.id,
+      names: u.names,
+      lastnames: u.lastnames,
+      roles: u.roles,
+      email: u.email,
+      phone_number: u.phone_number,
+    }));
+  }
 }

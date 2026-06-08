@@ -1,31 +1,12 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import DoctorsTable from "@/components/appointments/DoctorsTable";
 import ScheduleAppointmentModal from "@/components/appointments/ScheduleAppointmentModal";
 import { getAllDoctorsRequest } from "@/services/auth.service";
 import { getApiErrorMessage } from "@/lib/api-errors";
+import { formatSlotTime12h, formatDateLong } from "@/lib/date";
 import api from "@/lib/axios";
-
-// Convierte fecha UTC a hora Colombia UTC-5 en formato 12 horas
-function toCol12h(isoStr: string): string {
-  const utc = new Date(isoStr);
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let h = col.getUTCHours();
-  const m = col.getUTCMinutes().toString().padStart(2, "0");
-  const ap = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m} ${ap}`;
-}
-
-function toColDateLong(isoStr: string): string {
-  return new Date(isoStr).toLocaleDateString("es-CO", {
-    timeZone: "UTC",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    weekday: "long",
-  });
-}
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Programada",
@@ -43,7 +24,6 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "pz-badge-red",
 };
 
-// Modal de confirmacion para cancelar una cita
 function ConfirmCancelModal({
   onConfirm,
   onClose,
@@ -106,8 +86,6 @@ export default function PatientAppointmentsPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [tab, setTab] = useState<"citas" | "agendar">("citas");
-
-  // Estado para el modal de cancelacion
   const [cancelAppointmentId, setCancelAppointmentId] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -142,8 +120,7 @@ export default function PatientAppointmentsPage() {
     if (!cancelAppointmentId) return;
     setCancelLoading(true);
     try {
-      // Llama al endpoint de cancelacion
-      await api.patch(`/appointments/cancel`, {
+      await api.patch("/appointments/cancel", {
         appointmentId: cancelAppointmentId,
       });
       setSuccessMsg("Su cita fue cancelada correctamente.");
@@ -157,9 +134,13 @@ export default function PatientAppointmentsPage() {
     }
   };
 
-  // Determina si una cita puede cancelarse (solo las programadas o reagendadas)
   const canCancel = (status: string) =>
     status === "SCHEDULED" || status === "RESCHEDULED";
+
+  const getDoctorName = (doctorId: string) => {
+    const doc = doctors.find((d) => d.id === doctorId);
+    return doc ? `Dr. ${doc.name} ${doc.lastnames}` : doctorId;
+  };
 
   return (
     <div>
@@ -168,7 +149,6 @@ export default function PatientAppointmentsPage() {
         <p>Consulte y agende sus citas</p>
       </div>
 
-      {/* Pestanas de navegacion */}
       <div
         style={{
           display: "flex",
@@ -204,7 +184,6 @@ export default function PatientAppointmentsPage() {
         ))}
       </div>
 
-      {/* Mensajes de exito o error */}
       {errorMsg && (
         <div className="pz-error" style={{ marginBottom: "16px" }}>
           {errorMsg}
@@ -216,7 +195,6 @@ export default function PatientAppointmentsPage() {
         </div>
       )}
 
-      {/* Pestana: Mis citas */}
       {tab === "citas" && (
         <>
           {loading ? (
@@ -265,7 +243,7 @@ export default function PatientAppointmentsPage() {
                   <thead>
                     <tr>
                       <th>Fecha</th>
-                      <th>Hora (Colombia)</th>
+                      <th>Hora</th>
                       <th>Medico</th>
                       <th style={{ textAlign: "center" }}>Estado</th>
                       <th style={{ textAlign: "center" }}>Accion</th>
@@ -280,7 +258,7 @@ export default function PatientAppointmentsPage() {
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {toColDateLong(apt.date)}
+                          {formatDateLong(apt.date)}
                         </td>
                         <td>
                           <span
@@ -295,13 +273,11 @@ export default function PatientAppointmentsPage() {
                               whiteSpace: "nowrap",
                             }}
                           >
-                            {toCol12h(apt.date)}
+                            {formatSlotTime12h(apt.date)}
                           </span>
                         </td>
                         <td style={{ fontWeight: 600 }}>
-                          {doctors.find((d) => d.id === apt.doctorId)
-                            ? `Dr. ${doctors.find((d) => d.id === apt.doctorId)!.name} ${doctors.find((d) => d.id === apt.doctorId)!.lastnames}`
-                            : apt.doctorId}
+                          {getDoctorName(apt.doctorId)}
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <span
@@ -311,7 +287,6 @@ export default function PatientAppointmentsPage() {
                           </span>
                         </td>
                         <td style={{ textAlign: "center" }}>
-                          {/* Solo mostrar boton de cancelar para citas que se pueden cancelar */}
                           {canCancel(apt.status) && apt.appointmentId && (
                             <button
                               onClick={() =>
@@ -353,7 +328,6 @@ export default function PatientAppointmentsPage() {
         </>
       )}
 
-      {/* Pestana: Agendar nueva cita */}
       {tab === "agendar" && (
         <DoctorsTable
           doctors={doctors}
@@ -364,7 +338,6 @@ export default function PatientAppointmentsPage() {
         />
       )}
 
-      {/* Modal para agendar cita con medico seleccionado */}
       {selectedDoc && (
         <ScheduleAppointmentModal
           open={openModal}
@@ -376,7 +349,6 @@ export default function PatientAppointmentsPage() {
         />
       )}
 
-      {/* Modal de confirmacion de cancelacion */}
       {cancelAppointmentId && (
         <ConfirmCancelModal
           onConfirm={handleCancelAppointment}
