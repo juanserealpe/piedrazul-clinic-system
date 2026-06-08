@@ -30,6 +30,8 @@ import { ReScheduleRequestDto } from "../Dtos/Appointment/ReScheduleRequestDto";
 import { UpdateAppointmentOutput } from "../../UseCases/Appointment/Update/UpdateAppointmentOutput";
 import { GetAppointmentsByPatient } from "../../UseCases/Appointment/Get/GetAppointmentsByPatient/GetAppointmentsByPatient";
 import { CancelAppointmentUseCase } from "../../UseCases/Appointment/Cancel/CancelAppointmentUseCase";
+import { MarkToRescheduleUseCase } from "../../UseCases/Appointment/Update/MarkToReschedule/MarkToRescheduleUseCase";
+import { markToRescheduleRequestDto } from "../Dtos/Appointment/MarkToRescheduleRequestDto";
 
 @Controller("appointments")
 export class AppointmentController {
@@ -42,6 +44,7 @@ export class AppointmentController {
     private readonly getPendingsToRescheduleUseCase:         GetPendingsToRescheduleUseCase,
     private readonly getAppointmentsByPatientUseCase:        GetAppointmentsByPatient,
     private readonly cancelAppointmentUseCase:               CancelAppointmentUseCase,
+    private readonly markToRescheduleUseCase:                MarkToRescheduleUseCase,
   ) {}
 
   // ── CREATE ────────────────────────────────────────────────────────────────
@@ -146,5 +149,14 @@ export class AppointmentController {
   async getByPatient(@Req() req) {
     const patientId = req.user.preferred_username;
     return await this.getAppointmentsByPatientUseCase.execute(patientId);
+  }
+
+  // MARK TO RESCHEDULE
+  @Patch("markToReschedule")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("PATIENT", "DOCTOR", "ADMIN", "SCHEDULER")
+  async markToReschedule(@Body() body: markToRescheduleRequestDto) {
+    return await this.markToRescheduleUseCase.execute(body);
   }
 }
