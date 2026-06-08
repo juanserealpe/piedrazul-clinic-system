@@ -6,8 +6,16 @@ frontend-system/.next
 backend-system/node_modules
 backend-system/dist
 backend-system/piedrazul.db
+
 # ENV
 **/.env
 
 # LOGS
 *.log
+
+# DOCKER
+Dockerfile
+**/Dockerfile
+docker-compose.yml
+*.yml
+*.yaml

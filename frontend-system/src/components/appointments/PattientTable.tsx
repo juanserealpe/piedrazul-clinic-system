@@ -66,29 +66,6 @@ export default function PatientTable({ onCreateAppointment, searchQuery = "" }: 
     );
   }
 
-  const handleSearch = async () => {
-  try {
-    if (!searchId.trim()) return;
-
-    setSearching(true);
-    setSearchResult(null);
-
-    const result = await getPatientByIdRequest(searchId);
-
-    setSearchResult(result);
-  } catch (error) {
-    console.error(error);
-    setSearchResult(null);
-  } finally {
-    setSearching(false);
-  }
-};
-
-const clearSearch = () => {
-  setSearchId("");
-  setSearchResult(null);
-};
-
   return (
     <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
       <div

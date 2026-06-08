@@ -94,7 +94,7 @@ export class KeycloakService implements IKeycloakService {
     }
   }
 
-  async getRole(roleName: string, token: string) {
+  /*async getRole(roleName: string, token: string) {
     try {
       const res = await axios.get(
         `${this.baseUrl}/admin/realms/${this.realm}/roles/${roleName}`,
@@ -104,7 +104,17 @@ export class KeycloakService implements IKeycloakService {
     } catch (error) {
       this.handleError(error, `Error getting role ${roleName}`);
     }
-  }
+  }*/
+
+  async getAllRealmRoles(token: string) {
+  const res = await axios.get(
+    `${this.baseUrl}/admin/realms/${this.realm}/roles`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return res.data;
+}
 
   async assignRoles(userId: string, roles: any[], token: string) {
     try {
