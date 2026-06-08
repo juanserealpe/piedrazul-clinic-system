@@ -108,6 +108,19 @@ export class AppointmentController {
       patientId:     req.user.preferred_username,
     });
   }
+  @Patch("cancel-by-staff")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles("DOCTOR", "SCHEDULER")
+  async cancelByStaff(
+    @Body() body: { appointmentId: string },
+    @Req() req,
+  ) {
+    return await this.cancelAppointmentUseCase.executeByStaff({
+      appointmentId: body.appointmentId,
+      staffId: req.user.preferred_username,
+    });
+  }
 
   // ── PENDING RESCHEDULE ALL (by id param) ──────────────────────────────────
   @Get("pending-reschedule/all/:id")

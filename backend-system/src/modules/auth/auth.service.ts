@@ -166,5 +166,8 @@ async getPatientById(id: string): Promise<{ id: string; name: string, lastnames:
   }
   return user;
 }
+async getAllUsers() {
+    return this.userRepo.getAllUsers();
+  }
 
 }
