@@ -3,17 +3,21 @@ import { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/api-errors";
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrador", DOCTOR: "Médico", PATIENT: "Paciente", SCHEDULER: "Agendador",
-};
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "pz-badge-red", DOCTOR: "pz-badge-green", PATIENT: "pz-badge-green", SCHEDULER: "pz-badge-amber",
-};
-const ROLE_ICONS: Record<string, string> = {
-  ADMIN: "⚙️", DOCTOR: "👨‍⚕️", PATIENT: "🧑", SCHEDULER: "📋",
+const ETIQUETAS_ROL: Record<string, string> = {
+  ADMIN: "Administrador",
+  DOCTOR: "Medico",
+  PATIENT: "Paciente",
+  SCHEDULER: "Agendador",
 };
 
-interface User {
+const COLORES_ROL: Record<string, string> = {
+  ADMIN: "pz-badge-red",
+  DOCTOR: "pz-badge-green",
+  PATIENT: "pz-badge-green",
+  SCHEDULER: "pz-badge-amber",
+};
+
+interface Usuario {
   id: string;
   names: string;
   lastnames: string;
@@ -22,174 +26,298 @@ interface User {
   phone_number: string;
 }
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+function TarjetaEstadistica({
+  etiqueta,
+  cantidad,
+  color,
+}: {
+  etiqueta: string;
+  cantidad: number;
+  color: string;
+}) {
+  return (
+    <div className="pz-card" style={{ padding: "16px 20px", textAlign: "center" }}>
+      <div
+        style={{
+          fontSize: "1.6rem",
+          fontWeight: 800,
+          color,
+          lineHeight: 1,
+        }}
+      >
+        {cantidad}
+      </div>
+      <div
+        style={{
+          fontSize: "0.82rem",
+          color: "var(--pz-text-soft)",
+          marginTop: "6px",
+          fontWeight: 600,
+        }}
+      >
+        {etiqueta}
+      </div>
+    </div>
+  );
+}
+
+export default function PaginaUsuarios() {
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [filterRole, setFilterRole] = useState("ALL");
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState("TODOS");
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    cargarUsuarios();
+  }, []);
 
-  const loadUsers = async () => {
-    setLoading(true);
+  const cargarUsuarios = async () => {
+    setCargando(true);
     setError("");
     try {
       const res = await api.get("/auth/all-users");
-      setUsers(res.data);
+      setUsuarios(res.data);
     } catch (e) {
       setError(getApiErrorMessage(e));
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
   };
 
-  const term = search.toLowerCase().trim();
-  const filtered = users.filter((u) => {
-    const matchRole = filterRole === "ALL" || u.roles.includes(filterRole);
-    const fullName = `${u.names} ${u.lastnames}`.toLowerCase();
-    const matchSearch = !term || fullName.includes(term) || u.id.includes(term) ||
-      (u.email ?? "").toLowerCase().includes(term);
-    return matchRole && matchSearch;
+  const termino = busqueda.toLowerCase().trim();
+  const filtrados = usuarios.filter((u) => {
+    const coincideRol =
+      filtroRol === "TODOS" || u.roles.includes(filtroRol);
+    const nombreCompleto = `${u.names} ${u.lastnames}`.toLowerCase();
+    const coincideBusqueda =
+      !termino ||
+      nombreCompleto.includes(termino) ||
+      u.id.includes(termino) ||
+      (u.email ?? "").toLowerCase().includes(termino);
+    return coincideRol && coincideBusqueda;
   });
 
-  const stats = {
-    total: users.length,
-    doctors: users.filter(u => u.roles.includes("DOCTOR")).length,
-    patients: users.filter(u => u.roles.includes("PATIENT")).length,
-    schedulers: users.filter(u => u.roles.includes("SCHEDULER")).length,
-    admins: users.filter(u => u.roles.includes("ADMIN")).length,
+  const estadisticas = {
+    total: usuarios.length,
+    medicos: usuarios.filter((u) => u.roles.includes("DOCTOR")).length,
+    pacientes: usuarios.filter((u) => u.roles.includes("PATIENT")).length,
+    agendadores: usuarios.filter((u) => u.roles.includes("SCHEDULER")).length,
+    administradores: usuarios.filter((u) => u.roles.includes("ADMIN")).length,
   };
 
   return (
     <div>
       <div className="pz-page-header">
-        <h1>Gestión de Usuarios</h1>
-        <p>Usuarios registrados en el sistema</p>
+        <h1>Gestion de Usuarios</h1>
+        <p>Lista de todas las personas registradas en el sistema</p>
       </div>
 
-      {/* Tarjetas de resumen */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "14px", marginBottom: "24px" }}>
-        {[
-          { label: "Total", count: stats.total, icon: "👥", color: "var(--pz-green)" },
-          { label: "Médicos", count: stats.doctors, icon: "👨‍⚕️", color: "#0f4d7b" },
-          { label: "Pacientes", count: stats.patients, icon: "🧑", color: "#1a3a6b" },
-          { label: "Agendadores", count: stats.schedulers, icon: "📋", color: "#d97706" },
-          { label: "Admins", count: stats.admins, icon: "⚙️", color: "#c0392b" },
-        ].map((s) => (
-          <div key={s.label} className="pz-card" style={{ padding: "16px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: "1.6rem", marginBottom: "6px" }}>{s.icon}</div>
-            <div style={{ fontSize: "1.6rem", fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.count}</div>
-            <div style={{ fontSize: "0.78rem", color: "var(--pz-text-soft)", marginTop: "4px", fontWeight: 600 }}>{s.label}</div>
-          </div>
-        ))}
+      {/* Resumen por tipo de usuario */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: "14px",
+          marginBottom: "24px",
+        }}
+      >
+        <TarjetaEstadistica
+          etiqueta="Total registrados"
+          cantidad={estadisticas.total}
+          color="var(--pz-green)"
+        />
+        <TarjetaEstadistica
+          etiqueta="Medicos"
+          cantidad={estadisticas.medicos}
+          color="#0f4d7b"
+        />
+        <TarjetaEstadistica
+          etiqueta="Pacientes"
+          cantidad={estadisticas.pacientes}
+          color="#1a3a6b"
+        />
+        <TarjetaEstadistica
+          etiqueta="Agendadores"
+          cantidad={estadisticas.agendadores}
+          color="#d97706"
+        />
+        <TarjetaEstadistica
+          etiqueta="Administradores"
+          cantidad={estadisticas.administradores}
+          color="#c0392b"
+        />
       </div>
 
-      {/* Filtros */}
-      <div className="pz-card" style={{ padding: "18px 22px", marginBottom: "20px" }}>
-        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
+      {/* Filtros de busqueda */}
+      <div
+        className="pz-card"
+        style={{ padding: "18px 22px", marginBottom: "20px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            gap: "16px",
+            flexWrap: "wrap",
+            alignItems: "flex-end",
+          }}
+        >
           <div style={{ flex: 1, minWidth: "200px" }}>
-            <label className="pz-label">Buscar</label>
-            <input className="pz-input" type="text"
-              placeholder="Nombre, cédula o correo..."
-              value={search} onChange={e => setSearch(e.target.value)} />
+            <label className="pz-label">Buscar por nombre, cedula o correo</label>
+            <input
+              className="pz-input"
+              type="text"
+              placeholder="Escriba aqui para buscar..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
           </div>
           <div>
-            <label className="pz-label">Filtrar por rol</label>
-            <select className="pz-input" value={filterRole} onChange={e => setFilterRole(e.target.value)}
-              style={{ minWidth: "160px", cursor: "pointer" }}>
-              <option value="ALL">Todos los roles</option>
-              <option value="DOCTOR">Médico</option>
+            <label className="pz-label">Tipo de usuario</label>
+            <select
+              className="pz-input"
+              value={filtroRol}
+              onChange={(e) => setFiltroRol(e.target.value)}
+              style={{ minWidth: "180px", cursor: "pointer" }}
+            >
+              <option value="TODOS">Todos los tipos</option>
+              <option value="DOCTOR">Medico</option>
               <option value="PATIENT">Paciente</option>
               <option value="SCHEDULER">Agendador</option>
               <option value="ADMIN">Administrador</option>
             </select>
           </div>
-          <button onClick={loadUsers} className="pz-btn-outline" style={{ marginBottom: "2px" }}>
-            Actualizar
+          <button
+            onClick={cargarUsuarios}
+            className="pz-btn-outline"
+            style={{ marginBottom: "2px" }}
+          >
+            Actualizar lista
           </button>
         </div>
       </div>
 
-      {error && <div className="pz-error" style={{ marginBottom: "16px" }}>⚠️ {error}</div>}
+      {error && (
+        <div className="pz-error" style={{ marginBottom: "16px" }}>
+          {error}
+        </div>
+      )}
 
-      {loading ? (
-        <div className="pz-loading">Cargando usuarios...</div>
-      ) : filtered.length === 0 ? (
+      {cargando ? (
+        <div className="pz-loading">Cargando usuarios registrados...</div>
+      ) : filtrados.length === 0 ? (
         <div className="pz-card">
           <div className="pz-empty">
-            <div className="pz-empty-icon">👥</div>
+            <div
+              className="pz-empty-icon"
+              style={{ fontSize: "2rem", opacity: 0.4, marginBottom: "12px" }}
+            >
+              [Sin resultados]
+            </div>
             <p style={{ fontWeight: 600 }}>
-              {term || filterRole !== "ALL"
-                ? "No se encontraron usuarios con esos filtros"
-                : "No hay usuarios registrados"}
+              {termino || filtroRol !== "TODOS"
+                ? "No se encontraron usuarios con esos criterios de busqueda"
+                : "No hay usuarios registrados en el sistema"}
             </p>
+            {(termino || filtroRol !== "TODOS") && (
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  marginTop: "8px",
+                  color: "var(--pz-text-soft)",
+                }}
+              >
+                Intente con otro nombre, cedula o cambie el tipo de usuario.
+              </p>
+            )}
           </div>
         </div>
       ) : (
         <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--pz-border)" }}>
-            <p style={{ margin: 0, color: "var(--pz-text-soft)", fontSize: "0.88rem" }}>
-              Mostrando <strong>{filtered.length}</strong> de <strong>{users.length}</strong> usuarios
+          <div
+            style={{
+              padding: "16px 24px",
+              borderBottom: "1px solid var(--pz-border)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                color: "var(--pz-text-soft)",
+                fontSize: "0.88rem",
+              }}
+            >
+              Mostrando{" "}
+              <strong>{filtrados.length}</strong> de{" "}
+              <strong>{usuarios.length}</strong> usuarios registrados
             </p>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table className="pz-table">
               <thead>
                 <tr>
-                  <th>Usuario</th>
-                  <th>Cédula</th>
-                  <th>Contacto</th>
-                  <th style={{ textAlign: "center" }}>Roles</th>
+                  <th>Nombre completo</th>
+                  <th>Numero de cedula</th>
+                  <th>Telefono</th>
+                  <th>Correo electronico</th>
+                  <th style={{ textAlign: "center" }}>Tipo de usuario</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((user) => {
-                  const primaryRole = user.roles[0] ?? "PATIENT";
-                  return (
-                    <tr key={user.id}>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{
-                            width: "38px", height: "38px",
-                            background: "var(--pz-green-light)", borderRadius: "50%",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "1.1rem", flexShrink: 0,
-                          }}>
-                            {ROLE_ICONS[primaryRole] ?? "👤"}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>
-                              {user.names} {user.lastnames}
-                            </div>
-                            {user.email && (
-                              <div style={{ fontSize: "0.78rem", color: "var(--pz-text-soft)" }}>
-                                {user.email}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ fontFamily: "monospace", fontSize: "0.9rem", color: "var(--pz-text-mid)" }}>
-                        {user.id}
-                      </td>
-                      <td style={{ fontSize: "0.88rem", color: "var(--pz-text-mid)" }}>
-                        {user.phone_number || "—"}
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
-                          {user.roles.map(role => (
-                            <span key={role}
-                              className={`pz-badge ${ROLE_COLORS[role] ?? "pz-badge-green"}`}
-                              style={{ fontSize: "0.75rem" }}>
-                              {ROLE_LABELS[role] ?? role}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filtrados.map((usuario) => (
+                  <tr key={usuario.id}>
+                    <td>
+                      <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                        {usuario.names} {usuario.lastnames}
+                      </div>
+                    </td>
+                    <td
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: "0.9rem",
+                        color: "var(--pz-text-mid)",
+                      }}
+                    >
+                      {usuario.id}
+                    </td>
+                    <td
+                      style={{
+                        fontSize: "0.88rem",
+                        color: "var(--pz-text-mid)",
+                      }}
+                    >
+                      {usuario.phone_number || "No registrado"}
+                    </td>
+                    <td
+                      style={{
+                        fontSize: "0.88rem",
+                        color: "var(--pz-text-mid)",
+                      }}
+                    >
+                      {usuario.email || "No registrado"}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "6px",
+                          justifyContent: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {usuario.roles.map((rol) => (
+                          <span
+                            key={rol}
+                            className={`pz-badge ${COLORES_ROL[rol] ?? "pz-badge-green"}`}
+                            style={{ fontSize: "0.78rem" }}
+                          >
+                            {ETIQUETAS_ROL[rol] ?? rol}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
