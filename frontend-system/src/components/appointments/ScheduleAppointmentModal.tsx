@@ -1,11 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createAppointment } from "@/services/appointment.service";
 import { getAvailableSlots } from "@/services/schedule.service";
 import { getApiErrorMessage } from "@/lib/api-errors";
@@ -16,21 +11,10 @@ interface AvailableDate {
   slots: string[];
 }
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  doctor: any;
-}
-
-// Convierte fecha UTC a hora Colombia UTC-5 en formato 12 horas
-function toCol12h(isoStr: string): string {
-  const utc = new Date(isoStr);
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let h = col.getUTCHours();
-  const m = col.getUTCMinutes().toString().padStart(2, "0");
-  const ap = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m} ${ap}`;
+interface Doctor {
+  id: string;
+  name: string;
+  lastnames: string;
 }
 
 interface Props {
@@ -39,11 +23,7 @@ interface Props {
   doctor: Doctor;
 }
 
-export default function ScheduleAppointmentModal({
-  open,
-  onClose,
-  doctor,
-}: Props) {
+export default function ScheduleAppointmentModal({ open, onClose, doctor }: Props) {
   const [loading, setLoading] = useState(false);
   const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -77,7 +57,7 @@ export default function ScheduleAppointmentModal({
       setAvailableDates(available);
       if (available.length === 0) {
         setErrorMsg(
-          "No hay horarios disponibles para este medico en los proximos 12 dias."
+          "Este medico no tiene horarios disponibles en los proximos 12 dias."
         );
       }
     } catch (err) {
@@ -117,14 +97,12 @@ export default function ScheduleAppointmentModal({
         style={{
           borderRadius: "16px",
           padding: 0,
-          // Altura maxima con scroll interno para que no se corte en telefono
           maxHeight: "92vh",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
         }}
       >
-        {/* Cabecera fija */}
         <DialogHeader
           style={{
             padding: "20px 24px 16px",
@@ -137,16 +115,14 @@ export default function ScheduleAppointmentModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Cuerpo con scroll */}
         <div
           style={{
             overflowY: "auto",
             flex: 1,
             padding: "20px 24px",
-            WebkitOverflowScrolling: "touch", // scroll suave en iOS
+            WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* Mensajes */}
           {errorMsg && (
             <div className="pz-error" style={{ marginBottom: "16px" }}>
               {errorMsg}
@@ -160,7 +136,7 @@ export default function ScheduleAppointmentModal({
 
           {loading && availableDates.length === 0 && (
             <div className="pz-loading" style={{ padding: "32px 0" }}>
-              Buscando horarios disponibles, por favor espere...
+              Buscando horarios disponibles...
             </div>
           )}
 
@@ -173,14 +149,7 @@ export default function ScheduleAppointmentModal({
           )}
 
           {availableDates.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "24px",
-              }}
-            >
-              {/* Paso 1: Seleccionar fecha */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
                 <p
                   style={{
@@ -195,8 +164,7 @@ export default function ScheduleAppointmentModal({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fill, minmax(110px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
                     gap: "8px",
                   }}
                 >
@@ -209,13 +177,12 @@ export default function ScheduleAppointmentModal({
                         setSelectedSlot("");
                       }}
                     >
-                      {toColDateShort(item.date)}
+                      {formatDateShort(item.date)}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Paso 2: Seleccionar hora - con scroll si hay muchas opciones */}
               {selectedDate && (
                 <div>
                   <p
@@ -226,7 +193,7 @@ export default function ScheduleAppointmentModal({
                       fontSize: "0.95rem",
                     }}
                   >
-                    Paso 2 de 2: Seleccione la hora (hora Colombia)
+                    Paso 2 de 2: Seleccione la hora
                   </p>
                   <p
                     style={{
@@ -235,10 +202,8 @@ export default function ScheduleAppointmentModal({
                       marginBottom: "10px",
                     }}
                   >
-                    {currentSlots.length} horarios disponibles. Deslice hacia
-                    abajo para ver todos.
+                    {currentSlots.length} horarios disponibles
                   </p>
-                  {/* Contenedor con altura maxima y scroll para que siempre sea visible */}
                   <div
                     style={{
                       maxHeight: "240px",
@@ -253,8 +218,7 @@ export default function ScheduleAppointmentModal({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(96px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
                         gap: "8px",
                         padding: "4px",
                       }}
@@ -265,30 +229,18 @@ export default function ScheduleAppointmentModal({
                           className={`pz-slot-btn${selectedSlot === slot ? " selected" : ""}`}
                           onClick={() => setSelectedSlot(slot)}
                         >
-                          {toCol12h(slot)}
+                          {/* formatSlotTime12h lee getUTCHours directo, sin restar 5 horas */}
+                          {formatSlotTime12h(slot)}
                         </button>
                       ))}
                     </div>
                   </div>
-                  {currentSlots.length > 9 && (
-                    <p
-                      style={{
-                        fontSize: "0.78rem",
-                        color: "var(--pz-text-soft)",
-                        marginTop: "6px",
-                        textAlign: "center",
-                      }}
-                    >
-                      Deslice dentro del recuadro para ver mas horarios
-                    </p>
-                  )}
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Pie fijo con botones de accion */}
         <div
           style={{
             padding: "14px 24px",
@@ -300,11 +252,7 @@ export default function ScheduleAppointmentModal({
             background: "var(--pz-white)",
           }}
         >
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="pz-btn-outline"
-          >
+          <button onClick={onClose} disabled={loading} className="pz-btn-outline">
             Cancelar
           </button>
           <button

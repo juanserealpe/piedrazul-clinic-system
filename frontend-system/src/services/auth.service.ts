@@ -56,11 +56,3 @@ export const getAllPatientsRequest = async () : Promise<{ id: string; name: stri
 
   return response.data;
 }
-
-export const getPatientByIdRequest = async (id: string) : Promise<{ id: string; name: string, lastnames: string } | null> => {
-  const response = await api.get(
-    `/auth/patient/${id}`
-  );
-
-  return response.data;
-}

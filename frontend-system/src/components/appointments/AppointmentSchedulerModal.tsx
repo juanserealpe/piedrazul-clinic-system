@@ -30,25 +30,6 @@ interface Props {
   patient: Patient;
 }
 
-function toCol12h(isoStr: string): string {
-  const utc = new Date(isoStr);
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let h     = col.getUTCHours();
-  const m   = col.getUTCMinutes().toString().padStart(2, "0");
-  const ap  = h >= 12 ? "PM" : "AM";
-  h         = h % 12 || 12;
-  return `${h}:${m} ${ap}`;
-}
-
-function toColDateShort(isoStr: string): string {
-  return new Date(isoStr).toLocaleDateString("es-CO", {
-    timeZone: "UTC",
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
-}
-
 export default function AppointmentSchedulerModal({ open, onClose, doctor, patient }: Props) {
   const [loading, setLoading] = useState(false);
   const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
@@ -81,8 +62,9 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
         .map((r: any) => r.value)
         .filter((item: any) => item?.slots?.length > 0);
       setAvailableDates(available);
-      if (available.length === 0)
-        setErrorMsg("No hay horarios disponibles para los próximos 12 días.");
+      if (available.length === 0) {
+        setErrorMsg("No hay horarios disponibles para los proximos 12 dias.");
+      }
     } catch (err) {
       setErrorMsg(getApiErrorMessage(err));
     } finally {
@@ -100,9 +82,9 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
     setLoading(true);
     try {
       await createAppointment({
-        doctorId:  doctor.id,
+        doctorId: doctor.id,
         patientId: patient.id,
-        date:      new Date(selectedSlot).toISOString(),
+        date: new Date(selectedSlot).toISOString(),
       });
       setSuccessMsg(
         `Cita agendada correctamente para ${patient.name} ${patient.lastnames}.`
@@ -122,14 +104,12 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
         style={{
           borderRadius: "16px",
           padding: 0,
-          // ✅ altura máxima con scroll interno igual que el modal del paciente
           maxHeight: "92vh",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
         }}
       >
-        {/* Cabecera fija */}
         <DialogHeader
           style={{
             padding: "20px 24px 16px",
@@ -142,7 +122,6 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
           </DialogTitle>
         </DialogHeader>
 
-        {/* Cuerpo con scroll */}
         <div
           style={{
             overflowY: "auto",
@@ -151,74 +130,124 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {/* Resumen paciente / médico */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "16px" }}>
+          {/* Resumen paciente y medico */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+              marginBottom: "16px",
+            }}
+          >
             {[
-              { icon: "🧑",   label: "Paciente", value: `${patient.name} ${patient.lastnames}` },
-              { icon: "👨‍⚕️", label: "Médico",   value: `Dr. ${doctor.name} ${doctor.lastnames}` },
-            ].map(({ icon, label, value }) => (
-              <div key={label} style={{
-                background: "var(--pz-green-light)",
-                borderRadius: "10px",
-                padding: "12px 16px",
-                border: "1px solid #a7d9c8",
-              }}>
-                <div style={{ fontSize: "0.78rem", color: "var(--pz-text-soft)", fontWeight: 600, marginBottom: "3px" }}>
-                  {icon} {label}
+              { label: "Paciente", value: `${patient.name} ${patient.lastnames}` },
+              { label: "Medico", value: `Dr. ${doctor.name} ${doctor.lastnames}` },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                style={{
+                  background: "var(--pz-green-light)",
+                  borderRadius: "10px",
+                  padding: "12px 16px",
+                  border: "1px solid #a7d9c8",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.78rem",
+                    color: "var(--pz-text-soft)",
+                    fontWeight: 600,
+                    marginBottom: "3px",
+                  }}
+                >
+                  {label}
                 </div>
                 <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{value}</div>
               </div>
             ))}
           </div>
 
-          {/* Mensajes */}
-          {errorMsg   && <div className="pz-error"   style={{ marginBottom: "16px" }}>⚠️ {errorMsg}</div>}
-          {successMsg && <div className="pz-success" style={{ marginBottom: "16px" }}>{successMsg}</div>}
+          {errorMsg && (
+            <div className="pz-error" style={{ marginBottom: "16px" }}>
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div className="pz-success" style={{ marginBottom: "16px" }}>
+              {successMsg}
+            </div>
+          )}
 
           {loading && availableDates.length === 0 && (
             <div className="pz-loading" style={{ padding: "32px 0" }}>
-              Buscando horarios disponibles, por favor espere...
+              Buscando horarios disponibles...
             </div>
           )}
 
           {!loading && availableDates.length === 0 && !errorMsg && (
             <div style={{ textAlign: "center", padding: "32px 0", color: "var(--pz-text-soft)" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "8px" }}>📅</div>
-              <p style={{ fontWeight: 600 }}>No hay horarios disponibles para los próximos 12 días</p>
+              <p style={{ fontWeight: 600 }}>
+                No hay horarios disponibles para los proximos 12 dias
+              </p>
             </div>
           )}
 
           {availableDates.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
-              {/* Paso 1 */}
               <div>
-                <p style={{ fontWeight: 700, marginBottom: "12px", color: "var(--pz-text-mid)", fontSize: "0.95rem" }}>
+                <p
+                  style={{
+                    fontWeight: 700,
+                    marginBottom: "12px",
+                    color: "var(--pz-text-mid)",
+                    fontSize: "0.95rem",
+                  }}
+                >
                   Paso 1 de 2: Seleccione una fecha disponible
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "8px" }}>
-                  {availableDates.map(item => (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+                    gap: "8px",
+                  }}
+                >
+                  {availableDates.map((item) => (
                     <button
                       key={item.date}
                       className={`pz-date-btn${selectedDate === item.date ? " selected" : ""}`}
-                      onClick={() => { setSelectedDate(item.date); setSelectedSlot(""); }}
+                      onClick={() => {
+                        setSelectedDate(item.date);
+                        setSelectedSlot("");
+                      }}
                     >
-                      {toColDateShort(item.date)}
+                      {formatDateShort(item.date)}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Paso 2 — con scroll igual al modal del paciente */}
               {selectedDate && (
                 <div>
-                  <p style={{ fontWeight: 700, marginBottom: "12px", color: "var(--pz-text-mid)", fontSize: "0.95rem" }}>
-                    Paso 2 de 2: Seleccione la hora (hora Colombia)
+                  <p
+                    style={{
+                      fontWeight: 700,
+                      marginBottom: "12px",
+                      color: "var(--pz-text-mid)",
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    Paso 2 de 2: Seleccione la hora
                   </p>
-                  <p style={{ fontSize: "0.82rem", color: "var(--pz-text-soft)", marginBottom: "10px" }}>
-                    {currentSlots.length} horarios disponibles. Deslice hacia abajo para ver todos.
+                  <p
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--pz-text-soft)",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {currentSlots.length} horarios disponibles
                   </p>
-                  {/* ✅ Contenedor con altura máxima y scroll */}
                   <div
                     style={{
                       maxHeight: "240px",
@@ -230,30 +259,32 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
                       background: "var(--pz-cream)",
                     }}
                   >
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: "8px", padding: "4px" }}>
-                      {currentSlots.map(slot => (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
+                        gap: "8px",
+                        padding: "4px",
+                      }}
+                    >
+                      {currentSlots.map((slot) => (
                         <button
                           key={slot}
                           className={`pz-slot-btn${selectedSlot === slot ? " selected" : ""}`}
                           onClick={() => setSelectedSlot(slot)}
                         >
-                          {toCol12h(slot)}
+                          {/* formatSlotTime12h lee getUTCHours directo, sin restar 5 horas */}
+                          {formatSlotTime12h(slot)}
                         </button>
                       ))}
                     </div>
                   </div>
-                  {currentSlots.length > 9 && (
-                    <p style={{ fontSize: "0.78rem", color: "var(--pz-text-soft)", marginTop: "6px", textAlign: "center" }}>
-                      Deslice dentro del recuadro para ver más horarios
-                    </p>
-                  )}
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Pie fijo con botones */}
         <div
           style={{
             padding: "14px 24px",
@@ -272,9 +303,9 @@ export default function AppointmentSchedulerModal({ open, onClose, doctor, patie
             disabled={!selectedSlot || loading}
             onClick={handleSchedule}
             className="pz-btn-primary"
-            style={{ opacity: (!selectedSlot || loading) ? 0.6 : 1 }}
+            style={{ opacity: !selectedSlot || loading ? 0.6 : 1 }}
           >
-            {loading ? "⏳ Guardando..." : "✓ Confirmar cita"}
+            {loading ? "Guardando..." : "Confirmar cita"}
           </button>
         </div>
       </DialogContent>
