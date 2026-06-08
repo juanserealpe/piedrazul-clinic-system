@@ -3,59 +3,79 @@ import { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/api-errors";
 
-// Lee UTC directo. Los slots se almacenan con hora Colombia como UTC.
-function formatearHora12h(isoStr: string): string {
+// Lee UTC directo (mismo criterio que el resto de la app)
+function formatTime12h(isoStr: string): string {
   const d = new Date(isoStr);
   let h = d.getUTCHours();
   const m = d.getUTCMinutes().toString().padStart(2, "0");
-  const indicador = h >= 12 ? "PM" : "AM";
+  const ap = h >= 12 ? "PM" : "AM";
   h = h % 12 || 12;
-  return `${h}:${m} ${indicador}`;
+  return `${h}:${m} ${ap}`;
 }
 
-function formatearFechaLarga(isoStr: string): string {
+function formatDateShort(isoStr: string): string {
   return new Date(isoStr).toLocaleDateString("es-CO", {
-    timeZone: "UTC",
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+    timeZone: "UTC", day: "2-digit", month: "short", year: "numeric",
   });
 }
 
-interface RegistroCita {
+interface AuditEntry {
   appointmentId: string;
   patientId: string;
-  doctorId?: string;
+  doctorId: string;
   status: string;
-  date: string;
+  date: string; // fecha de la cita
 }
 
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  SCHEDULED: "Programada",
-  RESCHEDULED: "Reagendada",
-  PENDING_RESCHEDULE: "Pendiente por reagendar",
-  COMPLETED: "Completada",
-  CANCELLED: "Cancelada",
+const STATUS_LABELS: Record<string, string> = {
+  SCHEDULED: "Programada", RESCHEDULED: "Reagendada",
+  PENDING_RESCHEDULE: "Por reagendar", COMPLETED: "Completada", CANCELLED: "Cancelada",
+};
+const STATUS_CLASS: Record<string, string> = {
+  SCHEDULED: "pz-badge-green", RESCHEDULED: "pz-badge-green",
+  PENDING_RESCHEDULE: "pz-badge-amber", COMPLETED: "pz-badge-green", CANCELLED: "pz-badge-red",
 };
 
-const CLASES_ESTADO: Record<string, string> = {
-  SCHEDULED: "pz-badge-green",
-  RESCHEDULED: "pz-badge-green",
-  PENDING_RESCHEDULE: "pz-badge-amber",
-  COMPLETED: "pz-badge-green",
-  CANCELLED: "pz-badge-red",
-};
+export default function LogsPage() {
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [searched, setSearched] = useState(false);
 
-function TarjetaResumen({
-  etiqueta,
-  cantidad,
-  color,
-}: {
-  etiqueta: string;
-  cantidad: number;
-  color: string;
-}) {
+  useEffect(() => {
+    api.get("/auth/all-doctors").then(r => setDoctors(r.data)).catch(() => {});
+  }, []);
+
+  const handleSearch = async () => {
+    if (!filterDate) return;
+    setError(""); setSearched(true); setLoading(true);
+    try {
+      const params: any = { date: `${filterDate}T00:00:00.000Z` };
+      if (selectedDoctor) params.doctorId = selectedDoctor;
+      // Reutilizamos el endpoint by-doctor para auditar citas del día
+      const res = await api.get("/appointments/by-doctor", { params });
+      setEntries(res.data.appointments ?? []);
+    } catch (e) {
+      setError(getApiErrorMessage(e));
+      setEntries([]);
+    } finally { setLoading(false); }
+  };
+
+  const stats = {
+    total: entries.length,
+    scheduled: entries.filter(e => e.status === "SCHEDULED").length,
+    rescheduled: entries.filter(e => e.status === "RESCHEDULED" || e.status === "PENDING_RESCHEDULE").length,
+    cancelled: entries.filter(e => e.status === "CANCELLED").length,
+  };
+
+  const doctorName = (id: string) => {
+    const d = doctors.find(d => d.id === id);
+    return d ? `Dr. ${d.name} ${d.lastnames}` : id;
+  };
+
   return (
     <div className="pz-card" style={{ padding: "14px 18px", textAlign: "center" }}>
       <div style={{ fontSize: "1.5rem", fontWeight: 800, color }}>
@@ -134,255 +154,129 @@ export default function PaginaAuditoria() {
   return (
     <div>
       <div className="pz-page-header">
-        <h1>Auditoria del Sistema</h1>
-        <p>
-          Consulte el historial de citas medicas registradas por fecha y medico
-        </p>
+        <h1>Auditoría del Sistema</h1>
+        <p>Registro de actividades y eventos del sistema de citas</p>
       </div>
 
-      {/* Formulario de busqueda */}
-      <div
-        className="pz-card"
-        style={{ padding: "20px 24px", marginBottom: "20px" }}
-      >
-        <h3
-          style={{
-            margin: "0 0 16px",
-            fontSize: "1rem",
-            fontWeight: 700,
-            color: "var(--pz-green)",
-          }}
-        >
-          Buscar registros de citas
+      {/* Filtros de búsqueda */}
+      <div className="pz-card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
+          Consultar actividad
         </h3>
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            flexWrap: "wrap",
-            alignItems: "flex-end",
-          }}
-        >
+        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
           <div>
-            <label className="pz-label">Medico (opcional)</label>
-            <select
-              className="pz-input"
-              value={medicoSeleccionado}
-              onChange={(e) => setMedicoSeleccionado(e.target.value)}
-              style={{ minWidth: "240px", cursor: "pointer" }}
-            >
-              <option value="">Todos los medicos</option>
-              {medicos.map((m) => (
-                <option key={m.id} value={m.id}>
-                  Dr. {m.name} {m.lastnames}
-                </option>
+            <label className="pz-label">Médico (opcional)</label>
+            <select className="pz-input" value={selectedDoctor} onChange={e => setSelectedDoctor(e.target.value)}
+              style={{ minWidth: "220px", cursor: "pointer" }}>
+              <option value="">Todos los médicos</option>
+              {doctors.map(d => (
+                <option key={d.id} value={d.id}>Dr. {d.name} {d.lastnames}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="pz-label">Fecha a consultar</label>
-            <input
-              type="date"
-              className="pz-input"
-              value={fechaFiltro}
-              onChange={(e) => setFechaFiltro(e.target.value)}
-              style={{ width: "180px" }}
-            />
+            <label className="pz-label">Fecha</label>
+            <input type="date" className="pz-input" value={filterDate}
+              onChange={e => setFilterDate(e.target.value)} style={{ width: "180px" }} />
           </div>
-          <button
-            onClick={buscarRegistros}
-            className="pz-btn-primary"
-            style={{ marginBottom: "2px" }}
-          >
-            Buscar registros
+          <button onClick={handleSearch} className="pz-btn-primary" style={{ marginBottom: "2px" }}>
+            Consultar
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="pz-error" style={{ marginBottom: "16px" }}>
-          {error}
+      {error && <div className="pz-error" style={{ marginBottom: "16px" }}>⚠️ {error}</div>}
+
+      {/* Resumen estadístico */}
+      {searched && !loading && entries.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px", marginBottom: "20px" }}>
+          {[
+            { label: "Total citas", count: stats.total, color: "var(--pz-green)" },
+            { label: "Programadas", count: stats.scheduled, color: "#1a3a6b" },
+            { label: "Reagendadas", count: stats.rescheduled, color: "#d97706" },
+            { label: "Canceladas", count: stats.cancelled, color: "#c0392b" },
+          ].map(s => (
+            <div key={s.label} className="pz-card" style={{ padding: "14px 18px", textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 800, color: s.color }}>{s.count}</div>
+              <div style={{ fontSize: "0.78rem", color: "var(--pz-text-soft)", marginTop: "3px", fontWeight: 600 }}>{s.label}</div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Tarjetas de resumen - solo cuando hay resultados */}
-      {busquedaRealizada && !cargando && registros.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-            gap: "12px",
-            marginBottom: "20px",
-          }}
-        >
-          <TarjetaResumen
-            etiqueta="Total de citas"
-            cantidad={resumen.total}
-            color="var(--pz-green)"
-          />
-          <TarjetaResumen
-            etiqueta="Programadas"
-            cantidad={resumen.programadas}
-            color="#1a3a6b"
-          />
-          <TarjetaResumen
-            etiqueta="Reagendadas"
-            cantidad={resumen.reagendadas}
-            color="#d97706"
-          />
-          <TarjetaResumen
-            etiqueta="Canceladas"
-            cantidad={resumen.canceladas}
-            color="#c0392b"
-          />
-        </div>
-      )}
+      {loading && <div className="pz-loading">Consultando registros...</div>}
 
-      {cargando && (
-        <div className="pz-loading">Buscando registros de citas...</div>
-      )}
-
-      {/* Estado: sin resultados despues de buscar */}
-      {!cargando && busquedaRealizada && registros.length === 0 && !error && (
+      {!loading && searched && entries.length === 0 && !error && (
         <div className="pz-card">
           <div className="pz-empty">
-            <p style={{ fontWeight: 600 }}>
-              No se encontraron citas para la fecha seleccionada
-            </p>
-            <p
-              style={{
-                fontSize: "0.9rem",
-                marginTop: "6px",
-                color: "var(--pz-text-soft)",
-              }}
-            >
-              Intente con otra fecha o seleccione un medico diferente.
+            <div className="pz-empty-icon">📊</div>
+            <p style={{ fontWeight: 600 }}>No hay registros para esta fecha</p>
+            <p style={{ fontSize: "0.9rem", marginTop: "6px" }}>Intente con otra fecha o médico.</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && !searched && (
+        <div className="pz-card">
+          <div className="pz-empty">
+            <div className="pz-empty-icon">🔍</div>
+            <p style={{ fontWeight: 600 }}>Seleccione fecha y haga clic en Consultar</p>
+            <p style={{ fontSize: "0.9rem", marginTop: "6px" }}>
+              Se mostrarán todas las citas registradas para el día seleccionado.
             </p>
           </div>
         </div>
       )}
 
-      {/* Estado: aun no se ha buscado */}
-      {!cargando && !busquedaRealizada && (
-        <div className="pz-card">
-          <div className="pz-empty">
-            <p style={{ fontWeight: 600 }}>
-              Seleccione una fecha y haga clic en "Buscar registros"
-            </p>
-            <p
-              style={{
-                fontSize: "0.9rem",
-                marginTop: "6px",
-                color: "var(--pz-text-soft)",
-              }}
-            >
-              Puede filtrar por medico o ver todos los medicos para la fecha
-              seleccionada.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Tabla de resultados */}
-      {!cargando && registros.length > 0 && (
+      {!loading && entries.length > 0 && (
         <div className="pz-card" style={{ padding: 0, overflow: "hidden" }}>
-          <div
-            style={{
-              padding: "16px 24px",
-              borderBottom: "1px solid var(--pz-border)",
-            }}
-          >
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "1rem",
-                fontWeight: 700,
-                color: "var(--pz-green)",
-              }}
-            >
-              Citas del{" "}
-              {formatearFechaLarga(`${fechaFiltro}T12:00:00Z`)}
-              {medicoSeleccionado
-                ? ` - ${nombreMedico(medicoSeleccionado)}`
-                : " - Todos los medicos"}
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--pz-border)" }}>
+            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--pz-green)" }}>
+              Registros del {new Date(`${filterDate}T12:00:00Z`).toLocaleDateString("es-CO", {
+                timeZone: "UTC", weekday: "long", day: "2-digit", month: "long", year: "numeric",
+              })}
+              {selectedDoctor && ` — ${doctorName(selectedDoctor)}`}
             </h3>
-            <p
-              style={{
-                margin: "4px 0 0",
-                color: "var(--pz-text-soft)",
-                fontSize: "0.88rem",
-              }}
-            >
-              {registros.length}{" "}
-              {registros.length === 1
-                ? "cita encontrada"
-                : "citas encontradas"}
+            <p style={{ margin: "4px 0 0", color: "var(--pz-text-soft)", fontSize: "0.88rem" }}>
+              {entries.length} registro(s) encontrado(s)
             </p>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table className="pz-table">
               <thead>
                 <tr>
-                  <th>Codigo de cita</th>
-                  <th>Medico</th>
-                  <th>Cedula del paciente</th>
-                  <th>Hora de la cita</th>
+                  <th>ID Cita</th>
+                  <th>Médico</th>
+                  <th>Paciente</th>
+                  <th>Hora</th>
                   <th style={{ textAlign: "center" }}>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {registros.map((registro: any) => (
-                  <tr key={registro.appointmentId}>
-                    <td
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "0.78rem",
-                        color: "var(--pz-text-soft)",
-                      }}
-                    >
-                      {registro.appointmentId?.slice(0, 8)}...
+                {entries.map((e: any) => (
+                  <tr key={e.appointmentId}>
+                    <td style={{ fontFamily: "monospace", fontSize: "0.78rem", color: "var(--pz-text-soft)" }}>
+                      {e.appointmentId?.slice(0, 8)}...
                     </td>
-                    <td
-                      style={{
-                        fontSize: "0.88rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {nombreMedico(
-                        medicoSeleccionado || registro.doctorId || ""
-                      )}
+                    <td style={{ fontSize: "0.88rem", fontWeight: 600 }}>
+                      {doctorName(selectedDoctor || e.doctorId)}
                     </td>
-                    <td
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "0.88rem",
-                      }}
-                    >
-                      {registro.patientId}
+                    <td style={{ fontFamily: "monospace", fontSize: "0.88rem" }}>
+                      {e.patientId}
                     </td>
                     <td>
-                      <span
-                        style={{
-                          background: "var(--pz-green-light)",
-                          color: "var(--pz-green)",
-                          fontWeight: 700,
-                          padding: "3px 12px",
-                          borderRadius: "999px",
-                          fontSize: "0.88rem",
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        {formatearHora12h(registro.date)}
+                      <span style={{
+                        background: "var(--pz-green-light)", color: "var(--pz-green)",
+                        fontWeight: 700, padding: "3px 12px", borderRadius: "999px",
+                        fontSize: "0.88rem", fontFamily: "monospace",
+                      }}>
+                        {formatTime12h(e.date)}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
-                      <span
-                        className={`pz-badge ${
-                          CLASES_ESTADO[registro.status] ?? "pz-badge-green"
-                        }`}
-                        style={{ fontSize: "0.78rem" }}
-                      >
-                        {ETIQUETAS_ESTADO[registro.status] ?? registro.status}
+                      <span className={`pz-badge ${STATUS_CLASS[e.status] ?? "pz-badge-green"}`}
+                        style={{ fontSize: "0.78rem" }}>
+                        {STATUS_LABELS[e.status] ?? e.status}
                       </span>
                     </td>
                   </tr>
