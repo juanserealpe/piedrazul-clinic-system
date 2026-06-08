@@ -12,4 +12,5 @@ export interface IAuthService {
   userExists(id: string): Promise<boolean>;
   getAllDoctors(): Promise<{ id: string; name: string, lastnames: string }[]>;
   getAllPatients(): Promise<{ id: string; name: string, lastnames: string }[]>;
+  getAllUsers(): Promise<any[]>;
 }

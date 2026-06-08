@@ -57,4 +57,10 @@ export class AuthController {
     console.log("GET PATIENT BY ID:", a);
     return a;
   }
+  @Get('all-users')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAllUsers() {
+    return this.authService.getAllUsers();
+  }
 }

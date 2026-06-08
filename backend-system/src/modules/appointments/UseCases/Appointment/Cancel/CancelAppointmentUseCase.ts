@@ -7,6 +7,11 @@ export interface CancelAppointmentInput {
   patientId: string;
 }
 
+export interface CancelByStaffInput {
+  appointmentId: string;
+  staffId: string;
+}
+
 export interface CancelAppointmentOutput {
   appointmentId: string;
   status: string;
@@ -14,8 +19,9 @@ export interface CancelAppointmentOutput {
 }
 
 /**
- * Caso de uso: cancelar una cita médica por parte del paciente.
- * Solo se pueden cancelar citas en estado SCHEDULED o RESCHEDULED.
+ * Caso de uso: cancelar una cita médica.
+ * - Por paciente: solo sus propias citas SCHEDULED o RESCHEDULED.
+ * - Por staff (médico/agendador): cualquier cita SCHEDULED o RESCHEDULED.
  */
 export class CancelAppointmentUseCase {
   constructor(private readonly appointmentRepository: AppointmentRepository) {}
@@ -41,7 +47,6 @@ export class CancelAppointmentUseCase {
     appointment.status = Status.CANCELLED;
     await this.appointmentRepository.save(appointment);
 
-    // Guard: id nunca es null aquí porque el appointment ya existe en BD
     if (!appointment.id) {
       throw new Error("Unexpected: saved appointment has no id");
     }
@@ -50,6 +55,34 @@ export class CancelAppointmentUseCase {
       appointmentId: appointment.id,
       status: appointment.status,
       message: "Appointment cancelled successfully",
+    };
+  }
+
+  async executeByStaff(input: CancelByStaffInput): Promise<CancelAppointmentOutput> {
+    const appointment = await this.appointmentRepository.findById(input.appointmentId);
+
+    if (!appointment) {
+      throw AppError.notFound("Cita no encontrada");
+    }
+
+    if (
+      appointment.status !== Status.SCHEDULED &&
+      appointment.status !== Status.RESCHEDULED
+    ) {
+      throw AppError.badRequest("Solo se pueden cancelar citas en estado Programada o Reagendada");
+    }
+
+    appointment.status = Status.CANCELLED;
+    await this.appointmentRepository.save(appointment);
+
+    if (!appointment.id) {
+      throw new Error("Unexpected: saved appointment has no id");
+    }
+
+    return {
+      appointmentId: appointment.id,
+      status: appointment.status,
+      message: "Cita cancelada correctamente",
     };
   }
 }

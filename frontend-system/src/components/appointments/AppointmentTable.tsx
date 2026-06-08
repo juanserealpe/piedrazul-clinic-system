@@ -1,17 +1,16 @@
 "use client";
 import { AppointmentsResponse } from "@/types/appointment";
 
-// ── Helpers de hora Colombia (UTC-5) ──────────────────────────────────────────
-function formatColombiaTime12h(dateStr: string): string {
-  // El backend devuelve UTC; Colombia es UTC-5 → restamos 5 h
-  const utc = new Date(dateStr);
-  // Creamos una fecha ajustada a Colombia para mostrar
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let hours   = col.getUTCHours();
-  const mins  = col.getUTCMinutes().toString().padStart(2, "0");
-  const ampm  = hours >= 12 ? "PM" : "AM";
-  hours       = hours % 12 || 12;
-  return `${hours}:${mins} ${ampm}`;
+// ── Helpers de hora ───────────────────────────────────────────────────────────
+// Los slots se almacenan en UTC como hora Colombia directa (ej. 8 AM Colombia = T08:00:00Z).
+// NO se resta offset; se lee UTC directo igual que en los modales de selección.
+function formatSlotTime12h(dateStr: string): string {
+  const d = new Date(dateStr);
+  let h = d.getUTCHours();
+  const m = d.getUTCMinutes().toString().padStart(2, "0");
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${ap}`;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -54,7 +53,6 @@ export default function AppointmentTable({ data, loading }: Props) {
     );
   }
 
-  // Fecha encabezado: usamos UTC para no desplazar el día
   const headerDate = new Date(data.date).toLocaleDateString("es-CO", {
     timeZone: "UTC",
     weekday: "long",
@@ -77,7 +75,7 @@ export default function AppointmentTable({ data, loading }: Props) {
         <table className="pz-table">
           <thead>
             <tr>
-              <th>Hora (Colombia)</th>
+              <th>Hora</th>
               <th>Paciente (ID)</th>
               <th style={{ textAlign: "center" }}>Estado</th>
             </tr>
@@ -98,7 +96,7 @@ export default function AppointmentTable({ data, loading }: Props) {
                       fontFamily: "monospace",
                       whiteSpace: "nowrap",
                     }}>
-                      {formatColombiaTime12h(appointment.date)}
+                      {formatSlotTime12h(appointment.date)}
                     </span>
                   </td>
                   <td style={{ fontWeight: 600 }}>{appointment.patientId}</td>
