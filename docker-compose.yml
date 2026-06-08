@@ -17,8 +17,9 @@ services:
     restart: unless-stopped
     command:
       - start-dev
+      - --hostname=2.25.185.48
+      - --hostname-strict=false
       - --import-realm
-      - --hostname-strict-https=false 
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -29,7 +30,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
 
     volumes:
-      - ./realm:/opt/keycloak/data/import:Z
+      - ./my-app-realm-realm.json:/opt/keycloak/data/import/realm.json
 
     ports:
       - "8080:8080"
@@ -40,7 +41,6 @@ services:
   backend:
     build:
       context: ./backend-system
-
     container_name: backend
     restart: unless-stopped
 
@@ -60,7 +60,7 @@ services:
     build:
       context: ./frontend-system
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3000
+        NEXT_PUBLIC_API_URL: http://2.25.185.48:3000
 
     container_name: frontend
     restart: unless-stopped
