@@ -148,9 +148,15 @@ export const AppError = {
       code: ErrorCodes.INVALID_DATE,
       message: `La fecha ${pDate} es muy lejana, solo se puede reservar para maximo 2 semanas desde hoy`
     }),
-    badRequest: (message?: string) =>
+  badRequest: (message?: string) =>
     new BadRequestException({
       code: ErrorCodes.INVALID_INPUT,
       message: message || 'Solicitud inválida',
     }),
+  alreadyMarkToReschedule:(pId?: string) =>
+      new ConflictException({
+        code: ErrorCodes.APPOINTMENT_ALREADY_EXIST,
+        message: `La cita seleccionada (Id: ${pId}) ya se encuentra asignada para reagendar`
+      }),
+  
   }

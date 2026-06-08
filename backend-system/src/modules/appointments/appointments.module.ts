@@ -40,6 +40,7 @@ import { CreateDoctorUnavailabilityUseCase } from "./UseCases/DoctorUnavailabili
 import { GetActivesByDoctorUseCase } from "./UseCases/DoctorUnavailability/Get/GetActivesByDoctorUseCase";
 import { UpdateScheduleUseCase } from "./UseCases/Schedule/Update/UpdateScheduleUseCase";
 import { ChangeScheduleStatusUseCase } from "./UseCases/Schedule/ChangeScheduleStatus/ChangeScheduleStatusUseCase";
+import { MarkToRescheduleUseCase } from "./UseCases/Appointment/Update/MarkToReschedule/MarkToRescheduleUseCase";
 
 export const APPOINTMENT_REPOSITORY          = "APPOINTMENT_REPOSITORY";
 export const SCHEDULE_REPOSITORY             = "SCHEDULE_REPOSITORY";
@@ -134,6 +135,13 @@ export const DOCTOR_UNAVAILABILITY_REPOSITORY = "DOCTOR_UNAVAILABILITY_REPOSITOR
       provide:    CancelAppointmentUseCase,
       useFactory: (appointmentRepo) =>
         new CancelAppointmentUseCase(appointmentRepo),
+      inject: [APPOINTMENT_REPOSITORY],
+    },
+    //Mark To Reschedule
+    {
+      provide:    MarkToRescheduleUseCase,
+      useFactory: (appointmentRepo) =>
+        new MarkToRescheduleUseCase(appointmentRepo),
       inject: [APPOINTMENT_REPOSITORY],
     },
 
