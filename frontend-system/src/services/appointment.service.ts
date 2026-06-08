@@ -27,7 +27,10 @@ export const getAppointments = async (date: string, doctorId?: string) => {
   return response.data;
 };
 
-export const exportAppointmentsCsv = async (date: string, doctorId?: string) => {
+export const exportAppointmentsCsv = async (
+  date: string,
+  doctorId?: string
+) => {
   const response = await api.get("/appointments/export/csv", {
     params: { date, doctorId },
     responseType: "blob",
@@ -45,37 +48,39 @@ export const reScheduleAppointment = async (payload: {
 };
 
 /**
- * Obtiene citas pendientes de reagendar en un rango de fechas.
+ * Obtiene TODAS las citas pendientes de reagendar de un medico,
+ * desde hoy en adelante, sin necesidad de especificar un rango de fechas.
+ * Usa el endpoint /pending-reschedule/all/:id del backend.
  *
- * - Si se pasa doctorId: el backend filtra por ese medico (uso del agendador).
- * - Si NO se pasa doctorId: el backend usa el ID del usuario autenticado del JWT
- *   (uso del medico, que solo ve sus propias citas).
+ * Se usa cuando el medico autenticado quiere ver sus propias citas pendientes.
+ */
+export const getAllPendingsByDoctor = async (
+  doctorId: string
+): Promise<AppointmentNotificationResponse> => {
+  const response = await api.get(
+    `/appointments/pending-reschedule/all/${doctorId}`
+  );
+  return response.data;
+};
+
+/**
+ * Obtiene citas pendientes de reagendar en un rango de fechas.
+ * Se usa cuando el agendador necesita ver citas de un medico especifico
+ * dentro de una ventana de tiempo.
+ *
+ * Si no se pasa doctorId, el backend usa el ID del usuario autenticado (JWT).
  */
 export const getPendingAppointmentsToReschedule = async (
   startDate: string,
   endDate: string,
   doctorId?: string
 ): Promise<AppointmentNotificationResponse> => {
-
-  console.log("=================================");
-  console.log("Consultando citas pendientes");
-  console.log("Doctor ID:", doctorId);
-  console.log("Fecha inicio:", startDate);
-  console.log("Fecha fin:", endDate);
-
-  const response = await api.get(
-    "/appointments/pending-reschedule/range",
-    {
-      params: {
-        startDate,
-        endDate,
-        ...(doctorId ? { doctorId } : {}),
-      },
-    }
-  );
-
-  console.log("Respuesta backend:");
-  console.log(response.data);
-
+  const response = await api.get("/appointments/pending-reschedule/range", {
+    params: {
+      startDate,
+      endDate,
+      ...(doctorId ? { doctorId } : {}),
+    },
+  });
   return response.data;
 };
