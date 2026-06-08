@@ -27,7 +27,7 @@ async function bootstrap() {
 
   app.enableCors({
   origin: [
-    'http://150.230.180.25:4000',
+    //'http://150.230.180.25:4000',
     'http://localhost:4000',
   ],
   credentials: true,
@@ -35,7 +35,7 @@ async function bootstrap() {
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
 
-await app.listen(3000, '0.0.0.0');
+await app.listen(3000/*, '0.0.0.0' */);
   
   const dataSource = app.get<DataSource>(getDataSourceToken());
 }

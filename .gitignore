@@ -11,3 +11,8 @@ backend-system/piedrazul.db
 
 # LOGS
 *.log
+
+
+.yml
+
+*/ .Dockerfile
