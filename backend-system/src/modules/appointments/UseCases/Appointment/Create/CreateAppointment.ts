@@ -98,7 +98,7 @@ export class CreateAppointment {
     const vExistingAppointments =
       await this.appointmentRepository.findByDoctorStatusAndDateRange(
         pInput.doctorId,
-        [Status.SCHEDULED],
+        [Status.SCHEDULED, Status.RESCHEDULED],
         pInput.date,
         pInput.date,
       );

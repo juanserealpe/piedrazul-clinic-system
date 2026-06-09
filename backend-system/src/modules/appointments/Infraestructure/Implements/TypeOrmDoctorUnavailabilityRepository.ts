@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { DoctorUnavailabilityRepository } from "../../domain/Repositories/DoctorUnavailabilityRepository";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DoctorUnavailabilityOrmEntity } from "../Entities/DoctorUnavailabilityOrmEntity";
-import { LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
+import { LessThanOrEqual, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { DoctorUnavailability } from "../../domain/entities/DoctorUnavailability";
 import { DoctorUnavailabilityPersistenceMapper } from "../Mappers/DoctorUnavailabilityPersistenceMapper";
 
@@ -22,7 +22,7 @@ export class TypeOrmDoctorUnavailabilityRepository implements DoctorUnavailabili
             doctorId: pDoctorId,
             isActive: true,
             startDate: LessThanOrEqual(vDate),
-            endDate: MoreThanOrEqual(vDate),
+            endDate: MoreThan(vDate),
             },
         });
         if(!result) return null;
@@ -42,7 +42,7 @@ export class TypeOrmDoctorUnavailabilityRepository implements DoctorUnavailabili
                 startDate: LessThanOrEqual(
                     pEndDate.toISOString()
                 ),
-                endDate: MoreThanOrEqual(
+                endDate: MoreThan(
                     pStartDate.toISOString()
                 ),
             },
