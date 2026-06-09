@@ -63,7 +63,7 @@ export class AppointmentController {
   @Get("by-doctor")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR", "SCHEDULER")
+  @Roles("DOCTOR", "SCHEDULER", "ADMIN")
   async getByDoctor(@Query() query: GetAppointmentsRequestDto, @Req() req) {
     if (!query.doctorId) query.doctorId = req.user.preferred_username;
     const vInput = AppointmentControllerMapper.toGetInput(query);
@@ -76,9 +76,10 @@ export class AppointmentController {
   @Header("Content-Disposition", 'attachment; filename="appointments.csv"')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR", "SCHEDULER")
+  @Roles("DOCTOR", "SCHEDULER", "ADMIN")
   async exportCsv(@Query() query: GetAppointmentsRequestDto, @Req() req) {
-    query.doctorId = req.user.preferred_username;
+    // Admin manda doctorId explícito; doctor/scheduler usan su JWT
+    if (!query.doctorId) query.doctorId = req.user.preferred_username;
     const vInput = AppointmentControllerMapper.toGetInput(query);
     return await this.csvExportUseCase.execute(vInput);
   }
@@ -97,7 +98,7 @@ export class AppointmentController {
     return await this.reScheduleAppointmentUseCase.execute(vInput);
   }
 
-  // ── CANCEL ────────────────────────────────────────────────────────────────
+  // ── CANCEL (paciente cancela su propia cita) ──────────────────────────────
   @Patch("cancel")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
@@ -111,6 +112,8 @@ export class AppointmentController {
       patientId:     req.user.preferred_username,
     });
   }
+
+  // ── CANCEL BY STAFF (médico/agendador cancela cualquier cita) ─────────────
   @Patch("cancel-by-staff")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
@@ -125,11 +128,14 @@ export class AppointmentController {
     });
   }
 
-  // ── PENDING RESCHEDULE ALL (by id param) ──────────────────────────────────
+  // ── PENDING RESCHEDULE ALL ────────────────────────────────────────────────
+  // ── CORRECCIÓN Bug 5: agregar SCHEDULER al @Roles ────────────────────────
+  // El agendador necesita este endpoint para ver citas pendientes de todos
+  // los médicos. El :id lo manda él mismo; no se usa el JWT en este endpoint.
   @Get("pending-reschedule/all/:id")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles("DOCTOR")
+  @Roles("DOCTOR", "SCHEDULER")
   async getAll(@Param("id") id: string) {
     return await this.getAllPendingsToRescheduleUseCase.execute(id);
   }
@@ -143,8 +149,6 @@ export class AppointmentController {
     @Query() pQuery: GetPendingsToRescheduleRequestDto,
     @Req() req,
   ) {
-    // Doctor: no manda doctorId → usa su propio JWT
-    // Scheduler: manda doctorId del médico → lo respeta
     if (!pQuery.doctorId) pQuery.doctorId = req.user.preferred_username;
 
     const vInput = AppointmentControllerMapper.toGetPendingsInput(
@@ -164,7 +168,7 @@ export class AppointmentController {
     return await this.getAppointmentsByPatientUseCase.execute(patientId);
   }
 
-  // MARK TO RESCHEDULE
+  // ── MARK TO RESCHEDULE ────────────────────────────────────────────────────
   @Patch("markToReschedule")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtGuard, RolesGuard)
