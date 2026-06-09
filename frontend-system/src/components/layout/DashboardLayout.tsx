@@ -193,7 +193,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     api.get("/auth/all-users")
       .then(res => {
         const found = res.data.find((u: any) => u.id === user.id);
-        if (found) setNombre(`${found.name} ${found.lastnames}`);
+        if (found) setNombre(`${found.names} ${found.lastnames}`);
       })
       .catch(() => {});
   }, [user]);

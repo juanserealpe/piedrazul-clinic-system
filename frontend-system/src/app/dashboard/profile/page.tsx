@@ -19,7 +19,7 @@ export default function ProfilePage() {
   if (!user?.id) return;
   api.get("/auth/all-users").then((res) => {
     const found = res.data.find((u: any) => u.id === user.id);
-    if (found) setNombre(`${found.name} ${found.lastnames}`);
+    if (found) setNombre(`${found.names} ${found.lastnames}`);
   }).catch(() => {});
 }, [user]);
 
