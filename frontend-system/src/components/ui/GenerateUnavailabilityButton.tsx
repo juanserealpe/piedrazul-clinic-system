@@ -3,14 +3,10 @@ import { useState } from "react";
 import { createUnavailabilityRequest } from "@/services/schedule.service";
 import { getApiErrorMessage } from "@/lib/api-errors";
 
-// Colombia es UTC-5. El usuario ingresa hora local → la convertimos a UTC
 function localToUtcIso(dateStr: string, timeStr: string): string {
   if (!dateStr || !timeStr) return "";
-  // El usuario ingresa hora Colombia (UTC-5), sumamos 5h para ir a UTC
-  const [year, month, day]   = dateStr.split("-").map(Number);
-  const [hour, minute]       = timeStr.split(":").map(Number);
-  const utcMs = Date.UTC(year, month - 1, day, hour + 5, minute, 0, 0);
-  return new Date(utcMs).toISOString();
+
+  return `${dateStr}T${timeStr}:00.000Z`;
 }
 
 export default function GenerateUnavailabilityButton() {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, Req } from '@nestjs/common';
 import { LoginDto } from './dtos/login-dto';
 import { LoginResponseDto } from './dtos/login-response-dto';
 import { RefreshDto } from './dtos/refresh-dto';
@@ -15,12 +15,12 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterUserDto) : Promise<UserResponseDto> {
+  async register(@Body() dto: RegisterUserDto): Promise<UserResponseDto> {
     return this.authService.register(dto);
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto) : Promise<LoginResponseDto> { 
+  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
     return this.authService.login(dto);
   }
 
@@ -43,23 +43,39 @@ export class AuthController {
     const exists = await this.authService.userExists(id);
     return { exists };
   }
+
+  // ── CORRECCIÓN Bug 3: endpoints de listado ahora requieren autenticación ──
+  // /all-doctors: cualquier usuario autenticado puede ver los médicos
+  // (paciente necesita la lista para agendar, agendador también).
   @Get('all-doctors')
-  async getAllDoctors() : Promise<{ id: string; name: string, lastnames: string }[]> {
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN', 'PATIENT', 'SCHEDULER', 'DOCTOR')
+  async getAllDoctors(): Promise<{ id: string; name: string; lastnames: string }[]> {
     return this.authService.getAllDoctors();
   }
+
+  // /all-patients: solo el agendador y el admin necesitan ver pacientes.
   @Get('all-patients')
-  async getAllPatients() : Promise<{ id: string; name: string, lastnames: string }[]> {
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN', 'SCHEDULER')
+  async getAllPatients(): Promise<{ id: string; name: string; lastnames: string }[]> {
     return this.authService.getAllPatients();
   }
+  // ─────────────────────────────────────────────────────────────────────────
+
   @Get('patient/:id')
-  async getPatientById(@Param('id') id: string): Promise<{ id: string; name: string, lastnames: string } | null> {
-    const a =  await this.authService.getPatientById(id);  
-    console.log("GET PATIENT BY ID:", a);
-    return a;
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles('ADMIN', 'SCHEDULER', 'DOCTOR')
+  async getPatientById(
+    @Param('id') id: string
+  ): Promise<{ id: string; name: string; lastnames: string } | null> {
+    return this.authService.getPatientById(id);
   }
+
+  // /all-users: solo el admin ve la lista completa de usuarios.
   @Get('all-users')
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'DOCTOR', 'SCHEDULER', 'PATIENT')
   async getAllUsers() {
     return this.authService.getAllUsers();
   }

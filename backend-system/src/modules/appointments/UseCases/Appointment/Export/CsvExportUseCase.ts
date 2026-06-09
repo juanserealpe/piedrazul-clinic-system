@@ -17,7 +17,7 @@ export class CsvExportUseCase {
 
     const vRows = vResult.appointments.map(a => {
 
-      const vLocalDate = this.toColombiaTime(a.date);
+      const vLocalDate = this.formatDate(a.date);
 
       return `${vResult.doctorId},${a.patientId},${vLocalDate}`;
     });
@@ -25,22 +25,24 @@ export class CsvExportUseCase {
     return [vHeader, ...vRows].join("\n");
   } 
 
-  private toColombiaTime(pDateStr: string): string {
+  private formatDate(pDateStr: string): string {
 
     const vDate = new Date(pDateStr);
 
-    //UTC
-    const offsetMs = -5 * 60 * 60 * 1000;
+    const vYear = vDate.getUTCFullYear();
+    const vMonth = String(vDate.getUTCMonth() + 1).padStart(2, "0");
+    const vDay = String(vDate.getUTCDate()).padStart(2, "0");
 
-    const vLocal = new Date(vDate.getTime() + offsetMs);
+    let vHour = vDate.getUTCHours();
+    const vMin = String(vDate.getUTCMinutes()).padStart(2, "0");
 
-    const vYear = vLocal.getUTCFullYear();
-    const vMonth = String(vLocal.getUTCMonth() + 1).padStart(2, "0");
-    const vDay = String(vLocal.getUTCDate()).padStart(2, "0");
+    const vPeriod = vHour >= 12 ? "PM" : "AM";
 
-    const vHour = String(vLocal.getUTCHours()).padStart(2, "0");
-    const vMin = String(vLocal.getUTCMinutes()).padStart(2, "0");
+    vHour = vHour % 12;
+    if (vHour === 0) {
+      vHour = 12;
+    }
 
-    return `${vHour}:${vMin}  ${vDay}/${vMonth}/${vYear}`;
+    return `${vHour}:${vMin} ${vPeriod} ${vDay}/${vMonth}/${vYear}`;
   }
 }

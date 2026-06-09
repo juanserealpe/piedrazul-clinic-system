@@ -85,7 +85,6 @@ export class UpdateAppointment{
         if (vAlreadyTaken) {
             throw AppError.appointmentAlreadyExist(pInput.newDate.toISOString());
         }
-
         // Create history event
         const vNewSchedule =
             AppointmentDtoMapper

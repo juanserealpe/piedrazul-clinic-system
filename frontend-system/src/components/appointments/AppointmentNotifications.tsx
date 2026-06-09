@@ -26,14 +26,17 @@ function obtenerVentanaFechas() {
 }
 
 // Convierte una fecha ISO a hora Colombia (UTC-5) en formato 12h
-function formatearHoraColombia(isoStr: string): string {
-  const utc = new Date(isoStr);
-  const col = new Date(utc.getTime() - 5 * 60 * 60 * 1000);
-  let h = col.getUTCHours();
-  const m = col.getUTCMinutes().toString().padStart(2, "0");
-  const indicador = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m} ${indicador}`;
+function formatearHora(isoStr: string): string {
+  const date = new Date(isoStr);
+
+  let hour = date.getUTCHours();
+  const minute = date.getUTCMinutes().toString().padStart(2, "0");
+
+  const period = hour >= 12 ? "PM" : "AM";
+
+  hour = hour % 12 || 12;
+
+  return `${hour}:${minute} ${period}`;
 }
 
 // Convierte una fecha ISO a fecha legible en espanol
@@ -378,7 +381,7 @@ export default function NotificacionesCitas() {
                           }}
                         >
                           {formatearFecha(notif.date)} -{" "}
-                          <strong>{formatearHoraColombia(notif.date)}</strong>
+                          <strong>{formatearHora(notif.date)}</strong>
                         </div>
                       </div>
                       <button

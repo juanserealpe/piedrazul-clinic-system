@@ -44,11 +44,14 @@ export default function ScheduleAppointmentModal({ open, onClose, doctor }: Prop
     setErrorMsg("");
     setSuccessMsg("");
     try {
+      // ── CORRECCIÓN Bug 2: i+1 para excluir el día actual ─────────────────
       const promises = Array.from({ length: 12 }, (_, i) => {
         const date = new Date();
-        date.setUTCDate(date.getUTCDate() + i);
+        date.setUTCDate(date.getUTCDate() + i + 1); // mañana en adelante
+        date.setUTCHours(0, 0, 0, 0);
         return getAvailableSlots(date.toISOString(), doctor.id);
       });
+      // ─────────────────────────────────────────────────────────────────────
       const results = await Promise.allSettled(promises);
       const available = results
         .filter((r) => r.status === "fulfilled")
@@ -229,7 +232,6 @@ export default function ScheduleAppointmentModal({ open, onClose, doctor }: Prop
                           className={`pz-slot-btn${selectedSlot === slot ? " selected" : ""}`}
                           onClick={() => setSelectedSlot(slot)}
                         >
-                          {/* formatSlotTime12h lee getUTCHours directo, sin restar 5 horas */}
                           {formatSlotTime12h(slot)}
                         </button>
                       ))}
